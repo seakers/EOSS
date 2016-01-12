@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<candidateOrbits>
+	<orbit>
+		<name>GEO-35788-equat-NA</name>
+		<semimajoraxis>1000.0</semimajoraxis><!-- in km-->
+		<type>GEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>LEO-600-ISS-NA</name>
+		<semimajoraxis>600.0</semimajoraxis><!-- in km-->
+		<type>LEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SSO-600-SSO-DD</name>
+		<semimajoraxis>800.0</semimajoraxis><!-- in km-->
+		<type>LEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>250</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SSO-800-SSO-PM</name>
+		<semimajoraxis>800.0</semimajoraxis><!-- in km-->
+		<type>LEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SSO-800-SSO-AM</name>
+		<semimajoraxis>800.0</semimajoraxis><!-- in km-->
+		<type>LEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+</candidateOrbits>
