@@ -11,13 +11,43 @@ package eoss.problem;
  * @author nozomihitomi
  */
 public class Orbit {
+    /**
+     * semimajor axis in meters
+     */
     private final double semimajorAxis;
-    private final double inclination;
-    private final double RAAN;
+    /**
+     * Altitude in meters
+     */
+    private final double altitude;
+    /**
+     * Inclination in degrees
+     */
+    private final String inclination;
+//    /**
+//     * Type of inclination (e.g. SSO, polar)
+//     */
+//    private final String inclinationStr;
+    /**
+     * RAAN in degrees
+     */
+    private final String RAAN;
+    /**
+     * Mean anomaly in degrees
+     */
     private final double meanAnomaly;
+    
     private final double eccentricity;
+    
+    /**
+     * Argument of perigee in degrees
+     */
     private final double argPeri;
+    
     private final String name;
+    
+    /**
+     * Type of orbit (e.g. SSO, LEO)
+     */
     private final OrbitType type;
 
     /**
@@ -29,9 +59,9 @@ public class Orbit {
      * @param RAAN in degrees 
      * @param meanAnomaly in degrees
      * @param eccentricity between [0,1]
-     * @param argPeri in degrees
+     * @param argPeri argument of perigee in degrees
      */
-    public Orbit(String name, OrbitType type, double semimajorAxis, double inclination, double RAAN, double meanAnomaly, double eccentricity, double argPeri) {
+    public Orbit(String name, OrbitType type, double semimajorAxis, String inclination, String RAAN, double meanAnomaly, double eccentricity, double argPeri) {
         this.name = name;
         this.type = type;
         this.semimajorAxis = semimajorAxis;
@@ -40,6 +70,13 @@ public class Orbit {
         this.meanAnomaly = meanAnomaly;
         this.eccentricity = eccentricity;
         this.argPeri = argPeri;
+//        if(inclination==0.0)
+//            this.inclinationStr = "polar";
+//        else if(inclination==getSSOInclination(semimajorAxis))
+//            this.inclinationStr = "SSO";
+//        else
+//            this.inclinationStr = "";
+        this.altitude = semimajorAxis-Earth.radius;
     }
 
     public String getName() {
@@ -50,11 +87,11 @@ public class Orbit {
         return semimajorAxis;
     }
 
-    public double getInclination() {
+    public String getInclination() {
         return inclination;
     }
 
-    public double getRAAN() {
+    public String getRAAN() {
         return RAAN;
     }
 
@@ -74,8 +111,8 @@ public class Orbit {
     public int hashCode() {
         int hash = 5;
         hash = 37 * hash + (int) (Double.doubleToLongBits(this.semimajorAxis) ^ (Double.doubleToLongBits(this.semimajorAxis) >>> 32));
-        hash = 37 * hash + (int) (Double.doubleToLongBits(this.inclination) ^ (Double.doubleToLongBits(this.inclination) >>> 32));
-        hash = 37 * hash + (int) (Double.doubleToLongBits(this.RAAN) ^ (Double.doubleToLongBits(this.RAAN) >>> 32));
+//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.inclination) ^ (Double.doubleToLongBits(this.inclination) >>> 32));
+//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.RAAN) ^ (Double.doubleToLongBits(this.RAAN) >>> 32));
         hash = 37 * hash + (int) (Double.doubleToLongBits(this.eccentricity) ^ (Double.doubleToLongBits(this.eccentricity) >>> 32));
         hash = 37 * hash + (int) (Double.doubleToLongBits(this.argPeri) ^ (Double.doubleToLongBits(this.argPeri) >>> 32));
         return hash;
@@ -100,12 +137,12 @@ public class Orbit {
         if (Double.doubleToLongBits(this.semimajorAxis) != Double.doubleToLongBits(other.semimajorAxis)) {
             return false;
         }
-        if (Double.doubleToLongBits(this.inclination) != Double.doubleToLongBits(other.inclination)) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.RAAN) != Double.doubleToLongBits(other.RAAN)) {
-            return false;
-        }
+//        if (Double.doubleToLongBits(this.inclination) != Double.doubleToLongBits(other.inclination)) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.RAAN) != Double.doubleToLongBits(other.RAAN)) {
+//            return false;
+//        }
         if (Double.doubleToLongBits(this.eccentricity) != Double.doubleToLongBits(other.eccentricity)) {
             return false;
         }
@@ -123,7 +160,7 @@ public class Orbit {
     public String toJessSlots() {
         return 
             " (orbit-type " + type + ")"  + 
-            " (orbit-altitude# "  + semimajorAxis + ")"  + 
+            " (orbit-altitude# "  + altitude/1000 + ")"  + //change m to km
             " (orbit-eccentricity "  + eccentricity + ")"  + 
             " (orbit-RAAN " + RAAN + ")"  + 
             " (orbit-inclination " + inclination + ")"  + 
@@ -134,10 +171,23 @@ public class Orbit {
     public enum OrbitType {
         LEO, //low earth orbit
         
+        SSO, //sun synchronous orbit
+        
         MEO, //mid earth orbit
         
         HEO, //high earth orbit
         
         GEO; //geostationary orbit
     }
+    
+    /**
+     * Computes the inclination in degrees of a satellite in a sunsynchronous orbit. Assumes circular orbit
+     * @param semimajorAxis in m
+     * @return 
+     */
+    private double getSSOInclination(double semimajorAxis){
+        double kh = 10.10949;
+        double cos_i = Math.pow(this.semimajorAxis/Earth.radius,3.5)/(-kh);
+        return 180.*Math.acos(cos_i)/Math.PI;
+}
 }

@@ -26,10 +26,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import eoss.problem.Bus;
-import eoss.problem.EOSSDatabase;
-import eoss.problem.Instrument;
-import eoss.problem.Orbit;
 import eoss.problem.Orbit.OrbitType;
 
 public class Params {
@@ -40,11 +36,12 @@ public class Params {
     public static String req_mode;//used
     public static String run_mode;//used
     public static String initial_pop;
-    public static String template_definition_xls;// used
+    public static String attribute_set_xls;// used
     public static String instrument_capability_xls;// used
     public static String requirement_satisfaction_xls;
     public static String aggregation_xls;
     public static String capability_rules_xls;//used
+    public static String mission_analysis_database_xls;
 
     public static String instrument_capability_xml;//used
     public static String aggregation_xml; //used
@@ -65,11 +62,19 @@ public class Params {
     public static String requirement_satisfaction_clp;
     public static String cost_estimation_rules_clp; // used
     public static String fuzzy_cost_estimation_rules_clp; //used
+    public static String mass_budget_rules_clp;
+    public static String subsystem_mass_budget_rules_clp;
+    public static String deltaV_budget_rules_clp;
+    public static String adcs_design_rules_clp;
+    public static String propulsion_design_rules_clp;
+    public static String eps_design_rules_clp;
+    public static String sat_configuration_rules_clp;
+    public static String launch_vehicle_selection_rules_clp;
     public static String adhoc_rules_clp;
 
     // Instruments and orbits
     public static ArrayList<Orbit> orbits;
-    public static int[] altnertivesForNumberOfSatellites = {1, 2, 3, 4, 5, 6, 7, 8};
+    public static int[] altnertivesForNumberOfSatellites = {1};
 
     // Results
     public static String path_save_results;
@@ -102,7 +107,7 @@ public class Params {
     public static ArrayList subobj_weights;
     public static HashMap subobj_weights_map;
     public static HashMap revtimes;
-    public static HashMap scores;
+    public static HashMap<ArrayList<String>, HashMap<String,Double>> scores;
     public static HashMap subobj_scores;
     public static HashMap capabilities;
     public static HashMap all_dsms;
@@ -147,18 +152,20 @@ public class Params {
         }
 
         //paths to look up tables
+        capability_dat_file = path + File.separator + "dat" + File.separator + props.getProperty("capability_dat_file");
+        revtimes_dat_file = path + File.separator + "dat" + File.separator + props.getProperty("revtimes_dat_file");
+        dsm_dat_file = path + File.separator + "dat" + File.separator + props.getProperty("dsm_dat_file");
+        scores_dat_file = path + File.separator + "dat" + File.separator + props.getProperty("scores_dat_file");
+
+        //path to results
         path_save_results = path + File.separator + props.getProperty("path_save_results");
-        capability_dat_file = path_save_results + File.separator + props.getProperty("capability_dat_file");
-        revtimes_dat_file = path_save_results + File.separator + props.getProperty("revtimes_dat_file");
-        dsm_dat_file = path_save_results + File.separator + props.getProperty("dsm_dat_file");
-        scores_dat_file = path_save_results + File.separator + props.getProperty("scores_dat_file");
         initial_pop = path_save_results + File.separator + props.getProperty("initial_pop");
 
         // Paths for common xls files
-        template_definition_xls = path + File.separator + "xls" + File.separator + props.getProperty("template_definition_xls"); //used
+        attribute_set_xls = path + File.separator + "xls" + File.separator + props.getProperty("attribute_set_xls"); //used
         capability_rules_xls = path + File.separator + "xls" + File.separator + props.getProperty("capability_rules_xls");//used
         requirement_satisfaction_xls = path + File.separator + "xls" + File.separator + props.getProperty("requirement_satisfaction_xls");//used
-        aggregation_xls = path + File.separator + "xls" + File.separator + props.getProperty("aggregation_xls");//used
+        mission_analysis_database_xls = path + File.separator + "xls" + File.separator + props.getProperty("mission_analysis_database_xls");//used
 
         // Paths for common xml files
         instrument_capability_xml = path + File.separator + "config" + File.separator + props.getProperty("capability_rules_xml");//used
@@ -181,6 +188,14 @@ public class Params {
         requirement_satisfaction_clp = path + File.separator + "clp" + File.separator + props.getProperty("requirement_satisfaction_clp");
         cost_estimation_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("cost_estimation_rules_clp"); //Used
         fuzzy_cost_estimation_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("fuzzy_cost_estimation_rules_clp"); //Used
+        mass_budget_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("mass_budget_rules_clp");
+        subsystem_mass_budget_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("subsystem_mass_budget_rules_clp");
+        deltaV_budget_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("deltaV_budget_rules_clp");
+        adcs_design_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("adcs_design_rules_clp");
+        propulsion_design_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("propulsion_design_rules_clp");
+        eps_design_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("eps_design_rules_clp");
+        sat_configuration_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("sat_configuration_rules.clp");
+        launch_vehicle_selection_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("launch_vehicle_selection_rules_clp");
         adhoc_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("adhoc_rules_clp");
 
         // Intermediate results
@@ -324,6 +339,9 @@ public class Params {
                     case "LEO":
                         type = OrbitType.LEO;
                         break;
+                    case "SSO":
+                        type = OrbitType.SSO;
+                        break;
                     case "MEO":
                         type = OrbitType.MEO;
                         break;
@@ -337,8 +355,8 @@ public class Params {
                         throw new IllegalArgumentException("Expected OrbitType. Found " + orbType + "which is not a valid OrbitType");
                 }
                 Double semimajorAxis = Double.valueOf(orbit.getElementsByTagName("semimajoraxis").item(0).getTextContent());
-                Double inclination = Double.valueOf(orbit.getElementsByTagName("inclination").item(0).getTextContent());
-                Double RAAN = Double.valueOf(orbit.getElementsByTagName("raan").item(0).getTextContent());
+                String inclination = orbit.getElementsByTagName("inclination").item(0).getTextContent();
+                String RAAN = orbit.getElementsByTagName("raan").item(0).getTextContent();
                 Double meanAnomaly = Double.valueOf(orbit.getElementsByTagName("meananomaly").item(0).getTextContent());
                 Double eccentricity = Double.valueOf(orbit.getElementsByTagName("eccentricity").item(0).getTextContent());
                 Double argPeri = Double.valueOf(orbit.getElementsByTagName("argumentperigee").item(0).getTextContent());

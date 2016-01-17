@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
 import org.moeaframework.problem.AbstractProblem;
 import architecture.util.FuzzyValue;
-import rbsa.eoss.Interval;
+import architecture.util.Interval;
 import eoss.jess.QueryBuilder;
 import eoss.jess.Resource;
 
@@ -35,7 +35,7 @@ import eoss.jess.Resource;
  *
  * @author nozomihitomi
  */
-public class EOSSProblem extends AbstractProblem implements Function<Solution,Solution>{
+public class EOSSProblem extends AbstractProblem {
 
     private final int[] altnertivesForNumberOfSatellites;
 
@@ -100,8 +100,8 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
             r.reset();
 
             assertMissions(r, arch);
-            evaluateCostEONRules(r, arch, qb); //compute cost
-            //evaluateCost(r, arch, resu, qb, m);
+//            evaluateCostEONRules(r, arch, qb); //compute cost
+            evaluateCost(r, arch, qb);
 
             String str = "";
             for (Orbit orb : EOSSDatabase.getOrbits()) {
@@ -113,13 +113,6 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    @Override 
-    public Solution apply(Solution sltn){
-        evaluate(sltn);
-        return sltn;
-    }
-    
 
     @Override
     public Solution newSolution() {
@@ -296,7 +289,7 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
             ArrayList<Fact> missions = qb.makeQuery("MANIFEST::Mission");
             Double[] oldmasses = new Double[missions.size()];
             for (int i = 0; i < missions.size(); i++) {
-                oldmasses[i] = new Double(missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext()));
+                oldmasses[i] = missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
             }
             Double[] diffs = new Double[missions.size()];
             double tolerance = 10 * missions.size();
@@ -343,13 +336,12 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
                     for (Instrument inst : instruments) {
                         payload = payload + " " + inst.getName();
                     }
-                    call += "(instruments " + payload + ") (launch-date 2015) (time-horizon# " + Params.time_horizon + " ) (select-orbit no) " + orbit.toJessSlots();
+                    call += "(instruments " + payload + ") (launch-date 2015) (lifetime 5) (select-orbit no) " + orbit.toJessSlots();
                     call += "(num-of-sats-per-plane# "+ String.valueOf(arch.getNumberOfSatellitesPerOrbit()) + ")))";
                     call += "(assert (SYNERGIES::cross-registered-instruments "
                             + " (instruments " + payload
                             + ") (degree-of-cross-registration spacecraft) "
-                            + " (platform " + orbit + " )"
-                            + " (total-num-channels 0)))";
+                            + " (platform " + orbit + " )))";
                     r.eval(call);
                 }
             }
@@ -381,26 +373,29 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
                         }
                     }
                 }
-                ArrayList<String> extraRules = addExtraRules(r);
-                r.setFocus("CHANNELS");
-                r.run();
-                Iterator<String> iter = extraRules.iterator();
-                while (iter.hasNext()) {
-                    r.removeDefrule(iter.next());
-                }
+//                ArrayList<String> extraRules = addExtraRules(r);
+//                r.setFocus("CHANNELS");
+//                r.run();
+//                Iterator<String> iter = extraRules.iterator();
+//                while (iter.hasNext()) {
+//                    r.removeDefrule(iter.next());
+//                }
             } else {
                 assertMissions(r, arch);
 
+                r.setFocus("MANIFEST2");
+                r.run();
+                
                 r.setFocus("MANIFEST");
                 r.run();
 
-                ArrayList<String> extraRules = addExtraRules(r);
-                r.setFocus("CHANNELS");
-                r.run();
-                Iterator<String> iter = extraRules.iterator();
-                while (iter.hasNext()) {
-                    r.removeDefrule(iter.next());
-                }
+//                ArrayList<String> extraRules = addExtraRules(r);
+//                r.setFocus("CHANNELS");
+//                r.run();
+//                Iterator<String> iter = extraRules.iterator();
+//                while (iter.hasNext()) {
+//                    r.removeDefrule(iter.next());
+//                }
 
                 r.setFocus("CAPABILITIES");
                 r.run();
@@ -442,7 +437,7 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
                     HashMap therevtimes = (HashMap) Params.revtimes.get(key); //key: 'Global' or 'US', value Double
 
                     if (therevtimes == null) {
-                        key = arch.getNumberOfSatellitesPerOrbit() + "x" + StringUtils.join(fovs, ",");
+                        key = arch.getNumberOfSatellitesPerOrbit() + " x " + StringUtils.join(fovs, "  ");
                         therevtimes = (HashMap) Params.revtimes.get(key); //key: 'Global' or 'US', value Double
                     }
                     String call = "(assert (ASSIMILATION2::UPDATE-REV-TIME (parameter " + param + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
@@ -495,40 +490,40 @@ public class EOSSProblem extends AbstractProblem implements Function<Solution,So
         }
     }
 
-    /**
-     * TODO had to put the rules here instead of clp file because the rules were
-     * firing when they shouldn't have been...
-     */
-    private ArrayList<String> addExtraRules(Rete r) {
-        ArrayList<String> out = new ArrayList();
-        try {
-            String rule1name = "CHANNELS::compute-EON-vertical-spatial-resolution1";
-            String call1 = "(defrule " + rule1name
-                    + " ?s <- (SYNERGIES::cross-registered-instruments (platform ?plat) (total-num-channels 0)) "
-                    + "?c <- (accumulate (bind ?countss 0) "
-                    + "(bind ?countss (+ ?countss ?num)) "
-                    + "?countss "
-                    + "(CAPABILITIES::Manifested-instrument (orbit-string ?plat)(num-of-mmwave-band-channels ?num) )) "
-                    + "=> "
-                    + "(modify ?s (total-num-channels ?c)))";
-
-            String rule2name = "CHANNELS::compute-EON-vertical-spatial-resolution2";
-            String call2 = "(defrule " + rule2name
-                    + " ?EON <- (CAPABILITIES::Manifested-instrument  (Vertical-Spatial-Resolution# nil) (orbit-string ?orbs)) "
-                    + "(SYNERGIES::cross-registered-instruments (total-num-channels ?c&~nil)(platform ?orbs)) "
-                    + "=> "
-                    + "(modify ?EON (Vertical-Spatial-Resolution# (compute-vertical-spatial-resolution-EON ?c))))";
-            r.eval(call1);
-            r.eval(call2);
-
-            out.add(rule1name);
-            out.add(rule2name);
-        } catch (JessException ex) {
-            System.err.println("ExtraRules are wrong...");
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return out;
-    }
+//    /**
+//     * TODO had to put the rules here instead of clp file because the rules were
+//     * firing when they shouldn't have been...
+//     */
+//    private ArrayList<String> addExtraRules(Rete r) {
+//        ArrayList<String> out = new ArrayList();
+//        try {
+//            String rule1name = "CHANNELS::compute-EON-vertical-spatial-resolution1";
+//            String call1 = "(defrule " + rule1name
+//                    + " ?s <- (SYNERGIES::cross-registered-instruments (platform ?plat) (total-num-channels 0)) "
+//                    + "?c <- (accumulate (bind ?countss 0) "
+//                    + "(bind ?countss (+ ?countss ?num)) "
+//                    + "?countss "
+//                    + "(CAPABILITIES::Manifested-instrument (orbit-string ?plat)(num-of-mmwave-band-channels ?num) )) "
+//                    + "=> "
+//                    + "(modify ?s (total-num-channels ?c)))";
+//
+//            String rule2name = "CHANNELS::compute-EON-vertical-spatial-resolution2";
+//            String call2 = "(defrule " + rule2name
+//                    + " ?EON <- (CAPABILITIES::Manifested-instrument  (Vertical-Spatial-Resolution# nil) (orbit-string ?orbs)) "
+//                    + "(SYNERGIES::cross-registered-instruments (total-num-channels ?c&~nil)(platform ?orbs)) "
+//                    + "=> "
+//                    + "(modify ?EON (Vertical-Spatial-Resolution# (compute-vertical-spatial-resolution-EON ?c))))";
+//            r.eval(call1);
+//            r.eval(call2);
+//
+//            out.add(rule1name);
+//            out.add(rule2name);
+//        } catch (JessException ex) {
+//            System.err.println("ExtraRules are wrong...");
+//            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return out;
+//    }
 
     private ArrayList jessList2ArrayList(ValueVector vv, Rete r) {
         ArrayList al = new ArrayList();

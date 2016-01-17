@@ -5,9 +5,9 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.io.*;
-import rbsa.eoss.Interval;
 
 public class FuzzyValue implements Serializable {
+    private static final long serialVersionUID = -6526261553893765283L;
 	/**
 	 * 
 	 */

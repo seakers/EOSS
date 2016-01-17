@@ -92,12 +92,11 @@ public class ArchitectureGenerator implements Initialization {
             Assigning assign = (Assigning) variable;
             for (int i = 0; i < assign.getNumberOfLHS(); i++) {
                 for (int j = 0; j < assign.getNumberOfRHS(); j++) {
-                    if(pprng.nextBoolean())
-                        assign.connect(i,j);
+//                    if(pprng.nextBoolean())
+//                        assign.connect(i,j);
                 }
             }
-//            assign.connect(0,0);
-//            assign.connect(0,1);
+            assign.connect(7,1);
         } else {
             System.err.println("can not initialize unknown type");
         }

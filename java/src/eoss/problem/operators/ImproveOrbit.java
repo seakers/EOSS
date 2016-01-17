@@ -1,0 +1,77 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package eoss.problem.operators;
+
+import eoss.problem.EOSSArchitecture;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Orbit;
+import eoss.problem.Params;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+
+/**
+ * This domain-specific heuristic looks for opportunities where an instrument
+ * can be moved to a better orbit. The increase in performance is based on a
+ * look up table containing the instrument's assignment in all possible orbits.
+ *
+ * @author nozomihitomi
+ */
+public class ImproveOrbit extends AbstractEOSSOperator {
+
+    @Override
+    public int getArity() {
+        return 1;
+    }
+
+    @Override
+    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+        //Find a random non-empty orbit and its payload 
+        int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
+        if (randOrbitIndex == -1) {
+            return child;
+        }
+        Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
+
+        ArrayList<Integer> instIndices = new ArrayList<>(child.getInstrumentsInOrbit(randOrbitIndex));
+        Collections.shuffle(instIndices);//this sorts orbits in random order
+
+        for (int instrInd : instIndices) {
+            ArrayList<String> list = new ArrayList<>();
+            list.add(EOSSDatabase.getInstruments().get(instrInd).getName());
+
+            //getallorbit scores
+            ArrayList<Map.Entry<String, Double>> list2 = new ArrayList<>();
+            list2.addAll(Params.scores.get(list).entrySet());
+
+            //sort orbits and get best_orbit
+            Collections.sort(list2, Collections.reverseOrder(ByValueComparator));
+            String best_orbit = list2.get(0).getKey();
+            int best_orbit_index = findOrbit(best_orbit);
+            Double new_score = list2.get(0).getValue();
+            Double old_score = Params.scores.get(list).get(randOrbit.getName());
+
+            if (new_score > old_score) {
+                child.removeInstrumentFromOrbit(instrInd, randOrbitIndex);
+                child.addInstrumentToOrbit(instrInd, best_orbit_index);
+                return child;
+            }
+
+        }
+        return child;
+
+    }
+
+    private final Comparator<Map.Entry<String, Double>> ByValueComparator = new Comparator<Map.Entry<String, Double>>() {
+        @Override
+        public int compare(Map.Entry<String, Double> a1, Map.Entry<String, Double> a2) {
+            return a1.getValue().compareTo(a2.getValue());
+
+        }
+    };
+
+}

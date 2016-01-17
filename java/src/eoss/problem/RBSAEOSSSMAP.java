@@ -4,7 +4,6 @@
  */
 package eoss.problem;
 
-import eoss.problem.Params;
 import java.io.File;
 import org.moeaframework.Instrumenter;
 import org.moeaframework.algorithm.NSGAII;
@@ -22,11 +21,31 @@ import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
-//import rbsa.eoss.ArchitectureEvaluator;
 import architecture.ArchitectureGenerator;
-import eoss.problem.EOSSDatabase;
-import eoss.problem.EOSSProblem;
 import architecture.ResultIO;
+import eoss.problem.operators.AddRandomToSmallSatellite;
+import eoss.problem.operators.AddSynergy;
+import eoss.problem.operators.ImproveOrbit;
+import eoss.problem.operators.RemoveInterference;
+import eoss.problem.operators.RemoveRandomFromLoadedSatellite;
+import eoss.problem.operators.RemoveSuperfluous;
+import hh.hyperheuristics.HHFactory;
+import hh.hyperheuristics.HeMOEA;
+import hh.nextheuristic.INextHeuristic;
+import hh.rewarddefinition.CreditFunctionType;
+import hh.rewarddefinition.IRewardDefinition;
+import hh.rewarddefinition.RewardDefFactory;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.moeaframework.algorithm.EpsilonMOEA;
+import org.moeaframework.core.EpsilonBoxDominanceArchive;
+import org.moeaframework.core.Population;
+import org.moeaframework.core.Solution;
+import org.moeaframework.core.comparator.DominanceComparator;
+import org.moeaframework.core.operator.RandomInitialization;
+
 /**
  *
  * @author dani
@@ -34,79 +53,104 @@ import architecture.ResultIO;
 public class RBSAEOSSSMAP {
 
     /**
-     * First argument is the path to the project folder. Second argument is the mode. Third argument is the number of ArchitecturalEvaluators to initialize.
+     * First argument is the path to the project folder. Second argument is the
+     * mode. Third argument is the number of ArchitecturalEvaluators to
+     * initialize.
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
+
         //PATH
         args = new String[3];
-        args[0] = "/Users/nozomihitomi/Dropbox/EOSS";
-//          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS";
+        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+//          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problem\\climateCentric";
         args[1] = "3";
         args[2] = "3";
-        
+
         System.out.println("Path set to " + args[0]);
         System.out.println("Running mode " + args[1]);
         System.out.println("Will get " + args[2] + " resources");
-        
-        String path = args[0];
-        
-        int MODE = Integer.parseInt(args[1]);
-        int numCPU = Integer.parseInt(args[2]);        
-//        ArchitectureEvaluator AE = ArchitectureEvaluator.getInstance();
-        ResultIO resio = new ResultIO();
-        Problem prob = initEOSSProblem(path, "CRISP-ATTRIBUTES", "test","normal","fast",true, numCPU);
-        switch(MODE) {
 
-            case 3://Search
-                TypedProperties prop = new TypedProperties();
-                //search paramaters set here
-                int maxEvaluations = 50000;
-                int popSize = 2;
-                double crossoverProbability = 0.8;
-                double mutationProbability = 0.01;
+        String path = args[0];
+
+        int MODE = Integer.parseInt(args[1]);
+        int numCPU = Integer.parseInt(args[2]);
+//        ArchitectureEvaluator AE = ArchitectureEvaluator.getInstance();
+
+        Problem problem = initEOSSProblem(path, "CRISP-ATTRIBUTES", "test", "normal", "slow", true, numCPU);
+
+        //parameters and operators for search
+        TypedProperties properties = new TypedProperties();
+        //search paramaters set here
+        int popSize = 100;
+        properties.getInt("maxEvaluations", 50000);
+        properties.getInt("populationSize", popSize);
+        double crossoverProbability = 0.8;
+        double mutationProbability = 0.01;
+        Variation singlecross = new OnePointCrossover(crossoverProbability);
+        Variation BitFlip = new BitFlip(mutationProbability);
+        Variation GAVariation = new GAVariation(singlecross, BitFlip);
+        Initialization initialization = new ArchitectureGenerator(problem, popSize, "random");
+
+        //setup for epsilon MOEA
+        Population population = new Population();
+        DominanceComparator comparator = new ParetoDominanceComparator();
+        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(new double[]{0.001, 10});
+        final TournamentSelection selection = new TournamentSelection(2, comparator);
+
+        switch (MODE) {
+            case 1: //NSGAII Search
 
                 //setup NSGAII
-		Initialization initialization = new ArchitectureGenerator(prob, popSize, "random");
+                NondominatedSortingPopulation ndsPopulation = new NondominatedSortingPopulation();
 
-		NondominatedSortingPopulation population = new NondominatedSortingPopulation();
-
-		TournamentSelection selection = new TournamentSelection(2,
+                TournamentSelection tSelection = new TournamentSelection(2,
                         new ChainedComparator(
-						new ParetoDominanceComparator(),
-						new CrowdingComparator()));
+                                new ParetoDominanceComparator(),
+                                new CrowdingComparator()));
 
-		Variation singlecross = new OnePointCrossover(crossoverProbability);
-                Variation BitFlip = new BitFlip(mutationProbability);
-                Variation GAVariation =  new GAVariation(singlecross, BitFlip);
-                
+                Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, GAVariation,
+                        initialization);
 
-		Algorithm alg = new NSGAII(prob, population, null, selection, GAVariation,
-				initialization);
-                
-                Instrumenter instrumenter = new Instrumenter().withFrequency(popSize)
-                        .attachHypervolumeJmetalCollector()
-                        .attachElapsedTimeCollector();
+                runSearch(nsga2, properties, path);
 
-                InstrumentedAlgorithm instAlgorithm = instrumenter.instrument(alg);
+                break;
+            case 2: //Use epsilonMOEA
+                Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
 
-                // run the executor using the listener to collect results
-                System.out.println("Starting " + alg.getClass().getSimpleName() + " on " + prob.getName() + " with pop size: " + popSize);
-                long startTime = System.currentTimeMillis();
-                while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
-                    instAlgorithm.step();
+                runSearch(eMOEA, properties, path);
+
+            case 3://Hyperheuristic search
+                IRewardDefinition creditAssignment;
+                try {
+                    creditAssignment = RewardDefFactory.getInstance().getCreditDef("SI-Do-PF", properties, problem);
+
+                    int injectionRate = (int) properties.getDouble("injectionRate", 0.25);
+                    //for injection
+                    int lagWindow = (int) properties.getDouble("lagWindow", 50);
+
+                    ArrayList<Variation> heuristics = new ArrayList();
+                    //add domain-specific heuristics
+                    heuristics.add(new AddRandomToSmallSatellite(3));
+                    heuristics.add(new RemoveRandomFromLoadedSatellite(8));
+                    heuristics.add(new RemoveSuperfluous());
+                    heuristics.add(new ImproveOrbit());
+                    heuristics.add(new RemoveInterference());
+                    heuristics.add(new AddSynergy());
+                    //add domain-independent heuristics
+//                    heuristics.add(BitFlip);
+//                    heuristics.add(singlecross);
+
+                    //all other properties use default parameters
+                    INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector(properties.getString("HH", null), properties, heuristics);
+
+                    HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
+                            initialization, selector, creditAssignment, injectionRate, lagWindow);
+                    InstrumentedAlgorithm instAlg = runSearch(hemoea, properties, path);
+                } catch (IOException ex) {
+                    Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                 }
-
-                alg.terminate();
-                long finishTime = System.currentTimeMillis();
-                System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
-                
-                String filename = path + File.separator + "result";
-                resio.saveMetrics(instAlgorithm, filename);
-                resio.savePopulation(instAlgorithm.getResult(), filename);
-                
-                System.out.println("DONE");
                 break;
 //            case 5://Update DSMs
 //                AE.init(numAE);
@@ -193,12 +237,40 @@ public class RBSAEOSSSMAP {
             default:
                 System.out.println("Choose a mode between 1 and 9");
         }
-        
+
     }
-    
-    public static Problem initEOSSProblem(String path,String fuzzyMode, String testMode, String normalMode, String evalMode, boolean explanation, int numCPU){
+
+    public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, String evalMode, boolean explanation, int numCPU) {
         EOSSDatabase.getInstance(); //to initiate database
-        Params params = new Params(path, fuzzyMode, testMode,normalMode);//FUZZY or CRISP;
+        Params params = new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
         return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation);
+    }
+
+    public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath) {
+        int populationSize = (int) properties.getDouble("populationSize", 600);
+        int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
+
+        Instrumenter instrumenter = new Instrumenter().withFrequency(populationSize)
+                .attachHypervolumeJmetalCollector(new Solution(new double[]{}))
+                .attachElapsedTimeCollector();
+
+        InstrumentedAlgorithm instAlgorithm = instrumenter.instrument(alg);
+
+        // run the executor using the listener to collect results
+        System.out.println("Starting " + alg.getClass().getSimpleName() + " on " + alg.getProblem().getName() + " with pop size: " + populationSize);
+        long startTime = System.currentTimeMillis();
+        while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
+            instAlgorithm.step();
+        }
+
+        alg.terminate();
+        long finishTime = System.currentTimeMillis();
+        System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
+
+        ResultIO resio = new ResultIO();
+        String filename = savePath + File.separator + "result";
+        resio.saveMetrics(instAlgorithm, filename);
+        resio.savePopulation(instAlgorithm.getResult(), filename);
+        return instAlgorithm;
     }
 }
