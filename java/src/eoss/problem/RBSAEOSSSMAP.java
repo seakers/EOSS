@@ -32,7 +32,6 @@ import eoss.problem.operators.RemoveSuperfluous;
 import hh.hyperheuristics.HHFactory;
 import hh.hyperheuristics.HeMOEA;
 import hh.nextheuristic.INextHeuristic;
-import hh.rewarddefinition.CreditFunctionType;
 import hh.rewarddefinition.IRewardDefinition;
 import hh.rewarddefinition.RewardDefFactory;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.DominanceComparator;
-import org.moeaframework.core.operator.RandomInitialization;
 
 /**
  *
@@ -65,7 +63,7 @@ public class RBSAEOSSSMAP {
         args = new String[3];
         args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problem\\climateCentric";
-        args[1] = "3";
+        args[1] = "2";
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
@@ -78,14 +76,14 @@ public class RBSAEOSSSMAP {
         int numCPU = Integer.parseInt(args[2]);
 //        ArchitectureEvaluator AE = ArchitectureEvaluator.getInstance();
 
-        Problem problem = initEOSSProblem(path, "CRISP-ATTRIBUTES", "test", "normal", "slow", true, numCPU);
+        Problem problem = initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal", "slow", true, numCPU);
 
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
         int popSize = 100;
-        properties.getInt("maxEvaluations", 50000);
-        properties.getInt("populationSize", popSize);
+        properties.setInt("maxEvaluations", 100);
+        properties.setInt("populationSize", popSize);
         double crossoverProbability = 0.8;
         double mutationProbability = 0.01;
         Variation singlecross = new OnePointCrossover(crossoverProbability);
@@ -124,7 +122,7 @@ public class RBSAEOSSSMAP {
             case 3://Hyperheuristic search
                 IRewardDefinition creditAssignment;
                 try {
-                    creditAssignment = RewardDefFactory.getInstance().getCreditDef("SI-Do-PF", properties, problem);
+                    creditAssignment = RewardDefFactory.getInstance().getCreditDef("CEA", properties, problem);
 
                     int injectionRate = (int) properties.getDouble("injectionRate", 0.25);
                     //for injection
@@ -143,7 +141,7 @@ public class RBSAEOSSSMAP {
 //                    heuristics.add(singlecross);
 
                     //all other properties use default parameters
-                    INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector(properties.getString("HH", null), properties, heuristics);
+                    INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                     HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                             initialization, selector, creditAssignment, injectionRate, lagWindow);

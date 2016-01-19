@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<candidateLaunchVehicles>
+	<launchVehicle>
+		<name>Minotaur-IV</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Taurus-XL</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Delta-7920</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Delta-7420</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Delta-7320</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>SLS</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>VEGA</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Soyuz</name>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Airane5-ESCA</name>
+	</launchVehicle>
+	
+</candidateLaunchVehicles>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<candidateBuses>
+	<bus>
+		<name>3U</name>
+		<size>3.0</size><!--in cubesat units-->
+		<cost>1.0</cost><!-- in $Millions -->
+		<lifetime>0.5</lifetime><!-- in years -->
+	</bus>
+	
+	<bus>
+		<name>6U</name>
+		<size>6.0</size><!--in cubesat units-->
+		<cost>3.0</cost><!-- in $Millions -->
+		<lifetime>1.0</lifetime><!-- in years -->
+	</bus>
+	
+	<bus>
+		<name>12U</name>
+		<size>12.0</size><!--in cubesat units-->
+		<cost>3.0</cost><!-- in $Millions -->
+		<lifetime>5</lifetime><!-- in years -->
+	</bus>
+	
+	<bus>
+		<name>100U</name>
+		<size>100.0</size><!--in cubesat units-->
+		<cost>10.0</cost><!-- in $Millions -->
+		<lifetime>25</lifetime><!-- in years -->
+	</bus>
+	
+	
+</candidateBuses>

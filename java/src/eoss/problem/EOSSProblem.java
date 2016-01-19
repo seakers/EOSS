@@ -45,11 +45,10 @@ public class EOSSProblem extends AbstractProblem {
      * capabilities
      */
     private final String type;
-    
+
     private final Resource res;
 
     private final boolean explanation;
-
 
     /**
      *
@@ -155,15 +154,16 @@ public class EOSSProblem extends AbstractProblem {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
         arch.setObjective(0, science);
-        if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))
+        if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
             arch.setFuzzyObjective(0, fuzzy_science);
+        }
         if (explanation) {
             arch.setExplanation(0, explanations);
             arch.setCapabilities(qb.makeQuery("REQUIREMENTS::Measurement"));
         }
     }
 
-    private void aggregate_performance_score(EOSSArchitecture arch, Rete r){
+    private void aggregate_performance_score(EOSSArchitecture arch, Rete r) {
         ArrayList subobj_scores = new ArrayList();
         ArrayList obj_scores = new ArrayList();
         ArrayList panel_scores = new ArrayList();
@@ -198,13 +198,13 @@ public class EOSSProblem extends AbstractProblem {
                 ArrayList subobj_weights_o = (ArrayList) subobj_weights_p.get(o);
                 ArrayList subobj_scores_p = (ArrayList) subobj_scores.get(p);
                 ArrayList subobj_scores_o = (ArrayList) subobj_scores_p.get(o);
-                    obj_scores_p.add(innerProduct(subobj_weights_o, subobj_scores_o));
+                obj_scores_p.add(innerProduct(subobj_weights_o, subobj_scores_o));
             }
             obj_scores.add(obj_scores_p);
         }
         //Stakeholder and final score
         for (int p = 0; p < Params.npanels; p++) {
-                panel_scores.add(innerProduct((ArrayList) Params.obj_weights.get(p), (ArrayList) obj_scores.get(p)));
+            panel_scores.add(innerProduct((ArrayList) Params.obj_weights.get(p), (ArrayList) obj_scores.get(p)));
         }
         double science = innerProduct(Params.panel_weights, panel_scores);
         arch.setObjective(numberOfVariables, science);
@@ -219,7 +219,7 @@ public class EOSSProblem extends AbstractProblem {
         if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
             r.setFocus("FUZZY-CUBESAT-COST");
             r.run();
-            
+
             ArrayList<Fact> missions = qb.makeQuery("MANIFEST::Mission");
             costFacts.put("cost", missions);
             FuzzyValue fzcost = new FuzzyValue("Cost", new Interval("delta", 0, 0), "FY04$M");
@@ -246,31 +246,40 @@ public class EOSSProblem extends AbstractProblem {
     private double evaluateCost(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
         double cost = 0.0;
         try {
+            r.setFocus("MANIFEST2");
+            r.run();
+
             r.eval("(focus MANIFEST)");
-            r.eval("(run)");
+            r.run();
 
             designSpacecraft(r, arch, qb);
             r.eval("(focus SAT-CONFIGURATION)");
-            r.eval("(run)");
+            r.run();
 
             r.eval("(focus LV-SELECTION0)");
-            r.eval("(run)");
+            r.run();
             r.eval("(focus LV-SELECTION1)");
-            r.eval("(run)");
+            r.run();
             r.eval("(focus LV-SELECTION2)");
-            r.eval("(run)");
+            r.run();
             r.eval("(focus LV-SELECTION3)");
-            r.eval("(run)");
+            r.run();
 
-            r.eval("(focus COST-ESTIMATION)");
-            r.eval("(run)");
+            if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+                r.setFocus("FUZZY-COST-ESTIMATION0"); //applies NICM cost model to all instruments without computed costs
+                r.run();
+                r.setFocus("FUZZY-COST-ESTIMATION");
+            } else {
+                r.setFocus("COST-ESTIMATION");
+            }
+            r.run();
 
             ArrayList<Fact> missions = qb.makeQuery("MANIFEST::Mission");
             for (Fact mission : missions) {
                 cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
             }
 
-            arch.setObjective(1,cost);
+            arch.setObjective(1, cost);
             Explanation explanation = new Explanation();
             explanation.put("cost", missions);
             arch.setExplanation(1, explanation);
@@ -337,7 +346,7 @@ public class EOSSProblem extends AbstractProblem {
                         payload = payload + " " + inst.getName();
                     }
                     call += "(instruments " + payload + ") (launch-date 2015) (lifetime 5) (select-orbit no) " + orbit.toJessSlots();
-                    call += "(num-of-sats-per-plane# "+ String.valueOf(arch.getNumberOfSatellitesPerOrbit()) + ")))";
+                    call += "(num-of-sats-per-plane# " + String.valueOf(arch.getNumberOfSatellitesPerOrbit()) + ")))";
                     call += "(assert (SYNERGIES::cross-registered-instruments "
                             + " (instruments " + payload
                             + ") (degree-of-cross-registration spacecraft) "
@@ -359,7 +368,7 @@ public class EOSSProblem extends AbstractProblem {
             r.eval("(defadvice before (create$ sqrt + * **) (foreach ?xxx $?argv (if (eq ?xxx nil) then (bind ?xxx 0))))");
 
             Explanation explanation = new Explanation();
-            
+
             if (type.equalsIgnoreCase("Fast")) {
                 for (Orbit orbit : EOSSDatabase.getOrbits()) {
                     List<Instrument> instInOrb = arch.getInstrumentsInOrbit(orbit);
@@ -385,7 +394,7 @@ public class EOSSProblem extends AbstractProblem {
 
                 r.setFocus("MANIFEST2");
                 r.run();
-                
+
                 r.setFocus("MANIFEST");
                 r.run();
 
@@ -396,7 +405,6 @@ public class EOSSProblem extends AbstractProblem {
 //                while (iter.hasNext()) {
 //                    r.removeDefrule(iter.next());
 //                }
-
                 r.setFocus("CAPABILITIES");
                 r.run();
 
@@ -452,8 +460,8 @@ public class EOSSProblem extends AbstractProblem {
             r.setFocus("ASSIMILATION");
             r.run();
 
-//            r.setFocus( "FUZZY" );
-//            r.run();
+            r.setFocus("FUZZY");
+            r.run();
             r.setFocus("SYNERGIES");
             r.run();
 
@@ -524,7 +532,6 @@ public class EOSSProblem extends AbstractProblem {
 //        }
 //        return out;
 //    }
-
     private ArrayList jessList2ArrayList(ValueVector vv, Rete r) {
         ArrayList al = new ArrayList();
         try {
@@ -537,39 +544,41 @@ public class EOSSProblem extends AbstractProblem {
         }
         return al;
     }
-    
+
     /**
      * Takes two vectors (as an arraylist) and multiplies the elements
+     *
      * @param a
      * @param b
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     private ArrayList<Double> elementMult(ArrayList<Double> a, ArrayList<Double> b) {
         int n = a.size();
         int n2 = b.size();
-        if (n!=n2) {
+        if (n != n2) {
             throw new IllegalArgumentException("dotSum: Arrays of different sizes");
         }
         ArrayList c = new ArrayList(n);
-        for (int i = 0;i<n;i++) {
+        for (int i = 0; i < n; i++) {
             Double t = a.get(i) * b.get(i);
             c.add(t);
         }
         return c;
     }
-    
+
     /**
      * Takes the inner product or dot product of two vectors
+     *
      * @param a
      * @param b
      * @return a scalar value equal to the inner product of two vectors
      */
-    private double innerProduct(ArrayList a, ArrayList b){
-        ArrayList<Double> vector= elementMult(a,b);
+    private double innerProduct(ArrayList a, ArrayList b) {
+        ArrayList<Double> vector = elementMult(a, b);
         int n = vector.size();
         double res = 0.0;
-        for (Double val:vector) {
+        for (Double val : vector) {
             res += val;
         }
         return res;

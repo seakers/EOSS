@@ -8,6 +8,8 @@ package eoss.jess;
  *
  * @author dani
  */
+import architecture.util.FuzzyValue;
+import architecture.util.ValueMap;
 import eoss.attributes.EOAttribute;
 import eoss.attributes.AttributeBuilder;
 import java.io.*;
@@ -34,7 +36,6 @@ import org.xml.sax.SAXException;
 import eoss.problem.Params;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
-import eoss.problem.LaunchVehicle;
 import rbsa.eoss.GlobalVariables;
 import rbsa.eoss.Improve;
 import rbsa.eoss.SameOrBetter;
@@ -46,7 +47,6 @@ public class JessInitializer {
     private static JessInitializer instance = null;
 
     private JessInitializer() {
-
     }
 
     public static JessInitializer getInstance() {
@@ -64,9 +64,10 @@ public class JessInitializer {
             r.eval("(defglobal ?*app_path* = \"" + tmp + "\")");
             r.eval("(import eoss.*)");
             r.eval("(import architecture.util.*)");
+            r.eval("(import architecture.util.ValueMap)");
 
             // Load modules
-            r.batch(Params.module_definition_clp);;
+            r.batch(Params.module_definition_clp);
 
             // Load templates
             Workbook templates_xls = Workbook.getWorkbook(new File(Params.attribute_set_xls));
@@ -74,18 +75,18 @@ public class JessInitializer {
 
             // Load functions
             loadFunctions(r, Params.functions_clp);
-            
+
             //Load 
-            Workbook mission_analysis_xls = Workbook.getWorkbook( new File( Params.mission_analysis_database_xls ) );
-            loadOrderedDeffacts(r,mission_analysis_xls, "Walker", "Walker-revisit-time-facts","DATABASE::Revisit-time-of");
-            loadOrderedDeffacts(r,mission_analysis_xls, "Power", "orbit-information-facts", "DATABASE::Orbit");
-            loadOrderedDeffacts(r,mission_analysis_xls, "Launch Vehicles", "DATABASE::launch-vehicle-information-facts", "DATABASE::Launch-vehicle");
+            Workbook mission_analysis_xls = Workbook.getWorkbook(new File(Params.mission_analysis_database_xls));
+            loadOrderedDeffacts(r, mission_analysis_xls, "Walker", "Walker-revisit-time-facts", "DATABASE::Revisit-time-of");
+            loadOrderedDeffacts(r, mission_analysis_xls, "Power", "orbit-information-facts", "DATABASE::Orbit");
+            loadOrderedDeffacts(r, mission_analysis_xls, "Launch Vehicles", "DATABASE::launch-vehicle-information-facts", "DATABASE::Launch-vehicle");
             r.reset();
 
             // Load instrument database
             Workbook instrument_xls = Workbook.getWorkbook(new File(Params.capability_rules_xls));
             loadInstrumentsJess(r);
-            
+
             //Load orbit rules;
             r.batch(Params.orbit_rules_clp);
 
@@ -103,19 +104,19 @@ public class JessInitializer {
             r.batch(Params.mass_budget_rules_clp);
             r.batch(Params.subsystem_mass_budget_rules_clp);
             r.batch(Params.deltaV_budget_rules_clp);
-             
-             //Load eps design rules;
+
+            //Load eps design rules;
             r.batch(Params.eps_design_rules_clp);
             r.batch(Params.adcs_design_rules_clp);
             r.batch(Params.propulsion_design_rules_clp);
-             
+
             //Load cost estimation rules;
             r.batch(Params.cost_estimation_rules_clp);
             r.batch(Params.fuzzy_cost_estimation_rules_clp);
-             
+
             //Load launch vehicle selection rules
             r.batch(Params.launch_vehicle_selection_rules_clp);
-            
+
             //Load requirement rules
             Workbook requirements_xls = Workbook.getWorkbook(new File(Params.requirement_satisfaction_xls));
             if (Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) {
@@ -126,7 +127,7 @@ public class JessInitializer {
 //                loadRequirementRulesAttribsWithContinuousSatisfactionScore(r, requirements_xls, "Attributes");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
                 loadRequirementRulesAttribs(r, requirements_xls, "Attributes");
             } else if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
-                loadFuzzyRequirementRulesAttribsWithContinousSatisfactionScore(r, requirements_xls, "Attributes");
+                loadFuzzyRequirementRulesAttribs(r, requirements_xls, "Attributes");
             }
 
             //Load capability rules
@@ -186,7 +187,7 @@ public class JessInitializer {
     }
 
     private void loadTemplates(Rete r, Workbook xls) {
-        loadMeasurementTemplate(r, xls);        
+        loadMeasurementTemplate(r, xls);
         loadInstrumentTemplate(r, xls);
         loadSimpleTemplate(r, xls, "Mission", "MANIFEST::Mission");
         loadSimpleTemplate(r, xls, "Orbit", "DATABASE::Orbit");
@@ -294,11 +295,12 @@ public class JessInitializer {
             call2 = call2.concat(")");
             r.eval(call);
             r.eval(call2);
-            
+
             String call3 = "(deftemplate DATABASE::list-of-instruments (multislot list))";
             String call4 = "(deffacts DATABASE::list-of-instruments (DATABASE::list-of-instruments (list (create$";
-            for(Instrument inst:EOSSDatabase.getInstruments())
+            for (Instrument inst : EOSSDatabase.getInstruments()) {
                 call4 += " " + inst.getName();
+            }
             call4 += "))))";
             r.eval(call3);
             r.eval(call4);
@@ -560,7 +562,7 @@ public class JessInitializer {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void loadAttributeInheritanceRules(Rete r, Workbook xls, String sheet, String clp) {
         try {
             r.batch(clp);
@@ -795,102 +797,6 @@ public class JessInitializer {
 
     private void loadRequirementRulesAttribs(Rete r, Workbook xls, String sheet) {
         try {
-             Sheet meas = xls.getSheet(sheet);
-             int nlines = meas.getRows();            
-             String call2 = "(deffacts REQUIREMENTS::init-subobjectives ";
-             //String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ ))";
-             String lhs = "";
-             String rhs = "";
-             String rhs2 = " (bind ?list (create$ ";
-             String current_subobj = "";
-             int nattrib = 0;
-             String req_rule = "";
-             String attribs = "";
-             String param = "";
-             String current_param = "";
-             HashMap<String,ArrayList<String>> subobj_tests = null;
-             Params.requirement_rules = new HashMap();
-             for (int i =1;i<nlines;i++) {
-                 Cell[] row = meas.getRow(i);
-                 String subobj = row[0].getContents();
-                 param = row[1].getContents();
-                  
-                 ArrayList<String> attrib_test = new ArrayList();
-                if(!subobj.equalsIgnoreCase(current_subobj)) {
-                     
-                    if (nattrib > 0) {
-                        //finish this requirement rule
-                        String[] tokens = current_subobj.split("-",2);// limit = 2 so that remain contains RegionofInterest Global
-                        String parent = tokens[0];
-                        String index = tokens[1];
-                        call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ",nattrib) + " ))) ";
-                        String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ "  + StringUtils.repeat("N-A ",nattrib) + "))";
-                        req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
-                        req_rule = req_rule + ")";
-                        Params.requirement_rules.put(current_subobj,subobj_tests);
-                        Params.subobjectives_to_measurements.put(current_subobj, current_param);
-                        r.eval(req_rule);
-                         
-                        //start next requirement rule
-                        rhs = "";
-                        rhs2 = " (bind ?list (create$ ";
-                        attribs = "";
-                        lhs = "(defrule REQUIREMENTS::"  + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (power-duty-cycle# ?pc) (data-rate-duty-cycle# ?dc)  (Parameter " + param + ")";
-                        current_subobj = subobj;
-                        current_param = param;
-                        nattrib = 0;
-                        subobj_tests = new HashMap();
-                    } else {
-                        //start next requirement rule
-                        rhs = "";
-                        rhs2 = " (bind ?list (create$ ";
-                        attribs = "";
-                        lhs = "(defrule REQUIREMENTS::"  + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom)  (power-duty-cycle# ?pc) (data-rate-duty-cycle# ?dc)  (Parameter " + param + ")";
-                        current_subobj = subobj;
-                        current_param = param;
-                        subobj_tests = new HashMap();
-                        //nattrib = 0;
-                    }
-                }
-                 
-                String attrib = row[2].getContents();
-                attribs = attribs + " " + attrib;
-                String type = row[3].getContents();
-                String thresholds = row[4].getContents();
-                String scores = row[5].getContents();
-                String justif = row[6].getContents();
-                attrib_test.add(type);
-                attrib_test.add(thresholds);
-                attrib_test.add(scores);
-                subobj_tests.put(attrib, attrib_test);
-                nattrib++;
-                lhs = lhs + " (" + attrib + " ?val" + nattrib + "&~nil) ";
-                rhs = rhs + "(bind ?x" + nattrib + " (nth$ (find-bin-num ?val" + nattrib + " " + toJessList(thresholds) + " ) " + toJessList(scores) + "))";
-                rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif 
-                        + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                rhs2 = rhs2 + " ?x" + nattrib;
-             }
-             //Last rule has not been processed
-            String[] tokens = current_subobj.split("-",2);// limit = 2 so that remain contains RegionofInterest Global
-            String parent = tokens[0];
-            String index = tokens[1];
-            call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ",nattrib) + " ))) ";
-            String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ "  + StringUtils.repeat("N-A ",nattrib) + "))";
-            req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
-            req_rule = req_rule + ")";
- 
-            r.eval(req_rule);
-            Params.requirement_rules.put(current_subobj,subobj_tests);
-            Params.subobjectives_to_measurements.put(current_subobj, current_param);            
-            call2= call2 + ")";
-            r.eval(call2);
-         }catch (JessException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void loadRequirementRulesAttribsWithContinuousSatisfactionScore(Rete r, Workbook xls, String sheet) {
-        try {
             Sheet meas = xls.getSheet(sheet);
             int nlines = meas.getRows();
             String call2 = "(deffacts REQUIREMENTS::init-subobjectives ";
@@ -898,7 +804,6 @@ public class JessInitializer {
             String lhs = "";
             String rhs = "";
             String rhs2 = " (bind ?list (create$ ";
-            String rhs3 = " (bind ?vals (create$ ";
             String current_subobj = "";
             int nattrib = 0;
             String req_rule = "";
@@ -907,19 +812,6 @@ public class JessInitializer {
             String current_param = "";
             HashMap<String, ArrayList<String>> subobj_tests = null;
             Params.requirement_rules = new HashMap();
-
-            String linefunc = "(deffunction lineFunc(?x1 ?y1 ?x2 ?y2 ?x3)" //x1 y1, x2 y2, are known points. x3 is what you want to test to get y3
-                    + "(bind ?slope (/ (- ?y2 ?y1) (- ?x2 ?x1)))"
-                    + "(return (+ (* ?slope (- ?x3 ?x1)) ?y1)))";
-            r.eval(linefunc);
-            String funcCallSIB = "(deffunction scoringFuncSIB (?val ?thresh ?scores)"
-                    + "(bind ?n (find-bin-num ?val ?thresh))"
-                    + "(bind ?uplimit (nth$ (length$ ?thresh) ?thresh))"
-                    + "(if (eq ?n (length$ ?scores)) then (return (* (nth$ (- ?n 1) ?scores) (** 2.7183 (/ (- ?uplimit ?val) ?uplimit)))))"
-                    + "(if (eq ?n 1) then (return (nth$ 1 ?scores)))"
-                    + "(return (lineFunc (nth$ (- ?n 1) ?thresh) (nth$ (- ?n 1) ?scores) (nth$ ?n ?thresh) (nth$ ?n ?scores) ?val)))";
-            r.eval(funcCallSIB);
-
             for (int i = 1; i < nlines; i++) {
                 Cell[] row = meas.getRow(i);
                 String subobj = row[0].getContents();
@@ -935,7 +827,7 @@ public class JessInitializer {
                         String index = tokens[1];
                         call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
                         String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-                        req_rule = lhs + rhs0 + rhs + rhs2 + "))" + rhs3 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (attrib-vals ?vals) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
+                        req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
                         req_rule = req_rule + ")";
                         Params.requirement_rules.put(current_subobj, subobj_tests);
                         Params.subobjectives_to_measurements.put(current_subobj, current_param);
@@ -944,20 +836,18 @@ public class JessInitializer {
                         //start next requirement rule
                         rhs = "";
                         rhs2 = " (bind ?list (create$ ";
-                        rhs3 = " (bind ?vals (create$ ";
                         attribs = "";
-                        lhs = "(defrule REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
+                        lhs = "(defrule REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (power-duty-cycle# ?pc) (data-rate-duty-cycle# ?dc)  (Parameter " + param + ")";
                         current_subobj = subobj;
                         current_param = param;
                         nattrib = 0;
                         subobj_tests = new HashMap();
                     } else {
-                        //start first requirement rule
+                        //start next requirement rule
                         rhs = "";
                         rhs2 = " (bind ?list (create$ ";
-                        rhs3 = " (bind ?vals (create$ ";
                         attribs = "";
-                        lhs = "(defrule REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
+                        lhs = "(defrule REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom)  (power-duty-cycle# ?pc) (data-rate-duty-cycle# ?dc)  (Parameter " + param + ")";
                         current_subobj = subobj;
                         current_param = param;
                         subobj_tests = new HashMap();
@@ -977,22 +867,10 @@ public class JessInitializer {
                 subobj_tests.put(attrib, attrib_test);
                 nattrib++;
                 lhs = lhs + " (" + attrib + " ?val" + nattrib + "&~nil) ";
-                //Only apply some continuous scoring function to attributes that aren't associated with coverage
-                if (type.equalsIgnoreCase("SIB")) {
-                    rhs = rhs + "(bind ?x" + nattrib + " (scoringFuncSIB " + "?val" + nattrib + " " + toJessList(thresholds) + " " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                } else if (type.equalsIgnoreCase("LIB")) {
-                    rhs = rhs + "(bind ?x" + nattrib + " (scoringFuncLIB " + "?val" + nattrib + " " + toJessList(thresholds) + " " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                } else {
-                    rhs = rhs + "(bind ?x" + nattrib + " (nth$ (find-bin-num ?val" + nattrib + " " + toJessList(thresholds) + " ) " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                }
+                rhs = rhs + "(bind ?x" + nattrib + " (nth$ (find-bin-num ?val" + nattrib + " " + toJessList(thresholds) + " ) " + toJessList(scores) + "))";
+                rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
+                        + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
                 rhs2 = rhs2 + " ?x" + nattrib;
-                rhs3 = rhs3 + " ?val" + nattrib;
             }
             //Last rule has not been processed
             String[] tokens = current_subobj.split("-", 2);// limit = 2 so that remain contains RegionofInterest Global
@@ -1000,7 +878,7 @@ public class JessInitializer {
             String index = tokens[1];
             call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
             String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-            req_rule = lhs + rhs0 + rhs + rhs2 + "))" + rhs3 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (attrib-vals ?vals) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
+            req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
             req_rule = req_rule + ")";
 
             r.eval(req_rule);
@@ -1014,6 +892,7 @@ public class JessInitializer {
     }
 
     private void loadFuzzyRequirementRulesAttribs(Rete r, Workbook xls, String sheet) {
+
         try {
             Sheet meas = xls.getSheet(sheet);
             int nlines = meas.getRows();
@@ -1044,12 +923,12 @@ public class JessInitializer {
                         String[] tokens = current_subobj.split("-", 2);// limit = 2 so that remain contains RegionofInterest Global
                         String parent = tokens[0];
                         String index = tokens[1];
-                        call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value (new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (MatlabFunctions getValue_inv_hashmap))) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
+                        call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value (new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (call ValueMap getValueInterval))) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
                         String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
                         req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
                                 + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
                                 + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
-                                + "(MatlabFunctions getValue_hashmap)) getFuzzy_val) \"utils\" (MatlabFunctions getValue_inv_hashmap))) "
+                                + "(call ValueMap getIntervalValue)) getFuzzy_val) \"utils\" (call ValueMap getValueInterval))) "
                                 + " (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
                         req_rule = req_rule + ")";
                         Params.requirement_rules.put(current_subobj, subobj_tests);
@@ -1070,7 +949,7 @@ public class JessInitializer {
                         rhs = "";
                         rhs2 = " (bind ?list (create$ ";
                         attribs = "";
-                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
+                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ") ";
                         current_subobj = subobj;
                         current_param = param;
                         subobj_tests = new HashMap();
@@ -1100,14 +979,14 @@ public class JessInitializer {
             String parent = tokens[0];
             String index = tokens[1];
             call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value "
-                    + "(new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (MatlabFunctions getValue_inv_hashmap)))"
+                    + "(new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (call ValueMap getValueInterval)))"
                     + " (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") "
                     + "(reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
             String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
             req_rule = lhs + rhs0 + rhs + rhs2 + "))(assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
                     + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
                     + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
-                    + "(MatlabFunctions getValue_hashmap)) getFuzzy_val) \"utils\" (MatlabFunctions getValue_inv_hashmap))) "
+                    + "(call ValueMap getIntervalValue)) getFuzzy_val) \"utils\" (call ValueMap getValueInterval))) "
                     + " (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
             req_rule = req_rule + ")";
 
@@ -1119,140 +998,6 @@ public class JessInitializer {
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
 
-        }
-    }
-
-    private void loadFuzzyRequirementRulesAttribsWithContinousSatisfactionScore(Rete r, Workbook xls, String sheet) {
-        try {
-            Sheet meas = xls.getSheet(sheet);
-            int nlines = meas.getRows();
-            String call2 = "(deffacts REQUIREMENTS::init-subobjectives ";
-            //String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ ))";
-            String lhs = "";
-            String rhs = "";
-            String rhs2 = " (bind ?list (create$ ";
-            String rhs3 = " (bind ?vals (create$ ";
-            String current_subobj = "";
-            int nattrib = 0;
-            String req_rule = "";
-            String attribs = "";
-            String param = "";
-            String current_param = "";
-            HashMap<String, ArrayList<String>> subobj_tests = null;
-            Params.requirement_rules = new HashMap();
-
-            String linefunc = "(deffunction lineFunc(?x1 ?y1 ?x2 ?y2 ?x3)" //x1 y1, x2 y2, are known points. x3 is what you want to test to get y3
-                    + "(bind ?slope (/ (- ?y2 ?y1) (- ?x2 ?x1)))"
-                    + "(return (+ (* ?slope (- ?x3 ?x1)) ?y1)))";
-            r.eval(linefunc);
-            String funcCallSIB = "(deffunction scoringFuncSIB (?val ?thresh ?scores)"
-                    + "(bind ?n (find-bin-num ?val ?thresh))"
-                    + "(bind ?uplimit (nth$ (length$ ?thresh) ?thresh))"
-                    + "(if (eq ?n (length$ ?scores)) then (return (* (nth$ (- ?n 1) ?scores) (** 2.7183 (/ (- ?uplimit ?val) ?uplimit)))))"
-                    + "(if (eq ?n 1) then (return (nth$ 1 ?scores)))"
-                    + "(return (lineFunc (nth$ (- ?n 1) ?thresh) (nth$ (- ?n 1) ?scores) (nth$ ?n ?thresh) (nth$ ?n ?scores) ?val)))";
-            r.eval(funcCallSIB);
-
-            for (int i = 1; i < nlines; i++) {
-                Cell[] row = meas.getRow(i);
-                String subobj = row[0].getContents();
-                param = row[1].getContents();
-
-                ArrayList<String> attrib_test = new ArrayList();
-                if (!subobj.equalsIgnoreCase(current_subobj)) {
-
-                    if (nattrib > 0) {
-                        //finish this requirement rule
-                        String[] tokens = current_subobj.split("-", 2);// limit = 2 so that remain contains RegionofInterest Global
-                        String parent = tokens[0];
-                        String index = tokens[1];
-                        call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value (new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (MatlabFunctions getValue_inv_hashmap))) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
-                        String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-                        req_rule = lhs + rhs0 + rhs + rhs2 + "))" + rhs3 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
-                                + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
-                                + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
-                                + "(MatlabFunctions getValue_hashmap)) getFuzzy_val) \"utils\" (MatlabFunctions getValue_inv_hashmap))) "
-                                + " (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )(attrib-vals ?vals))) ";
-                        req_rule = req_rule + ")";
-                        Params.requirement_rules.put(current_subobj, subobj_tests);
-                        Params.subobjectives_to_measurements.put(current_subobj, current_param);
-                        r.eval(req_rule);
-
-                        //start next requirement rule
-                        rhs = "";
-                        rhs2 = " (bind ?list (create$ ";
-                        rhs3 = " (bind ?vals (create$ ";
-                        attribs = "";
-                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
-                        current_subobj = subobj;
-                        current_param = param;
-                        nattrib = 0;
-                        subobj_tests = new HashMap();
-                    } else {
-                        //start next requirement rule
-                        rhs = "";
-                        rhs2 = " (bind ?list (create$ ";
-                        rhs3 = " (bind ?vals (create$ ";
-                        attribs = "";
-                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
-                        current_subobj = subobj;
-                        current_param = param;
-                        subobj_tests = new HashMap();
-                    }
-                }
-
-                String attrib = row[2].getContents();
-                attribs = attribs + " " + attrib;
-                String type = row[3].getContents();
-                String thresholds = row[4].getContents();
-                String scores = row[5].getContents();
-                String justif = row[6].getContents();
-                attrib_test.add(type);
-                attrib_test.add(thresholds);
-                attrib_test.add(scores);
-                subobj_tests.put(attrib, attrib_test);
-                nattrib++;
-                lhs = lhs + " (" + attrib + " ?val" + nattrib + "&~nil) ";
-                //Only apply some continuous scoring function to attributes that aren't associated with coverage
-                if (type.equalsIgnoreCase("SIB")) {
-                    rhs = rhs + "(bind ?x" + nattrib + " (scoringFuncSIB " + "?val" + nattrib + " " + toJessList(thresholds) + " " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                } else if (type.equalsIgnoreCase("LIB")) {
-                    rhs = rhs + "(bind ?x" + nattrib + " (scoringFuncLIB " + "?val" + nattrib + " " + toJessList(thresholds) + " " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                } else {
-                    rhs = rhs + "(bind ?x" + nattrib + " (nth$ (find-bin-num ?val" + nattrib + " " + toJessList(thresholds) + " ) " + toJessList(scores) + "))";
-                    rhs = rhs + "(if (< ?x" + nattrib + " 1.0) then (bind ?new-reasons (replace$  ?new-reasons " + nattrib + " " + nattrib + " " + justif
-                            + " )) (bind ?reason (str-cat ?reason " + " " + justif + "))) ";
-                }
-                rhs2 = rhs2 + " ?x" + nattrib;
-                rhs3 = rhs3 + " ?val" + nattrib;
-            }
-            //Last rule has not been processed
-            String[] tokens = current_subobj.split("-", 2);// limit = 2 so that remain contains RegionofInterest Global
-            String parent = tokens[0];
-            String index = tokens[1];
-            call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value "
-                    + "(new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (MatlabFunctions getValue_inv_hashmap)))"
-                    + " (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") "
-                    + "(reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
-            String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-            req_rule = lhs + rhs0 + rhs + rhs2 + "))" + rhs3 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
-                    + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
-                    + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
-                    + "(MatlabFunctions getValue_hashmap)) getFuzzy_val) \"utils\" (MatlabFunctions getValue_inv_hashmap))) "
-                    + " (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )(attrib-vals ?vals)))";
-            req_rule = req_rule + ")";
-
-            r.eval(req_rule);
-            Params.requirement_rules.put(current_subobj, subobj_tests);
-            Params.subobjectives_to_measurements.put(current_subobj, current_param);
-            call2 = call2 + ")";
-            r.eval(call2);
-        } catch (JessException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -1505,9 +1250,10 @@ public class JessInitializer {
                 String list_of_measurements = "";
                 for (int i = 0; i < nmeasurements; i++) {
                     Cell[] row = sh.getRow(i);
-                    if(row.length==0)
+                    if (row.length == 0) {
                         continue;
-                    if(row[0].getType().equals(jxl.CellType.EMPTY)){
+                    }
+                    if (row[0].getType().equals(jxl.CellType.EMPTY)) {
                         continue;
                     }
                     call2 = call2 + "(assert (REQUIREMENTS::Measurement";
