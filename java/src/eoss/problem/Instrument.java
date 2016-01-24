@@ -7,6 +7,7 @@
 package eoss.problem;
 
 import java.util.Objects;
+import java.util.Set;
 import org.moeaframework.util.TypedProperties;
 
 /**
@@ -16,69 +17,40 @@ import org.moeaframework.util.TypedProperties;
 public class Instrument {
     
     private final String name;
-    private final double size;
-    private final double cost;
-    private final double mass;
+    private final TypedProperties properties;
 
-    /**
-     * 
-     * @param name name of instrument
-     * @param size in CubeSat Sizes
-     * @param cost in millions of dollars
-     * @param mass in kilograms
-     */
-    public Instrument(String name, double size, double cost, double mass) {
-        this.name = name;
-        this.size = size;
-        this.cost = cost;
-        this.mass = mass;
-        if(name.equalsIgnoreCase(""))
-            System.err.println("Instrument has no name");
-        if(size<0 || cost<0 || mass<0)
-            throw new IllegalArgumentException("Instrument has invalid parameters: Size = " + size + ", Cost = " + cost + ", Mass = " + mass + ".");
-    }
-    
-    /**
-     * Creates an instrument object using the x,y, and z dimensions and assumes cuboid shape.
-     * @param name name of instrument
-     * @param xSize x dimension
-     * @param ySize y dimension
-     * @param zSize z dimension
-     * @param cost in millions of dollars
-     * @param mass in kilograms
-     */
-    public Instrument(String name, double xSize, double ySize,double zSize, double cost, double mass) {
-        this(name,xSize * ySize * zSize,cost,mass);
-    }
     
     /**
      * 
      * @param prop properties of the instrument
      */
     public Instrument(TypedProperties prop) {
-        this(prop.getString("name", ""),prop.getDouble("xSize", -1),prop.getDouble("ySize", -1),prop.getDouble("zSize", -1),prop.getDouble("cost", -1),prop.getDouble("mass", -1));
+        this.properties = prop;
+        this.name = properties.getString("Name", "noname");
     }
 
     public String getName() {
         return name;
     }
-
-    public double getSize() {
-        return size;
+    
+    public String getProperty(String propertyName){
+        return properties.getString(propertyName, "nil");
     }
-
-    public double getCost() {
-        return cost;
+    
+    /**
+     * Gets the key entries or the property names as a set.
+     * @return 
+     */
+    public Set getProperties(){
+        return properties.getProperties().keySet();
     }
-
-    public double getMass() {
-        return mass;
-    }
+    
+    
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 17 * hash + Objects.hashCode(this.name);
+        hash = 17 * hash + Objects.hashCode(this.properties);
         return hash;
     }
 
@@ -96,7 +68,7 @@ public class Instrument {
             return false;
         }
         final Instrument other = (Instrument) obj;
-        if (!Objects.equals(this.name, other.name)) {
+        if (!Objects.equals(this.properties, other.properties)) {
             return false;
         }
         return true;

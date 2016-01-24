@@ -1,27 +1,12 @@
-(deftemplate SYNERGIES::NUM-CHANNELS (slot num-channels) )
+(deftemplate SYNERGY::NUM-CHANNELS (slot num-channels) )
 
-(deftemplate DATABASE::Revisit-time-of "Revisit time of an architecture-orbit-instrument tuple" 
-   (slot mission-architecture)
-   (slot num-of-sats-per-plane#)  
-   (slot orbit-altitude#) 
-   (slot orbit-type) 
-   (slot orbit-inclination) 
-   (slot orbit-raan) 
-   (slot instrument-field-of-view#) 
-   (slot avg-revisit-time-global#) 
-   (slot avg-revisit-time-tropics#) 
-   (slot avg-revisit-time-northern-hemisphere#) 
-   (slot avg-revisit-time-southern-hemisphere#) 
-   (slot avg-revisit-time-cold-regions#) 
-   (slot avg-revisit-time-US#)
-   )
 (deftemplate SEARCH-HEURISTICS::improve-heuristic (slot id))
 
 (deftemplate SEARCH-HEURISTICS::list-improve-heuristics (multislot list) (slot num-heuristics (default 0)))
-(deftemplate SYNERGIES::cross-registered "Declare a set of measurements as cross-registered"
+(deftemplate SYNERGY::cross-registered "Declare a set of measurements as cross-registered"
     (multislot measurements) (slot degree-of-cross-registration) (slot platform))
   
-(deftemplate SYNERGIES::cross-registered-instruments "Declare a set of measurements as cross-registered"
+(deftemplate SYNERGY::cross-registered-instruments "Declare a set of measurements as cross-registered"
     (multislot instruments) (slot degree-of-cross-registration) (slot platform))
 
 (deftemplate REASONING::partially-satisfied "Requirements that are partially satisfied" (slot subobjective)
@@ -35,7 +20,7 @@
 (slot benefit) (slot lifecycle-cost) (slot utility) (slot pareto-ranking) (slot programmatic-risk) (slot fairness) (slot launch-risk) (slot reason-id) 
 (slot data-continuity) (slot discounted-value) (slot reason-str))
 	
-(deftemplate ASSIMILATION2::UPDATE-REV-TIME (slot parameter ) (slot avg-revisit-time-global#) (slot avg-revisit-time-US#))
+(deftemplate ASSIMILATION::UPDATE-REV-TIME (slot parameter ) (slot avg-revisit-time-global#) (slot avg-revisit-time-US#))
 
 (deftemplate AGGREGATION::STAKEHOLDER (slot id) (slot fuzzy-value) (slot parent) (slot index) (slot satisfaction) (slot satisfied-by) (multislot obj-fuzzy-scores) (multislot obj-scores) (slot reason) (multislot weights))
 (deftemplate AGGREGATION::OBJECTIVE (slot id) (slot fuzzy-value) (slot index) (slot satisfaction) (slot reason) (multislot subobj-fuzzy-scores) (multislot subobj-scores) (slot satisfied-by) (slot parent) (multislot weights))

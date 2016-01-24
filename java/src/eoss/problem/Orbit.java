@@ -45,6 +45,8 @@ public class Orbit {
     
     private final String name;
     
+    private final double period;
+    
     /**
      * Type of orbit (e.g. SSO, LEO)
      */
@@ -61,7 +63,7 @@ public class Orbit {
      * @param eccentricity between [0,1]
      * @param argPeri argument of perigee in degrees
      */
-    public Orbit(String name, OrbitType type, double semimajorAxis, String inclination, String RAAN, double meanAnomaly, double eccentricity, double argPeri) {
+    public Orbit(String name, OrbitType type, double semimajorAxis, String inclination, String RAAN, double period, double meanAnomaly, double eccentricity, double argPeri) {
         this.name = name;
         this.type = type;
         this.semimajorAxis = semimajorAxis;
@@ -77,10 +79,15 @@ public class Orbit {
 //        else
 //            this.inclinationStr = "";
         this.altitude = semimajorAxis-Earth.radius;
+        this.period = period;
     }
 
     public String getName() {
         return name;
+    }
+    
+    public double getPeriod() {
+        return period;
     }
 
     public double getSemimajorAxis() {
@@ -106,6 +113,16 @@ public class Orbit {
     public double getArgPeri() {
         return argPeri;
     }
+
+    public double getAltitude() {
+        return altitude/1000;
+    }
+
+    public OrbitType getType() {
+        return type;
+    }
+    
+    
 
     @Override
     public int hashCode() {

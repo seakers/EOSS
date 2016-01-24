@@ -400,21 +400,12 @@ else (return FALSE)))
     (return (fuzzyprod$ (map$ fuzzyval ?list)))
     )
 
-(deffunction fuzzyval (?fuzz)
-    ;(printout t fuzzyval " " ?fuzz crlf)
-    (return (new FuzzyValue "Value" ?fuzz "utils" (matlabf get_value_inv_hashmap)))
-    )
-
 (deffunction defuzzyfy (?fuzz)
     (return (call (fuzzyval ?fuzz) getNum_val))
     )    
 
 (deffunction cost-fv (?avg ?delta)
     (return (new FuzzyValue "Cost" (new Interval "delta" ?avg ?delta) "FY04$M"))
-    )
-
-(deffunction value-fv (?lo ?hi)
-    (return (new FuzzyValue "Value" (new Interval "interval" ?lo ?hi) "utils" (matlabf get_value_inv_hashmap)))
     )
 
 (deffunction as-interval(?num)

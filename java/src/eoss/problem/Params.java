@@ -8,6 +8,7 @@ package eoss.problem;
  *
  * @author dani
  */
+import eoss.jess.JessInitializer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -27,6 +28,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import eoss.problem.Orbit.OrbitType;
+import jxl.Cell;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.read.biff.BiffException;
+import org.moeaframework.util.TypedProperties;
 
 public class Params {
     //public static String master_xls;
@@ -84,7 +90,6 @@ public class Params {
     public static HashMap measurements_to_subobjectives;
     public static HashMap measurements_to_objectives;
     public static HashMap measurements_to_panels;
-    public static ArrayList parameter_list;
     public static ArrayList objectives;
     public static ArrayList subobjectives;
     public static HashMap instruments_to_measurements;
@@ -296,29 +301,53 @@ public class Params {
         }
     }
 
+    
+    /**
+     * Loads the characteristics of the instruments and adds the to the Jess
+     * database
+     *
+     * @param r
+     */
     private void loadInstruments() {
-        File instrumentFile = new File(path + File.separator + "config" + File.separator + "candidateInstruments.xml");
         try {
-            DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Workbook xls = Workbook.getWorkbook(new File(Params.capability_rules_xls));
+            Sheet meas = xls.getSheet("CHARACTERISTICS");
+            int ninst = meas.getRows();
+            int nattributes = meas.getColumns();
 
-            Document doc = dBuilder.parse(instrumentFile);
-            doc.getDocumentElement().normalize();
-            NodeList instrumentNode = doc.getElementsByTagName("instrument");
-            for (int i = 0; i < instrumentNode.getLength(); i++) {
-                Element inst = (Element) instrumentNode.item(i);
-                String instName = inst.getElementsByTagName("name").item(0).getTextContent();
-                Double instSize = Double.valueOf(inst.getElementsByTagName("size").item(0).getTextContent());
-                Double instCost = Double.valueOf(inst.getElementsByTagName("cost").item(0).getTextContent());
-                Double instMass = Double.valueOf(inst.getElementsByTagName("mass").item(0).getTextContent());
-                EOSSDatabase.addInstrument(new Instrument(instName, instSize, instCost, instMass));
+            for (int i = 1; i < ninst; i++) {
+                Cell[] row = meas.getRow(i);
+                TypedProperties properties = new TypedProperties();
+                for (int j = 0; j < nattributes; j++) {
+                    String cell_value = row[j].getContents();
+                    String[] splitted = cell_value.split(" ");
+
+                    int len = splitted.length;
+                    String propertyName;
+                    String propertyValue;
+                    if (len < 2) {
+                        System.err.println("Exception when loading instrument " + properties.getString("Name", "noname") + " for property " + splitted[0]);
+                    }
+                    if (len == 2) {
+                        propertyName = splitted[0];
+                        propertyValue = splitted[1];
+                    } else {
+                        //some columns have more than one value like a list
+                        propertyName = splitted[0];
+                        propertyValue = splitted[1];
+                        for (int kk = 2; kk < len; kk++) {
+                            propertyValue = propertyValue + " " + splitted[kk];
+                        }
+                    }
+                    properties.setString(propertyName, propertyValue);
+                }
+                Instrument newInstrument = new Instrument(properties);
+                EOSSDatabase.addInstrument(newInstrument);
             }
-
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BiffException ex) {
+            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -357,10 +386,11 @@ public class Params {
                 Double semimajorAxis = Double.valueOf(orbit.getElementsByTagName("semimajoraxis").item(0).getTextContent());
                 String inclination = orbit.getElementsByTagName("inclination").item(0).getTextContent();
                 String RAAN = orbit.getElementsByTagName("raan").item(0).getTextContent();
+                Double period = Double.valueOf(orbit.getElementsByTagName("period").item(0).getTextContent());
                 Double meanAnomaly = Double.valueOf(orbit.getElementsByTagName("meananomaly").item(0).getTextContent());
                 Double eccentricity = Double.valueOf(orbit.getElementsByTagName("eccentricity").item(0).getTextContent());
                 Double argPeri = Double.valueOf(orbit.getElementsByTagName("argumentperigee").item(0).getTextContent());
-                EOSSDatabase.addOrbit(new Orbit(orbName, type, semimajorAxis, inclination, RAAN, meanAnomaly, eccentricity, argPeri));
+                EOSSDatabase.addOrbit(new Orbit(orbName, type, semimajorAxis, inclination, RAAN,period, meanAnomaly, eccentricity, argPeri));
             }
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);

@@ -8,20 +8,15 @@ package eoss.jess;
  *
  * @author dani
  */
-import architecture.util.FuzzyValue;
-import architecture.util.ValueMap;
 import eoss.attributes.EOAttribute;
-import eoss.attributes.AttributeBuilder;
 import java.io.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -36,15 +31,16 @@ import org.xml.sax.SAXException;
 import eoss.problem.Params;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
-import rbsa.eoss.GlobalVariables;
-import rbsa.eoss.Improve;
-import rbsa.eoss.SameOrBetter;
+import eoss.attributes.GlobalAttributes;
+import eoss.attributes.OLAttribute;
+import eoss.attributes.NLAttribute;
 import rbsa.eoss.Weight;
-import rbsa.eoss.Worsen;
 
 public class JessInitializer {
 
     private static JessInitializer instance = null;
+
+    private HashMap<String,SlotType> capabilitiesToRequirementAttribInheritance;
 
     private JessInitializer() {
     }
@@ -63,6 +59,7 @@ public class JessInitializer {
             String tmp = Params.path.replaceAll("\\\\", "\\\\\\\\");
             r.eval("(defglobal ?*app_path* = \"" + tmp + "\")");
             r.eval("(import eoss.*)");
+            r.eval("(import rbsa.eoss.*)");
             r.eval("(import architecture.util.*)");
             r.eval("(import architecture.util.ValueMap)");
 
@@ -70,16 +67,14 @@ public class JessInitializer {
             r.batch(Params.module_definition_clp);
 
             // Load templates
-            Workbook templates_xls = Workbook.getWorkbook(new File(Params.attribute_set_xls));
-            loadTemplates(r, templates_xls);
+            Workbook attribute_xls = Workbook.getWorkbook(new File(Params.attribute_set_xls));
+            loadTemplates(r, attribute_xls);
 
             // Load functions
             loadFunctions(r, Params.functions_clp);
 
-            //Load 
+            //Load  launhc vehicles
             Workbook mission_analysis_xls = Workbook.getWorkbook(new File(Params.mission_analysis_database_xls));
-            loadOrderedDeffacts(r, mission_analysis_xls, "Walker", "Walker-revisit-time-facts", "DATABASE::Revisit-time-of");
-            loadOrderedDeffacts(r, mission_analysis_xls, "Power", "orbit-information-facts", "DATABASE::Orbit");
             loadOrderedDeffacts(r, mission_analysis_xls, "Launch Vehicles", "DATABASE::launch-vehicle-information-facts", "DATABASE::Launch-vehicle");
             r.reset();
 
@@ -91,14 +86,15 @@ public class JessInitializer {
             r.batch(Params.orbit_rules_clp);
 
             //Load attribute inheritance rules
-            loadAttributeInheritanceRules(r, templates_xls, "Attribute Inheritance", Params.attribute_inheritance_clp);
+            loadAttributeInheritanceRules(r, attribute_xls, "Attribute Inheritance", Params.attribute_inheritance_clp);
 
             //Load cost estimation rules;
             r.batch(Params.cost_estimation_rules_clp);
             r.batch(Params.fuzzy_cost_estimation_rules_clp);
 
             //Load fuzzy attribute rules
-            loadFuzzyAttributeRules(r, templates_xls, "Fuzzy Attributes", "REQUIREMENTS::Measurement");
+            loadFuzzyAttributeRules(r, attribute_xls, "Fuzzy Capability Attributes", "CAPABILITIES::Manifested-instrument", "FUZZY-CAPABILITY-ATTRIBUTE");
+            loadFuzzyAttributeRules(r, attribute_xls, "Fuzzy Requirement Attributes", "REQUIREMENTS::Measurement", "FUZZY-REQUIREMENT-ATTRIBUTE");
 
             //Load mass budget rules;
             r.batch(Params.mass_budget_rules_clp);
@@ -183,12 +179,17 @@ public class JessInitializer {
             db_instruments.put(instr, facts.get(0));
         }
         qb.addPrecomputed_query("DATABASE::Instrument", db_instruments);
-
     }
 
     private void loadTemplates(Rete r, Workbook xls) {
-        loadMeasurementTemplate(r, xls);
-        loadInstrumentTemplate(r, xls);
+        HashMap<String,SlotType> measurementAttribs = loadMeasurementTemplate(r, xls);
+        HashMap<String,SlotType> instrumentAttribs = loadInstrumentTemplate(r, xls);
+        capabilitiesToRequirementAttribInheritance = new HashMap<>();
+        for (String attrib : instrumentAttribs.keySet()) {
+            if (measurementAttribs.containsKey(attrib)) {
+                capabilitiesToRequirementAttribInheritance.put(attrib,measurementAttribs.get(attrib));
+            }
+        }
         loadSimpleTemplate(r, xls, "Mission", "MANIFEST::Mission");
         loadSimpleTemplate(r, xls, "Orbit", "DATABASE::Orbit");
         loadSimpleTemplate(r, xls, "Launch-vehicle", "DATABASE::Launch-vehicle");
@@ -199,13 +200,21 @@ public class JessInitializer {
         }
     }
 
-    private void loadMeasurementTemplate(Rete r, Workbook xls) {
+    /**
+     * loads the templates for REQUIREMENTS::Measurement. Returns the slot names
+     * in an ArrayList.
+     *
+     * @param r
+     * @param xls
+     * @return
+     */
+    private HashMap<String,SlotType> loadMeasurementTemplate(Rete r, Workbook xls) {
+        HashMap<String,SlotType> out = new HashMap<>();
         try {
-            HashMap attribs_to_keys = new HashMap();
-            HashMap keys_to_attribs = new HashMap();
-            HashMap attribs_to_types = new HashMap();
+            HashMap<String, Integer> attribs_to_keys = new HashMap();
+            HashMap<Integer, String> keys_to_attribs = new HashMap();
+            HashMap<String, String> attribs_to_types = new HashMap();
             HashMap attribSet = new HashMap();
-            Params.parameter_list = new ArrayList<String>();
             Sheet meas = xls.getSheet("Measurement");
             String call = "(deftemplate REQUIREMENTS::Measurement ";
             int nslots = meas.getRows();
@@ -220,42 +229,54 @@ public class JessInitializer {
                 attribs_to_keys.put(name, id);
                 keys_to_attribs.put(id, name);
                 attribs_to_types.put(name, type);
+
+                EOAttribute attrib = null;
                 if (type.equalsIgnoreCase("NL") || type.equalsIgnoreCase("OL")) {
+
                     String str_num_atts = row[4].getContents();
                     int num_vals = Integer.parseInt(str_num_atts);
-                    Hashtable<String, Integer> accepted_values = new Hashtable<String, Integer>();
+                    HashMap<String, Integer> accepted_values = new HashMap<>();
                     for (int j = 0; j < num_vals; j++) {
-                        accepted_values.put(row[j + 5].getContents(), new Integer(j));
+                        accepted_values.put(row[j + 5].getContents(), j);
                     }
-                    EOAttribute attrib = AttributeBuilder.make(type, name, "N/A");
-                    attrib.acceptedValues = accepted_values;
-                    attribSet.put(name, attrib);
-                    if (name.equalsIgnoreCase("Parameter")) {
-                        Params.parameter_list.addAll(accepted_values.keySet());
+                    if (type.equalsIgnoreCase("NL")) {
+                        attrib = new NLAttribute(name, "N/A", accepted_values);
+                    } else {
+                        attrib = new OLAttribute(name, "N/A", accepted_values);
                     }
-                } else {
-                    EOAttribute attrib = AttributeBuilder.make(type, name, "N/A");
-                    attribSet.put(name, attrib);
                 }
-
+                attribSet.put(name, attrib);
                 call = call.concat(" (" + slot_type + " " + name + ") ");
+                
+                if(slot_type.equalsIgnoreCase("slot"))
+                    out.put(name,SlotType.SLOT);
+                else if(slot_type.equalsIgnoreCase("multislot"))
+                    out.put(name,SlotType.MULTISLOT);
+                else
+                    throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
             }
-            GlobalVariables.defineMeasurement(attribs_to_keys, keys_to_attribs, attribs_to_types, attribSet);
+
+            GlobalAttributes.defineMeasurement(attribs_to_keys, keys_to_attribs, attribs_to_types, attribSet);
 
             call = call.concat(")");
             r.eval(call);
         } catch (NumberFormatException | JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return out;
     }
 
-    private void loadInstrumentTemplate(Rete r, Workbook xls) {
+    /**
+     * loads the templates for CAPABILITIES::Manifested-instrument and
+     * DATABASE::Instrument. Returns the slot names in an ArrayList.
+     *
+     * @param r
+     * @param xls
+     * @return
+     */
+    private HashMap<String,SlotType> loadInstrumentTemplate(Rete r, Workbook xls) {
+        HashMap<String,SlotType> out = new HashMap<>();
         try {
-            HashMap attribs_to_keys = new HashMap();
-            HashMap keys_to_attribs = new HashMap();
-            HashMap attribs_to_types = new HashMap();
-            HashMap attribSet = new HashMap();
-
             Sheet meas = xls.getSheet("Instrument");
             String call = "(deftemplate CAPABILITIES::Manifested-instrument ";
             String call2 = "(deftemplate DATABASE::Instrument ";
@@ -264,32 +285,17 @@ public class JessInitializer {
                 Cell[] row = meas.getRow(i);
                 String slot_type = row[0].getContents();
                 String name = row[1].getContents();
-                String str_id = row[2].getContents();
-                int id = Integer.parseInt(str_id);
-                String type = row[3].getContents();
-
-                attribs_to_keys.put(name, id);
-                keys_to_attribs.put(id, name);
-                attribs_to_types.put(name, type);
-                if (type.equalsIgnoreCase("NL") || type.equalsIgnoreCase("OL")) {
-                    String str_num_atts = row[4].getContents();
-                    int num_vals = Integer.parseInt(str_num_atts);
-                    Hashtable accepted_values = new Hashtable();
-                    for (int j = 0; j < num_vals; j++) {
-                        accepted_values.put(row[j + 5], new Integer(j));
-                    }
-                    EOAttribute attrib = AttributeBuilder.make(type, name, "N/A");
-                    attrib.acceptedValues = accepted_values;
-                    attribSet.put(name, attrib);
-                } else {
-                    EOAttribute attrib = AttributeBuilder.make(type, name, "N/A");
-                    attribSet.put(name, attrib);
-                }
 
                 call = call.concat(" (" + slot_type + " " + name + ") ");
                 call2 = call2.concat(" (" + slot_type + " " + name + ") ");
+                
+                if(slot_type.equalsIgnoreCase("slot"))
+                    out.put(name,SlotType.SLOT);
+                else if(slot_type.equalsIgnoreCase("multislot"))
+                    out.put(name,SlotType.MULTISLOT);
+                else
+                    throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
             }
-            GlobalVariables.defineInstrument(attribs_to_keys, keys_to_attribs, attribs_to_types, attribSet);
 
             call = call.concat(")");
             call2 = call2.concat(")");
@@ -307,6 +313,7 @@ public class JessInitializer {
         } catch (NumberFormatException | JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return out;
     }
 
     private void loadSimpleTemplate(Rete r, Workbook xls, String sheet, String template_name) {
@@ -464,52 +471,6 @@ public class JessInitializer {
         }
     }
 
-    private void loadInstrumentFacts(Rete r, File file, String name, String template) {
-        DocumentBuilder dBuilder;
-
-        try {
-            dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document doc = dBuilder.parse(file);
-            doc.getDocumentElement().normalize();
-            NodeList instrumentList = doc.getElementsByTagName("instrument");
-
-            String call = "(deffacts " + name + " ";
-            //loop through instruments
-            for (int i = 0; i < instrumentList.getLength(); i++) {
-                Element instrument = (Element) instrumentList.item(i);
-                NodeList instrumentFacts = instrumentList.item(i).getChildNodes();
-                call = call.concat(" (" + template + " ");
-                //loop through facts of instrument i
-                for (int j = 0; j < instrumentFacts.getLength(); j++) {
-                    String slot_name = instrumentFacts.item(j).getNodeName();
-                    if (slot_name.startsWith("#")) //carriage returns, tabs and comments in xml file start with #
-                    {
-                        continue;
-                    }
-                    if (slot_name.equalsIgnoreCase("measurements")) //measurement facts loaded in method loadCapabilityRules
-                    {
-                        continue;
-                    }
-                    String slot_value = instrumentFacts.item(j).getTextContent();
-                    call = call.concat(" (" + slot_name + " " + slot_value + ") ");
-                }
-
-                call = call.concat(") ");
-            }
-
-            call = call.concat(")");
-            r.eval(call);
-        } catch (SAXException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (JessException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     /**
      * Loads the characteristics of the instruments and adds the to the Jess
      * database
@@ -611,7 +572,7 @@ public class JessInitializer {
         }
     }
 
-    private void loadFuzzyAttributeRules(Rete r, Workbook xls, String sheet, String template) {
+    private void loadFuzzyAttributeRules(Rete r, Workbook xls, String sheet, String template, String module) {
         try {
             Sheet meas = xls.getSheet(sheet);
 
@@ -625,7 +586,6 @@ public class JessInitializer {
                 int num_values = Integer.parseInt(row[3].getContents());
                 String[] fuzzy_values = new String[num_values];
                 String[] mins = new String[num_values];
-                String[] means = new String[num_values];
                 String[] maxs = new String[num_values];
                 String call_values = "(create$ ";
                 String call_mins = "(create$ ";
@@ -635,7 +595,6 @@ public class JessInitializer {
                     call_values = call_values + fuzzy_values[j - 1] + " ";
                     mins[j - 1] = row[1 + 4 * j].getContents();
                     call_mins = call_mins + mins[j - 1] + " ";
-                    means[j - 1] = row[2 + 4 * j].getContents();
                     maxs[j - 1] = row[3 + 4 * j].getContents();
                     call_maxs = call_maxs + maxs[j - 1] + " ";
                 }
@@ -643,17 +602,17 @@ public class JessInitializer {
                 call_mins = call_mins + ")";
                 call_maxs = call_maxs + ")";
 
-                String call = "(defrule FUZZY::numerical-to-fuzzy-" + att + " ";
+                String call = "(defrule " + module + "::numerical-to-fuzzy-" + att + " ";
                 if (param.equalsIgnoreCase("all")) {
-                    call = call + "?m <- (" + template + " (" + att + "# ?num&~nil) (" + att + " nil)) => ";
-                    call = call + "(bind ?value (numerical-to-fuzzy ?num " + call_values + " " + call_mins + " " + call_maxs + " )) (modify ?m (" + att + " ?value))) ";
+                    call = call + "?f <- (" + template + " (" + att + "# ?num&~nil) (" + att + " nil)) => ";
+                    call = call + "(bind ?value (numerical-to-fuzzy ?num " + call_values + " " + call_mins + " " + call_maxs + " )) (modify ?f (" + att + " ?value ))) ";
                 } else {
                     String att2 = att.substring(0, att.length() - 1);
-                    call = call + "?m <- (" + template + " (Parameter \"" + param + "\") (" + att2 + "# ?num&~nil) (" + att + " nil)) => ";
-                    call = call + "(bind ?value (numerical-to-fuzzy ?num " + call_values + " " + call_mins + " " + call_maxs + " )) (modify ?m (" + att + " ?value))) ";
+                    call = call + "?f <- (" + template + " (Parameter \"" + param + "\") (" + att2 + "# ?num&~nil) (" + att + " nil)) => ";
+                    call = call + "(bind ?value (numerical-to-fuzzy ?num " + call_values + " " + call_mins + " " + call_maxs + " )) (modify ?f (" + att + " ?value ))) ";
                 }
-
                 r.eval(call);
+
             }
         } catch (NumberFormatException | JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
@@ -1151,91 +1110,22 @@ public class JessInitializer {
         }
     }
 
+    /**
+     * All measurements for a given instruments must have the same attributes.
+     * If it does not have a specific attribute need to set it to nill in excel
+     * sheet.
+     *
+     * @param r
+     * @param xls
+     */
     private void loadCapabilityRules(Rete r, Workbook xls) {
-        DocumentBuilder dBuilder;
         try {
-//             dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-//             Document doc = dBuilder.parse(file);
-//             doc.getDocumentElement().normalize();
-//             NodeList instrumentList = doc.getElementsByTagName("instrument");
-//             for(int i=0;i<instrumentList.getLength();i++){
-//                 Element instrumentNode = (Element)instrumentList.item(i);
-//                 String instrumentName = instrumentNode.getElementsByTagName("name").item(0).getTextContent();
-//                 ArrayList meas = new ArrayList();
-//                 ArrayList subobj = new ArrayList();
-//                 ArrayList obj = new ArrayList();
-//                 ArrayList pan = new ArrayList();
-//                 String call = "(defrule MANIFEST::" + instrumentName + "-init-can-measure " + "(declare (salience -20)) ?this <- (CAPABILITIES::Manifested-instrument  (Name ?ins&" + instrumentName
-//                         +  ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) " 
-//                         + " (not (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements no))) => " 
-//                         + "(assert (CAPABILITIES::can-measure (instrument ?ins) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (data-rate-duty-cycle# nil) (power-duty-cycle# nil)(orbit-RAAN ?raan)"
-//                         + "(in-orbit (str-cat ?typ \"-\" ?h \"-\" ?inc \"-\" ?raan)) (can-take-measurements yes) (reason \"by default\"))))";
-//                r.eval(call);
-//                
-//                String call2 = "(defrule CAPABILITIES::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name ?ins&" + instrumentName
-//                         +  ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) " 
-//                         + " (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements yes) (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p)) => " 
-//                         + " (if (and (numberp ?dc-d) (numberp ?dc-d)) then (bind ?*science-multiplier* (min ?dc-d ?dc-p)) else (bind ?*science-multiplier* 1.0)) (assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
-//                String list_of_measurements = "";
-//                
-//                NodeList measurementList = ((Element)instrumentNode.getElementsByTagName("measurements").item(0)).getElementsByTagName("measurement");
-//                //loop over the number of measuremetns that instrument can take
-//                for (int j = 0;j<measurementList.getLength();j++) {
-//                    String measurement = measurementList.item(j);
-//                    call2 = call2 + "(assert (REQUIREMENTS::Measurement";
-//                    
-//                    String capability_type = row[0].getContents();//Measurement
-//                    if (!capability_type.equalsIgnoreCase("Measurement")) {
-//                        System.out.println("check line 1401 in JessInitializer. ATMS maybe causing some issues");
-////                        throw new Exception("loadCapabilityRules: Type of capability not recognized (use Measurement)");
-//                    }
-//                    String att_value_pair = row[1].getContents();
-//                    String[] tokens2 = att_value_pair.split(" ",2);
-//                    String att = tokens2[0];//Parameter
-//                    String val = tokens2[1];//"x.x.x Soil moisture"
-//                    meas.add(val);
-//                    ArrayList list_subobjs = (ArrayList) Params.measurements_to_subobjectives.get(val);
-//                    if (list_subobjs != null) {
-//                        Iterator list_subobjs2 = list_subobjs.iterator();
-//                        while (list_subobjs2.hasNext()) {
-//                            String tmp = (String) list_subobjs2.next();
-//                            String subob = tmp.substring(9,tmp.length()-1);
-//                            if (!subobj.contains(subob)) {
-//                                subobj.add(subob);
-//                            }
-//                            String[] tokens3 = subob.split("-",2);
-//                            String ob = tokens3[0];
-//                            if (!obj.contains(ob)) {
-//                                obj.add(ob);
-//                            }
-//                            java.util.regex.Pattern p = java.util.regex.Pattern.compile("^[A-Z]+");
-//                            Matcher m = p.matcher(ob);
-//                            m.find();
-//                            String pa = m.group();
-//
-//                            if (!pan.contains(pa)) {
-//                                pan.add(pa);
-//                            }
-//                        }
-//                    }
-//                    for (int k = 1;k<row.length;k++) {
-//                        String att_value_pair2 = row[k].getContents();
-//                        call2 = call2 + " (" + att_value_pair2 + ") ";
-//                    }
-//                    call2 = call2 + "(taken-by " + instrumentName +  ") (flies-in ?miss) (orbit-altitude# ?h) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Id " + instrumentName + j + ") (Instrument " + instrumentName + "))) ";
-//                    list_of_measurements = list_of_measurements + " " + instrumentName + j + " ";
-//                }
-//             }
-//             
             for (Instrument instrument : EOSSDatabase.getInstruments()) {
                 String instrumentName = instrument.getName();
                 Sheet sh = xls.getSheet(instrumentName);
                 int nmeasurements = sh.getRows();
                 System.out.println("Loading capabilities for " + instrumentName + "...");
                 ArrayList meas = new ArrayList();
-                ArrayList subobj = new ArrayList();
-                ArrayList obj = new ArrayList();
-                ArrayList pan = new ArrayList();
                 String call = "(defrule MANIFEST::" + instrumentName + "-init-can-measure " + "(declare (salience -20)) ?this <- (CAPABILITIES::Manifested-instrument  (Name ?ins&" + instrumentName
                         + ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) "
                         + " (not (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements no))) => "
@@ -1243,11 +1133,13 @@ public class JessInitializer {
                         + "(in-orbit (str-cat ?typ \"-\" ?h \"-\" ?inc \"-\" ?raan)) (can-take-measurements yes) (reason \"by default\"))))";
                 r.eval(call);
 
-                String call2 = "(defrule CAPABILITIES::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name ?ins&" + instrumentName
-                        + ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) "
-                        + " (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements yes) (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p)) => "
-                        + " (if (and (numberp ?dc-d) (numberp ?dc-d)) then (bind ?*science-multiplier* (min ?dc-d ?dc-p)) else (bind ?*science-multiplier* 1.0)) (assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
+                String lhs1 = "(defrule CAPABILITIES::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name " + instrumentName + ") (Id ?id)(generated-measurements ?gm&nil)";
+                String lhs2 = "";
+                String lhs3 = " (CAPABILITIES::can-measure (instrument " + instrumentName + ") (can-take-measurements yes) (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p)) => ";
+                String rhs1 = " (if (and (numberp ?dc-d) (numberp ?dc-d)) then (bind ?*science-multiplier* (min ?dc-d ?dc-p)) else (bind ?*science-multiplier* 1.0)) "
+                            + "(assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
                 String list_of_measurements = "";
+                String rhs2 = "";
                 for (int i = 0; i < nmeasurements; i++) {
                     Cell[] row = sh.getRow(i);
                     if (row.length == 0) {
@@ -1256,7 +1148,10 @@ public class JessInitializer {
                     if (row[0].getType().equals(jxl.CellType.EMPTY)) {
                         continue;
                     }
-                    call2 = call2 + "(assert (REQUIREMENTS::Measurement";
+                    rhs2 = rhs2 + "(assert (REQUIREMENTS::Measurement";
+
+                    //inherit slots from capabilities to requirements that are not defined in the instumnt capability xls
+                    HashMap<String,SlotType> needsInheritcance = new HashMap<>(capabilitiesToRequirementAttribInheritance);
 
                     String capability_type = row[0].getContents();//Measurement
                     if (!capability_type.equalsIgnoreCase("Measurement")) {
@@ -1267,49 +1162,46 @@ public class JessInitializer {
                     String att = tokens2[0];//Parameter
                     String val = tokens2[1];//"x.x.x Soil moisture"
                     meas.add(val);
-                    ArrayList list_subobjs = (ArrayList) Params.measurements_to_subobjectives.get(val);
-                    if (list_subobjs != null) {
-                        Iterator list_subobjs2 = list_subobjs.iterator();
-                        while (list_subobjs2.hasNext()) {
-                            String tmp = (String) list_subobjs2.next();
-                            String subob = tmp.substring(9, tmp.length() - 1);
-                            if (!subobj.contains(subob)) {
-                                subobj.add(subob);
-                            }
-                            String[] tokens3 = subob.split("-", 2);
-                            String ob = tokens3[0];
-                            if (!obj.contains(ob)) {
-                                obj.add(ob);
-                            }
-                            java.util.regex.Pattern p = java.util.regex.Pattern.compile("^[A-Z]+");
-                            Matcher m = p.matcher(ob);
-                            m.find();
-                            String pa = m.group();
 
-                            if (!pan.contains(pa)) {
-                                pan.add(pa);
-                            }
-                        }
-                    }
                     for (int j = 1; j < row.length; j++) {
                         String att_value_pair2 = row[j].getContents();
-                        call2 = call2 + " (" + att_value_pair2 + ") ";
+                        rhs2 = rhs2 + " (" + att_value_pair2 + ") ";
+                        String[] tokens = att_value_pair2.split(" ", 2);
+                        needsInheritcance.remove(tokens[0]);
                     }
-                    call2 = call2 + "(taken-by " + instrumentName + ") (flies-in ?miss) (orbit-altitude# ?h) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Id " + instrumentName + i + ") (Instrument " + instrumentName + "))) ";
+                    rhs2 += "(taken-by " + instrumentName + ") (Id " + instrumentName + i + ") (Instrument " + instrumentName + ")(synergy-level# 0) ";
+
+                    //create part of the rule to inherit the rest of the 
+                    lhs2 = "";
+                    Iterator<String> iter = needsInheritcance.keySet().iterator();
+                    int ind = 0;
+                    while(iter.hasNext()) {
+                        String slotName = iter.next();
+                        SlotType slotType = needsInheritcance.get(slotName);
+                        if (slotName.equalsIgnoreCase("Id")) {
+                            //since id is used in assert, need to make it a special case
+                            continue;
+                        } else if(slotType.equals(SlotType.SLOT)){
+                            lhs2 += "(" + slotName + " ?var" + String.valueOf(ind) + ")";
+                            rhs2 += "(" + slotName + " ?var" + String.valueOf(ind) + ")";
+                        } else if(slotType.equals(SlotType.MULTISLOT)){
+                            lhs2 += "(" + slotName + " $?var" + String.valueOf(ind) + ")";
+                            rhs2 += "(" + slotName + " $?var" + String.valueOf(ind) + ")";
+                        }
+                        ind++;
+                    }
+                    lhs2 += ")";
+                    rhs2 += "))";
+
                     list_of_measurements = list_of_measurements + " " + instrumentName + i + " ";
                 }
-                call2 = call2 + "(assert (SYNERGIES::cross-registered (measurements " + list_of_measurements + " ) (degree-of-cross-registration instrument) (platform ?id  )))";
-                call2 = call2 + "(modify ?this (measurement-ids " + list_of_measurements + ")))";
-                r.eval(call2);
+
+                String rhs3 = "(assert (SYNERGY::cross-registered (measurements " + list_of_measurements + " ) (degree-of-cross-registration instrument) (platform ?id  )))";
+                rhs3 = rhs3 + "(modify ?this (measurement-ids " + list_of_measurements + ")(generated-measurements TRUE)))";
+                r.eval(lhs1 + lhs2 + lhs3 + rhs1 + rhs2 + rhs3);
                 Params.instruments_to_measurements.put(instrumentName, meas);
-                Params.instruments_to_subobjectives.put(instrumentName, subobj);
-                Params.instruments_to_objectives.put(instrumentName, obj);
-                Params.instruments_to_panels.put(instrumentName, pan);
             }
             Params.measurements_to_instruments = getInverseHashMap(Params.instruments_to_measurements);
-            Params.subobjectives_to_instruments = getInverseHashMap(Params.instruments_to_measurements);
-            Params.objectives_to_instruments = getInverseHashMap(Params.instruments_to_objectives);
-            Params.panels_to_instruments = getInverseHashMap(Params.instruments_to_panels);
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }

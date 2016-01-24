@@ -1,44 +1,41 @@
 package eoss.attributes;
 
 // package KBSAofEOSS;
-import eoss.attributes.EOAttribute;
-import java.util.Hashtable;
+import java.util.HashMap;
+
 public class NLAttribute extends EOAttribute {
-    public NLAttribute(String charact, String val, Hashtable<String, Integer> accepted){
-        this.characteristic = charact;
-        this.value = val;
-        this.type = "NL";
-        this.acceptedValues = accepted;
-        }
-    
-    public NLAttribute(String charact, String val){
-        this.characteristic = charact;
-        this.value = val;
-        this.type = "NL";
 
-        //EOAttribute att = (EOAttribute) GlobalVariables.measurementAttributeSet.get(charact);
-        //this.acceptedValues = att.acceptedValues;
-        }
+    public NLAttribute(String charact, String val, HashMap<String, Integer> accepted) {
+        super(charact, AttributeType.NL, val, accepted);
+    }
+
+    /**
+     * This implementation of a neutral list only checks to see if the attribute values are equal. If so it returns 0. Else it returns -1.
+     * @param other
+     * @return 
+     */
     @Override
-    public int SameOrBetter(EOAttribute other) {
-     // Since this is a Neutral List attribute:
-        int z = 0;
-     int value_this = this.acceptedValues.get(this.value);
-     int value_other = other.acceptedValues.get(other.value);
-     if(value_this == value_other) {
-         z = 0;
-     }
-     else {
-         z = -1;
-     }
- return z;    
- }
-
-
+    public int sameOrBetter(EOAttribute other) {
+        // Since this is a Neutral List attribute:
+        if (this.getValue().equalsIgnoreCase(other.getValue())) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
 
     @Override
-   public  NLAttribute cloneAttribute(EOAttribute other){
-        NLAttribute n = new NLAttribute(other.characteristic, other.value);
-        return n;
+    public String improve() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String worsen() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public EOAttribute cloneAttribute(EOAttribute attribute) {
+        return new NLAttribute(getCharacteristic(), getValue(), getAcceptedValues());
     }
 }

@@ -62,7 +62,7 @@ public class RBSAEOSSSMAP {
         //PATH
         args = new String[3];
         args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-//          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problem\\climateCentric";
+//          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
         args[1] = "2";
         args[2] = "3";
 

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jess.Fact;
@@ -46,7 +45,7 @@ public class EOSSProblem extends AbstractProblem {
      */
     private final String type;
 
-    private final Resource res;
+    private final Resource resource;
 
     private final boolean explanation;
 
@@ -65,7 +64,7 @@ public class EOSSProblem extends AbstractProblem {
         super(2, 2);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         this.type = type;
-        this.res = new Resource();
+        this.resource = new Resource();
         this.explanation = explanation;
     }
 
@@ -91,8 +90,8 @@ public class EOSSProblem extends AbstractProblem {
     public void evaluate(Solution sltn) {
         EOSSArchitecture arch = (EOSSArchitecture) sltn;
 
-        Rete r = res.getRete();
-        QueryBuilder qb = res.getQueryBuilder();
+        Rete r = resource.getRete();
+        QueryBuilder qb = resource.getQueryBuilder();
 
         try {
             evaluatePerformance(r, arch, qb); //compute science score
@@ -246,9 +245,7 @@ public class EOSSProblem extends AbstractProblem {
     private double evaluateCost(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
         double cost = 0.0;
         try {
-            r.setFocus("MANIFEST2");
-            r.run();
-
+            //
             r.eval("(focus MANIFEST)");
             r.run();
 
@@ -280,9 +277,9 @@ public class EOSSProblem extends AbstractProblem {
             }
 
             arch.setObjective(1, cost);
-            Explanation explanation = new Explanation();
-            explanation.put("cost", missions);
-            arch.setExplanation(1, explanation);
+            Explanation explanations = new Explanation();
+            explanations.put("cost", missions);
+            arch.setExplanation(1, explanations);
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -293,7 +290,7 @@ public class EOSSProblem extends AbstractProblem {
     private void designSpacecraft(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
         try {
             r.eval("(focus PRELIM-MASS-BUDGET)");
-            r.eval("(run)");
+            r.run();
 
             ArrayList<Fact> missions = qb.makeQuery("MANIFEST::Mission");
             Double[] oldmasses = new Double[missions.size()];
@@ -305,22 +302,22 @@ public class EOSSProblem extends AbstractProblem {
             boolean converged = false;
             while (!converged) {
                 r.eval("(focus CLEAN1)");
-                r.eval("(run)");
+                r.run();
 
                 r.eval("(focus MASS-BUDGET)");
-                r.eval("(run)");
+                r.run();
 
                 r.eval("(focus CLEAN2)");
-                r.eval("(run)");
+                r.run();
 
                 r.eval("(focus UPDATE-MASS-BUDGET)");
-                r.eval("(run)");
+                r.run();
 
                 Double[] drymasses = new Double[missions.size()];
                 double sumdiff = 0.0;
                 double summasses = 0.0;
                 for (int i = 0; i < missions.size(); i++) {
-                    drymasses[i] = new Double(missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext()));
+                    drymasses[i] = missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
                     diffs[i] = Math.abs(drymasses[i] - oldmasses[i]);
                     sumdiff = sumdiff + diffs[i];
                     summasses = summasses + drymasses[i];
@@ -341,13 +338,48 @@ public class EOSSProblem extends AbstractProblem {
                 ArrayList<Instrument> instruments = arch.getInstrumentsInOrbit(orbit);
                 if (instruments.size() > 0) {
                     String payload = "";
+                    double payloadMass = 0;
+                    double characteristicPower = 0;
+                    double dataRate = 0;
+                    ArrayList<Double> payloadDimensions = new ArrayList<>();
+                    payloadDimensions.add(0, 0.0); //max dimension in x, y, and z
+                    payloadDimensions.add(1, 0.0); //nadir-area
+                    payloadDimensions.add(2, 0.0); //max z dimension
                     String call = "(assert (MANIFEST::Mission (Name " + orbit + ") ";
                     for (Instrument inst : instruments) {
                         payload = payload + " " + inst.getName();
+                        payloadMass += Double.parseDouble(inst.getProperty("mass#"));
+                        characteristicPower += Double.parseDouble(inst.getProperty("characteristic-power#"));
+                        dataRate += Double.parseDouble(inst.getProperty("average-data-rate#"));
+                        double dx = Double.parseDouble(inst.getProperty("dimension-x#"));
+                        double dy = Double.parseDouble(inst.getProperty("dimension-y#"));
+                        double dz = Double.parseDouble(inst.getProperty("dimension-z#"));
+                        payloadDimensions.set(0, Math.max(payloadDimensions.get(0),Math.max(Math.max(dx, dy), dz)));
+                        payloadDimensions.set(1, payloadDimensions.get(1) + dx*dy);
+                        payloadDimensions.set(2, Math.max(payloadDimensions.get(2),dz));
+                        
+                        //manifest the instrument
+                        String callManifestInstrument = "(assert (CAPABILITIES::Manifested-instrument ";
+                        Iterator iter = inst.getProperties().iterator();
+                        while (iter.hasNext()) {
+                            String propertyName = (String) iter.next();
+                            callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
+                        }
+                        callManifestInstrument += "(flies-in " + orbit.getName() + ")";
+                        callManifestInstrument += "(orbit-altitude# " + String.valueOf(orbit.getAltitude()) + ")";
+                        callManifestInstrument += "(orbit-inclination " + orbit.getInclination() + ")";
+                        callManifestInstrument += "))";
+                        r.eval(callManifestInstrument);
                     }
                     call += "(instruments " + payload + ") (launch-date 2015) (lifetime 5) (select-orbit no) " + orbit.toJessSlots();
+                    call += "(payload-mass# " + String.valueOf(payloadMass) + ")";
+                    call += "(payload-power# " + String.valueOf(characteristicPower) + ")";
+                    call += "(payload-data-rate# " + String.valueOf(dataRate) + ")";
+                    double perOrbit = (dataRate*1.2*orbit.getPeriod())/(1024*8); //(GByte/orbit) 20% overhead
+                    call += "(payload-dimensions# " + String.valueOf(payloadDimensions.get(0)) + " " + String.valueOf(payloadDimensions.get(1)) + " " +  String.valueOf(payloadDimensions.get(2)) + ")";
+                    call += "(sat-data-rate-per-orbit# " + String.valueOf(perOrbit) + ")";
                     call += "(num-of-sats-per-plane# " + String.valueOf(arch.getNumberOfSatellitesPerOrbit()) + ")))";
-                    call += "(assert (SYNERGIES::cross-registered-instruments "
+                    call += "(assert (SYNERGY::cross-registered-instruments "
                             + " (instruments " + payload
                             + ") (degree-of-cross-registration spacecraft) "
                             + " (platform " + orbit + " )))";
@@ -367,7 +399,7 @@ public class EOSSProblem extends AbstractProblem {
             r.eval("(defadvice before (create$ >= <= < >) (foreach ?xxx $?argv (if (eq ?xxx nil) then (return FALSE))))");
             r.eval("(defadvice before (create$ sqrt + * **) (foreach ?xxx $?argv (if (eq ?xxx nil) then (bind ?xxx 0))))");
 
-            Explanation explanation = new Explanation();
+            Explanation explanations = new Explanation();
 
             if (type.equalsIgnoreCase("Fast")) {
                 for (Orbit orbit : EOSSDatabase.getOrbits()) {
@@ -392,9 +424,6 @@ public class EOSSProblem extends AbstractProblem {
             } else {
                 assertMissions(r, arch);
 
-                r.setFocus("MANIFEST2");
-                r.run();
-
                 r.setFocus("MANIFEST");
                 r.run();
 
@@ -405,23 +434,23 @@ public class EOSSProblem extends AbstractProblem {
 //                while (iter.hasNext()) {
 //                    r.removeDefrule(iter.next());
 //                }
+                 r.setFocus("FUZZY-CAPABILITY-ATTRIBUTE");
+                r.run();
+                
                 r.setFocus("CAPABILITIES");
                 r.run();
-
+                
                 if (type.equalsIgnoreCase("capabilities")) {
                     //This method only computes capabilities
-                    r.setFocus("FUZZY");
-                    r.run();
-                    ArrayList<Fact> capabilities = null;
-                    capabilities = qb.makeQuery("REQUIREMENTS::Measurement");
+                    ArrayList<Fact> capabilities = qb.makeQuery("REQUIREMENTS::Measurement");
                     capabilities.addAll(qb.makeQuery("SYNERGIES::cross-registered"));
                     capabilities.addAll(qb.makeQuery("SYNERGIES::NUM-CHANNELS"));
                     arch.setCapabilities(capabilities);
                     System.out.println("Capabilities computed for arch " + arch.toFactString());
                     return;
                 }
-
-                r.setFocus("SYNERGIES");
+                
+                r.setFocus("SYNERGY");
                 r.run();
             }
 
@@ -448,24 +477,21 @@ public class EOSSProblem extends AbstractProblem {
                         key = arch.getNumberOfSatellitesPerOrbit() + " x " + StringUtils.join(fovs, "  ");
                         therevtimes = (HashMap) Params.revtimes.get(key); //key: 'Global' or 'US', value Double
                     }
-                    String call = "(assert (ASSIMILATION2::UPDATE-REV-TIME (parameter " + param + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
+                    String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + param + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
                             + "(avg-revisit-time-US# " + therevtimes.get("US") + ")))";
                     r.eval(call);
                 }
-
             }
-            r.setFocus("ASSIMILATION2");
-            r.run();
-
             r.setFocus("ASSIMILATION");
             r.run();
 
-            r.setFocus("FUZZY");
+            r.setFocus("FUZZY-REQUIREMENT-ATTRIBUTE");
             r.run();
-            r.setFocus("SYNERGIES");
+            
+            r.setFocus("SYNERGY");
             r.run();
 
-            r.setFocus("SYNERGIES-ACROSS-ORBITS");
+            r.setFocus("SYNERGY-ACROSS-ORBITS");
             r.run();
 
             if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
@@ -489,9 +515,9 @@ public class EOSSProblem extends AbstractProblem {
             }
 
             if (Params.run_mode.equalsIgnoreCase("DEBUG")) {
-                explanation.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
-                explanation.put("full", qb.makeQuery("REASONING::fully-satisfied"));
-                arch.setExplanation(0, explanation);
+                explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
+                explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
+                arch.setExplanation(0, explanations);
             }
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);

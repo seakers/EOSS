@@ -11,26 +11,11 @@
         else (return (+ (nth$ 1 ?list) (sum$ (rest$ ?list)))))
     )
 
-
-(deffunction apply-NICM (?instr)
-    (bind ?m (get-instrument-mass ?instr))
-    (bind ?p (get-instrument-power ?instr))
-    (bind ?rb (get-instrument-datarate ?instr))
-    
-    (bind ?cost (* 25600 (** (/ ?p 61.5) 0.32) (** (/ ?m 53.8) 0.26) 
-            (** (/ (* 1000 ?rb) 40.4) 0.11))); in FY04$
-    (bind ?cost (/ ?cost 1.097))
-    ;(printout t apply-NICM " " ?instr " = " ?m " " ?p " " ?rb " " ?cost crlf)
-    (return ?cost)
-    )
-
 (defrule COST-ESTIMATION::estimate-instrument-cost
     "This rule estimates payload cost using a very simplified version of the 
     NASA Instrument Cost Model available on-line"
     (declare (salience 25) (no-loop TRUE))
-    ?instr <- (DATABASE::Instrument (cost# nil) (Name ?name) 
-        (developed-by ?whom) 
-        )
+    ?instr <- (CAPABILITIES::Manifested-instrument (cost# nil) (Name ?name) (developed-by ?whom)(mass# ?m&~nil) (average-power# ?p&~nil) (average-data-rate# ?rb&~nil))
     =>  
 	(printout t ?name crlf)
     (bind ?c0 (apply-NICM ?name)) 

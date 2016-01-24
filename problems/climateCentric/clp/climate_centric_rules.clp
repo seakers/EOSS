@@ -4,29 +4,11 @@
 ;(set-reset-globals FALSE)
 ;(ENUMERATION::SMAP-ARCHITECTURE (payload SMAP_RAD SMAP_MWR CMIS VIIRS BIOMASS) (num-sats 1) (orbit-altitude 800) (orbit-raan DD) (orbit-type SSO) (orbit-inc SSO) (num-planes 1) (doesnt-fly ) (num-sats-per-plane 1) (num-instruments 5) (sat-assignments 1 1 1 1 1))
 
-(deftemplate MANIFEST::ARCHITECTURE (slot bitString) (multislot payload) (slot num-sats) (slot source) (slot orbit) 
-    (slot orbit-altitude) (slot orbit-raan) (slot orbit-type) (slot orbit-inc) (slot num-planes)
-    (multislot doesnt-fly) (slot num-sats-per-plane) (slot lifecycle-cost) (slot benefit)  
-	(slot space-segment-cost) (slot ground-segment-cost) (slot pareto-ranking) (slot utility)
-	(slot mutate) (slot crossover)  (slot improve) (slot id) (multislot heuristics-to-apply) (multislot heuristics-applied) 
-    (slot num-instruments) (multislot sat-assignments) (multislot ground-stations) (multislot constellations))
-
-(reset)
-(defquery DATABASE::get-instruments 
-    ?f <- (DATABASE::list-of-instruments (list $?l))
-    )
-
 (deffunction get-instruments ()
     (bind ?res (run-query* DATABASE::get-instruments))
     (?res next)
     (bind ?f (?res getObject f))
     (return ?f.list)
-    )
-
-(deffunction get-my-instruments ()
-    ;(bind ?list (matlabf get_instrument_list))
-    ;(if (listp ?list) then (return ?list) else (return (create$ ?list)))
-	(return (MatlabFunction getInstrumentList))
     )
 
 (deffunction set-my-instruments (?list)
@@ -47,11 +29,6 @@
     (build ?prog)
     )
 
-
-
-(create-index-of)
-
-
 (deffunction get-instrument (?ind)
     (return (nth$ ?ind (get-instruments)))
     )
@@ -59,8 +36,6 @@
 (deffunction get-my-instrument (?ind)
     (return (eval (nth$ ?ind (get-my-instruments))))
     )
-
-
 
 ;; **********************
 ;; SMAP EXAMPLE MANIFEST RULES
@@ -107,9 +82,6 @@
         )
     (return ?ass)
     )
-
-
-
 
 
 ;; **********************
@@ -236,7 +208,7 @@
 ;; SMAP EXAMPLE EMERGENCE RULES
 ;; ***************************
 
-(defrule SYNERGIES::SMAP-spatial-disaggregation 
+(defrule SYNERGY::SMAP-spatial-disaggregation 
     "A frequent coarse spatial resolution measurement can be combined
      with a sparse high spatial resolution measurement to produce 
     a frequent high spatial resolution measurement with average accuracy"
@@ -245,7 +217,7 @@
         (Horizontal-Spatial-Resolution# ?hs1&~nil) (Accuracy# ?a1&~nil)  (Id ?id1) (taken-by ?ins1))
     ?m2 <- (REQUIREMENTS::Measurement (Parameter "2.3.2 soil moisture") (Illumination Passive) 
         (Horizontal-Spatial-Resolution# ?hs2&~nil) (Accuracy# ?a2&~nil) (Id ?id2&~?id1) (taken-by ?ins2))
-    (SYNERGIES::cross-registered (measurements $?meas&:(contains$ $?meas ?id1)&:(contains$ $?meas ?id2)))
+    (SYNERGY::cross-registered (measurements $?meas&:(contains$ $?meas ?id1)&:(contains$ $?meas ?id2)))
     ;(not (REASONING::stop-improving (Measurement ?p)))
     (test (eq (str-index disaggregated ?ins1) FALSE))
     (test (eq (str-index disaggregated ?ins2) FALSE))
@@ -257,7 +229,7 @@
             (taken-by (str-cat ?ins1 "-" ?ins2 "-disaggregated")) );; fuzzy-max in accuracy is OK because joint product does provide 4% accuracy
 )
 
-;(defrule SYNERGIES::AM-PM-diurnal-cycle
+;(defrule SYNERGY::AM-PM-diurnal-cycle
 ;?m1 <- (REQUIREMENTS::Measurement (Parameter ?p) (diurnal-cycle AM-only) (Id ?id1) (taken-by ?ins1))
 ;(REQUIREMENTS::Measurement (Parameter ?p) (diurnal-cycle PM-only) (Id ?id2) (taken-by ?ins2));
 ;
@@ -265,61 +237,61 @@
 ;(modify ?m1 (diurnal-cycle AM-PM) (Id (str-cat ?id1 "-syn-" ?id2)) (taken-by (str-cat ?ins1 "-syn-" ?ins2))) 
 ;)
 
-(defrule SYNERGIES-ACROSS-ORBITS::AM-PM-diurnal-cycle
+(defrule SYNERGY-ACROSS-ORBITS::AM-PM-diurnal-cycle
 ?m1 <- (REQUIREMENTS::Measurement (Parameter ?p) (diurnal-cycle AM-only) (Id ?id1) (taken-by ?ins1))
 (REQUIREMENTS::Measurement (Parameter ?p) (diurnal-cycle PM-only) (Id ?id2) (taken-by ?ins2) )
 
 =>
 (modify ?m1 (diurnal-cycle AM-PM) (Id (str-cat ?id1 "-syn-" ?id2)) (taken-by (str-cat ?ins1 "-syn-" ?ins2)) ) 
 )
-(defrule SYNERGIES::ozone
+(defrule SYNERGY::ozone
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "1.8.2 O3"|"1.8.26 O3 - lower troposphere"|"1.8.27 O3 - upper troposphere"|"1.8.28 O3 - lower stratosphere"|"1.8.29 O3 - upper stratosphere") (Accuracy# 5.0) (Id ?id1) (taken-by ?ins1) )
 ?m2 <- (REQUIREMENTS::Measurement (Parameter "1.8.2 O3"|"1.8.26 O3 - lower troposphere"|"1.8.27 O3 - upper troposphere"|"1.8.28 O3 - lower stratosphere"|"1.8.29 O3 - upper stratosphere") (Accuracy# 5.0) (Id ?id2&~?id1) (taken-by ?ins2&~?ins1) )
-(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (modify ?m1 (Accuracy# 2.5))
 (modify ?m2 (Accuracy# 2.5))
 )
-(defrule SYNERGIES::dry-atmosphere-correction-for-ocean-color
+(defrule SYNERGY::dry-atmosphere-correction-for-ocean-color
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "3.1.5 Ocean color - Dissolved Organic Matter"|"3.1.4 Ocean color - chlorophyl"|"3.1.6 Ocean color - Suspended Sediments") (rms-system-tropo-dry# High) (Id ?id1) (taken-by ?ins1) )
 ?sub1 <- (REQUIREMENTS::Measurement (Parameter "1.1.1 aerosol height/optical depth") (Id ?id2&~?id1) (taken-by ?ins2&~?ins1))
-?sub2 <- (SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+?sub2 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (modify ?m1 (rms-system-tropo-dry# Low))
 )
-(defrule SYNERGIES::dry-atmosphere-correction-for-ocean-altimetry
+(defrule SYNERGY::dry-atmosphere-correction-for-ocean-altimetry
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "3.2.1 Sea level height") (rms-system-tropo-dry# High) (Id ?id1) (taken-by ?ins1) )
 ?sub1 <-(REQUIREMENTS::Measurement (Parameter "1.1.1 aerosol height/optical depth") (Id ?id2&~?id1) (taken-by ?ins2&~?ins1))
-?sub2 <-(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+?sub2 <-(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (modify ?m1 (rms-system-tropo-dry# Low) (taken-by (str-cat ?ins1 "-syn"  ?ins2)))
 )
 ;; A4.Clouds and aerosols
-(defrule SYNERGIES::clouds-and-aerosols
+(defrule SYNERGY::clouds-and-aerosols
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "1.5.3 Cloud amount/distribution -horizontal and vertical-")  (Id ?id1) (taken-by ?ins1))
 ?sub1 <- (REQUIREMENTS::Measurement (Parameter "1.1.6 aerosol absorption optical depth") (Id ?id2&~?id1) (taken-by ?ins2&~?ins1))
-?sub2 <- (SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+?sub2 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (duplicate ?m1 (Parameter "A12.Clouds and aerosols") (taken-by (str-cat ?ins1 "-syn"  ?ins2)))
 )
 ;; A4.Clouds and radiation
-(defrule SYNERGIES::clouds-and-radiation
+(defrule SYNERGY::clouds-and-radiation
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "1.5.3 Cloud amount/distribution -horizontal and vertical-")(Id ?id1) (taken-by ?ins1))
 ?sub1 <- (REQUIREMENTS::Measurement (Parameter "1.9.3 Spectrally resolved SW radiance -0.3-2um-") (Id ?id2&~?id1) (taken-by ?ins2&~?ins1))
-?sub2 <- (SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+?sub2 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (duplicate ?m1 (Parameter "A4.Clouds and radiation") (taken-by (str-cat ?ins1 "-syn"  ?ins2)))
 )
 ;; A11. Tropospheric chemistry, pollution and aerosols
-(defrule SYNERGIES::tropospheric-pollution-GHG-and-aerosols
+(defrule SYNERGY::tropospheric-pollution-GHG-and-aerosols
 ?m1 <- (REQUIREMENTS::Measurement (Parameter "1.8.5 CO"|"1.8.26 O3 - lower troposphere")  (Id ?id1) (taken-by ?ins1))
 ?sub1 <- (REQUIREMENTS::Measurement (Parameter "1.1.6 aerosol absorption optical depth") (Id ?id2&~?id1) (taken-by ?ins2&~?ins1))
-?sub2 <- (SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+?sub2 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
 =>
 (duplicate ?m1 (Parameter "A11. Tropospheric chemistry, pollution and aerosols") (taken-by (str-cat ?ins1 "-syn"  ?ins2)))
 )
 
-(defrule SYNERGIES::carbon-net-ecosystem-exchange 
+(defrule SYNERGY::carbon-net-ecosystem-exchange 
     "Carbon net ecosystem exchange data products are produced from the combination of soil moisture, land surface temperature, 
     landcover classificatin, and vegetation gross primary productivity [Entekhabi et al, 2010]"
     
@@ -327,7 +299,7 @@
     ?sub1 <- (REQUIREMENTS::Measurement (Parameter "2.5.1 Surface temperature -land-") (Id ?id2) (taken-by ?ins2))
     ?sub2 <- (REQUIREMENTS::Measurement (Parameter "2.6.2 landcover status")  (Id ?id3) (taken-by ?ins3))
     ?sub3 <- (REQUIREMENTS::Measurement (Parameter "2.4.2 vegetation state") (Id ?id4) (taken-by ?ins4))
-    ?sub4 <- (SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3 ?id4) $?m))
+    ?sub4 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3 ?id4) $?m))
     ;(not (REQUIREMENTS::Measurement (Parameter "2.3.3 Carbon net ecosystem exchange NEE")))
 	=>
 
@@ -336,7 +308,7 @@
             (taken-by (str-cat ?ins1 "-syn" ?ins2 "-syn-" ?ins3 "-syn-" ?ins4)) );; fuzzy-max in accuracy is OK because joint product does provide 4% accuracy
 )
 
-(defrule SYNERGIES::snow-cover-3freqs
+(defrule SYNERGY::snow-cover-3freqs
     "Full accuracy of snow cover product is obtained when IR, X, and L-band measurements
     are combined "
     
@@ -349,14 +321,14 @@
     ?L <- (REQUIREMENTS::Measurement (Parameter "4.2.4 snow cover") (Spectral-region MW-L)
         (Accuracy Low) (Id ?id3) (taken-by ?ins3))
     
-	(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3) $?m))
+	(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3) $?m))
     =>
     
     (duplicate ?X (Accuracy High) (Id (str-cat ?id1 "-syn-" ?id2 "-syn-" ?id3))
             (taken-by (str-cat ?ins1 "-syn-" ?ins2 "-syn-" ?ins3)) )
     )
 
-(defrule SYNERGIES::snow-cover-2freqs
+(defrule SYNERGY::snow-cover-2freqs
     "Medium accuracy of snow cover product is obtained when IR and MW measurements
     are combined "
     
@@ -368,14 +340,14 @@
 
     (test (neq (str-index MW ?sr) FALSE))
 	
-	(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+	(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
     =>
     ;(printout t "snow cover 2 freqs " crlf)
     (duplicate ?MW (Accuracy Medium) (Id (str-cat ?id1 "-syn-" ?id2 ))
             (taken-by (str-cat ?ins1 "-syn-" ?ins2)))
     )
 
-(defrule SYNERGIES::ice-cover-3freqs
+(defrule SYNERGY::ice-cover-3freqs
     "Full accuracy of ice cover product is obtained when IR, X, and L-band measurements
     are combined "
     
@@ -388,14 +360,14 @@
     ?L <- (REQUIREMENTS::Measurement (Parameter "4.3.2 Sea ice cover") (Spectral-region MW-L)
          (Accuracy Low) (Id ?id3) (taken-by ?ins3))
     
-	(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3) $?m))
+	(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3) $?m))
     =>
     
     (duplicate ?X (Accuracy High) (Id (str-cat ?id1 "-syn-" ?id2 "-syn-" ?id3))
             (taken-by (str-cat ?ins1 "-syn-" ?ins2 "-syn-" ?ins3)))
     )
 
-(defrule SYNERGIES::ice-cover-2freqs
+(defrule SYNERGY::ice-cover-2freqs
     "Medium accuracy of ice cover product is obtained when IR and MW measurements
     are combined "
     
@@ -407,14 +379,14 @@
 
     (test (neq (str-index MW ?sr) FALSE))
 	
-	(SYNERGIES::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
+	(SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2) $?m))
     =>
     
     (duplicate ?MW (Accuracy Medium) (Id (str-cat ?id1 "-syn-" ?id2 ))
             (taken-by (str-cat ?ins1 "-syn-" ?ins2)))
     )
 
-(defrule SYNERGIES::ocean-salinity-space-average
+(defrule SYNERGY::ocean-salinity-space-average
     "L-band passive radiometer can yield 0.2psu data if we average in space
     (from SMAP applications report)"
 
@@ -428,7 +400,7 @@
         (taken-by (str-cat ?ins1 "-space-averaged")))
     )
 
-(defrule SYNERGIES::ocean-wind-space-average
+(defrule SYNERGY::ocean-wind-space-average
     "L-band passive radiometer can yield 1 m/s wind data if we average in space
     (from SMAP applications report)"
 
@@ -456,23 +428,23 @@
 ;(defrule CAPABILITIES::cross-register-measurements-from-cross-registered-instruments;
 ;	(CAPABILITIES::Manifested-instrument (Name ?ins1) (measurement-ids $?m1))
 	;(CAPABILITIES::Manifested-instrument (Name ?ins2&~?ins1) (measurement-ids $?m2))
-	;(SYNERGIES::cross-registered-instruments (instruments $?ins))
+	;(SYNERGY::cross-registered-instruments (instruments $?ins))
 	;(test (contains$ $?ins ?ins1))
 	;(test (contains$ $?ins ?ins2))
 ;	
 ;	=>
-;	(assert (SYNERGIES::cross-registered (measurements (str-cat $?m1 $?m2))))
+;	(assert (SYNERGY::cross-registered (measurements (str-cat $?m1 $?m2))))
 ;)
 
 (defrule CAPABILITIES::cross-register-measurements-from-cross-registered-instruments
-	(SYNERGIES::cross-registered-instruments (instruments $?ins) (platform ?sat) )
+	(SYNERGY::cross-registered-instruments (instruments $?ins) (platform ?sat) )
 	?c <- (accumulate (bind ?str "")                        ;; initializer
                 (bind ?str (str-cat ?str " " $?m1))                    ;; action
                 ?str                                        ;; result
                 (CAPABILITIES::Manifested-instrument (Name ?ins1&:(contains$ $?ins ?ins1)) (flies-in ?sat) (measurement-ids $?m1) )
 				) ;; CE
 	=>
-	(assert (SYNERGIES::cross-registered (measurements (explode$ ?c)) (degree-of-cross-registration spacecraft) (platform ?sat) ))
+	(assert (SYNERGY::cross-registered (measurements (explode$ ?c)) (degree-of-cross-registration spacecraft) (platform ?sat) ))
 	;(printout t ?c crlf)
 )
 
