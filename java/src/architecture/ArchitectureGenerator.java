@@ -98,6 +98,9 @@ public class ArchitectureGenerator implements Initialization {
 //            }
             assign.connect(7,1);
             assign.connect(0,2);
+            assign.connect(3, 4);
+            assign.connect(3, 0);
+            assign.connect(9, 2);
         } else {
             System.err.println("can not initialize unknown type");
         }

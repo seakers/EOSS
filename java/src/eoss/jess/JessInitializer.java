@@ -127,7 +127,7 @@ public class JessInitializer {
             }
 
             //Load capability rules
-            loadCapabilityRules(r, instrument_xls);
+            loadCapabilityRules(r, instrument_xls,Params.capability_rules_clp);
 
             //Load synergy rules
             loadSynergyRules(r, Params.synergy_rules_clp);
@@ -248,10 +248,12 @@ public class JessInitializer {
                 attribSet.put(name, attrib);
                 call = call.concat(" (" + slot_type + " " + name + ") ");
                 
+                //when storing the attribute names get rid of any calls to default values for the slots
+                String[] attribName = name.split(" ");
                 if(slot_type.equalsIgnoreCase("slot"))
-                    out.put(name,SlotType.SLOT);
+                    out.put(attribName[0],SlotType.SLOT);
                 else if(slot_type.equalsIgnoreCase("multislot"))
-                    out.put(name,SlotType.MULTISLOT);
+                    out.put(attribName[0],SlotType.MULTISLOT);
                 else
                     throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
             }
@@ -289,10 +291,12 @@ public class JessInitializer {
                 call = call.concat(" (" + slot_type + " " + name + ") ");
                 call2 = call2.concat(" (" + slot_type + " " + name + ") ");
                 
+                //when storing the attribute names get rid of any calls to default values for the slots
+                String[] attribName = name.split(" ");
                 if(slot_type.equalsIgnoreCase("slot"))
-                    out.put(name,SlotType.SLOT);
+                    out.put(attribName[0],SlotType.SLOT);
                 else if(slot_type.equalsIgnoreCase("multislot"))
-                    out.put(name,SlotType.MULTISLOT);
+                    out.put(attribName[0],SlotType.MULTISLOT);
                 else
                     throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
             }
@@ -884,7 +888,7 @@ public class JessInitializer {
                         String index = tokens[1];
                         call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value (new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (call ValueMap getValueInterval))) (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") (reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
                         String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-                        req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
+                        req_rule = lhs + rhs0 + rhs + rhs2 + " ?dc ?pc)) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
                                 + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
                                 + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
                                 + "(call ValueMap getIntervalValue)) getFuzzy_val) \"utils\" (call ValueMap getValueInterval))) "
@@ -898,7 +902,8 @@ public class JessInitializer {
                         rhs = "";
                         rhs2 = " (bind ?list (create$ ";
                         attribs = "";
-                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ")";
+                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib "
+                                + "?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (data-rate-duty-cycle# ?dc) (power-duty-cycle# ?pc) (Parameter " + param + ")";
                         current_subobj = subobj;
                         current_param = param;
                         nattrib = 0;
@@ -908,7 +913,8 @@ public class JessInitializer {
                         rhs = "";
                         rhs2 = " (bind ?list (create$ ";
                         attribs = "";
-                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (Parameter " + param + ") ";
+                        lhs = "(defrule FUZZY-REQUIREMENTS::" + subobj + "-attrib "
+                                + "?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (data-rate-duty-cycle# ?dc) (power-duty-cycle# ?pc) (Parameter " + param + ") ";
                         current_subobj = subobj;
                         current_param = param;
                         subobj_tests = new HashMap();
@@ -942,7 +948,7 @@ public class JessInitializer {
                     + " (id " + current_subobj + ") (index " + index + ") (parent " + parent + ") "
                     + "(reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + " ))) ";
             String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
-            req_rule = lhs + rhs0 + rhs + rhs2 + "))(assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
+            req_rule = lhs + rhs0 + rhs + rhs2 + " ?dc ?pc))(assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) "
                     + "(attrib-scores ?list) (satisfaction (*$ ?list)) (fuzzy-value (new FuzzyValue \"Value\" (call "
                     + "(new FuzzyValue \"Value\" (new Interval \"interval\" (*$ ?list) (*$ ?list)) \"utils\" "
                     + "(call ValueMap getIntervalValue)) getFuzzy_val) \"utils\" (call ValueMap getValueInterval))) "
@@ -1118,8 +1124,9 @@ public class JessInitializer {
      * @param r
      * @param xls
      */
-    private void loadCapabilityRules(Rete r, Workbook xls) {
+    private void loadCapabilityRules(Rete r, Workbook xls,String clp) {
         try {
+            r.batch(clp);
             for (Instrument instrument : EOSSDatabase.getInstruments()) {
                 String instrumentName = instrument.getName();
                 Sheet sh = xls.getSheet(instrumentName);
@@ -1130,14 +1137,13 @@ public class JessInitializer {
                         + ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) "
                         + " (not (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements no))) => "
                         + "(assert (CAPABILITIES::can-measure (instrument ?ins) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (data-rate-duty-cycle# nil) (power-duty-cycle# nil)(orbit-RAAN ?raan)"
-                        + "(in-orbit (str-cat ?typ \"-\" ?h \"-\" ?inc \"-\" ?raan)) (can-take-measurements yes) (reason \"by default\"))))";
+                        + "(in-orbit ?miss) (can-take-measurements yes) (reason \"by default\"))))";
                 r.eval(call);
 
-                String lhs1 = "(defrule CAPABILITIES::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name " + instrumentName + ") (Id ?id)(generated-measurements ?gm&nil)";
+                String lhs1 = "(defrule CAPABILITIES-GENERATE::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name " + instrumentName + ") (Id ?id)(generated-measurements ?gm&nil)";
                 String lhs2 = "";
                 String lhs3 = " (CAPABILITIES::can-measure (instrument " + instrumentName + ") (can-take-measurements yes) (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p)) => ";
-                String rhs1 = " (if (and (numberp ?dc-d) (numberp ?dc-d)) then (bind ?*science-multiplier* (min ?dc-d ?dc-p)) else (bind ?*science-multiplier* 1.0)) "
-                            + "(assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
+                String rhs1 = "(assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
                 String list_of_measurements = "";
                 String rhs2 = "";
                 for (int i = 0; i < nmeasurements; i++) {

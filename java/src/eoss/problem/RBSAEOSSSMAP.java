@@ -63,7 +63,7 @@ public class RBSAEOSSSMAP {
         args = new String[3];
         args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-        args[1] = "2";
+        args[1] = "3"; //mode
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
@@ -81,7 +81,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 2;
         properties.setInt("maxEvaluations", 100);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 0.8;
@@ -130,12 +130,12 @@ public class RBSAEOSSSMAP {
 
                     ArrayList<Variation> heuristics = new ArrayList();
                     //add domain-specific heuristics
-                    heuristics.add(new AddRandomToSmallSatellite(3));
-                    heuristics.add(new RemoveRandomFromLoadedSatellite(8));
-                    heuristics.add(new RemoveSuperfluous());
-                    heuristics.add(new ImproveOrbit());
+//                    heuristics.add(new AddRandomToSmallSatellite(3));
+//                    heuristics.add(new RemoveRandomFromLoadedSatellite(8));
+//                    heuristics.add(new RemoveSuperfluous());
+//                    heuristics.add(new ImproveOrbit());
                     heuristics.add(new RemoveInterference());
-                    heuristics.add(new AddSynergy());
+//                    heuristics.add(new AddSynergy());
                     //add domain-independent heuristics
 //                    heuristics.add(BitFlip);
 //                    heuristics.add(singlecross);
@@ -212,26 +212,6 @@ public class RBSAEOSSSMAP {
 //                }
 //                System.out.println("DONE");
 //                break;
-//            case 10: //use when you have data files you can load (maybe useful if computer restarts mid way through a run)
-//                POP_SIZE = 500;
-//                MAX_SEARCH_ITS = 2;
-//                
-//                params = new Params( path, "CRISP-ATTRIBUTES", "test","normal","search_heuristic_rules_smap_2");//FUZZY or CRISP
-//                ResultCollection loadedResCol = RM.loadResultCollectionFromFile(Params.path_save_results + "\\2015-01-07_06-14-26_test.rs");
-//                ArrayList<EOSSArchitecture> init_popul = loadedResCol.getPopulation();    //ArrayList<Architecture> init_pop = ResultIO.getInstance().loadResultCollectionFromFile(params.initial_pop).getPopulation();
-//                for (int i = 0;i<9;i++) {
-//                    params = new Params( path, "CRISP-ATTRIBUTES", "test","normal","search_heuristic_rules_smap_2");//FUZZY or CRISP
-//                    AE.init(numAE);
-//                    AE.evalMinMax();
-//                    ATE.setTerm_crit(new SearchOptions(POP_SIZE,MAX_SEARCH_ITS,0.5,0.1,0.5));
-//                    ATE.search_NSGA2();
-//                    System.out.println("PERF: " + ATE.getSp().toString());
-//                    ResultCollection c = new ResultCollection(AE.getResults());//
-//                    init_popul = c.getPopulation();
-//                    RM.saveResultCollection(c);
-//                    ATE.clear();
-//                    AE.clear();
-//                }
             default:
                 System.out.println("Choose a mode between 1 and 9");
         }
@@ -241,7 +221,7 @@ public class RBSAEOSSSMAP {
     public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, String evalMode, boolean explanation, int numCPU) {
         EOSSDatabase.getInstance(); //to initiate database
         Params params = new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
-        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation);
+        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation, true);
     }
 
     public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath) {

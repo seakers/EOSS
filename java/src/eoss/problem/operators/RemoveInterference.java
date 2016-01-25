@@ -84,9 +84,9 @@ public class RemoveInterference extends AbstractEOSSOperator {
      */
     private int checkNthOrderInterference(ArrayList<String> thepayload, Orbit orbit, int order) {
 
-        NDSM dsm = (NDSM) Params.all_dsms.get("EDSM" + order + "@" + orbit.getName());
+        NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
-        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("+");
+        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("-","-");
 
         //Find a missing interference from intreaction tree
         Iterator<Nto1pair> it = tm.keySet().iterator();

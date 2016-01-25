@@ -87,5 +87,44 @@ public final class EOSSDatabase {
     public static void removeBus(Bus bus) {
         EOSSDatabase.buses.remove(bus);
     }
+    
+    /**
+     * finds and returns the index of the given instrument
+     * @param instrument
+     * @return returns the index of the given instrument if found in Database. else returns -1;
+     */
+    public static int findInstrumentIndex(Instrument instrument){
+        for(int i=0; i<instruments.size(); i++){
+            if(instruments.get(i).equals(instrument))
+                return i;
+        }
+        return -1;
+    }
+    
+    /**
+     * finds and returns the index of the given orbit
+     * @param orbit
+     * @return returns the index of the given orbit if found in Database. else returns -1;
+     */
+    public static int findOrbitIndex(Orbit orbit){
+        for(int i=0; i<orbits.size(); i++){
+            if(orbits.get(i).equals(orbit))
+                return i;
+        }
+        return -1;
+    }
+    
+    /**
+     * finds and returns the index of the given instrument
+     * @param bus
+     * @return returns the index of the given instrument if found in Database. else returns -1;
+     */
+    public static int findBusIndex(Bus bus){
+        for(int i=0; i<buses.size(); i++){
+            if(buses.get(i).equals(bus))
+                return i;
+        }
+        return -1;
+    }
 
 }

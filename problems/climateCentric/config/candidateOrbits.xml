@@ -6,7 +6,7 @@
 		<type>LEO</type>
 		<inclination>polar</inclination><!-- in deg -->
 		<raan>NA</raan><!-- in deg -->
-		<period>97</period>
+		<period>5801.188861</period>
 		<meananomaly>0</meananomaly><!-- in deg -->
 		<eccentricity>0</eccentricity>
 		<argumentperigee>0</argumentperigee><!-- in deg -->
@@ -18,7 +18,7 @@
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>AM</raan><!-- in deg -->
-		<period>97</period>
+		<period>5801.188861</period>
 		<meananomaly>0</meananomaly><!-- in deg -->
 		<eccentricity>0</eccentricity>
 		<argumentperigee>0</argumentperigee><!-- in deg -->
@@ -30,7 +30,7 @@
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>DD</raan><!-- in deg -->
-		<period>97</period>
+		<period>5801.188861</period>
 		<meananomaly>0</meananomaly><!-- in deg -->
 		<eccentricity>0</eccentricity>
 		<argumentperigee>0</argumentperigee><!-- in deg -->
@@ -42,7 +42,7 @@
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>DD</raan><!-- in deg -->
-		<period>101</period>
+		<period>6052.370108</period>
 		<meananomaly>0</meananomaly><!-- in deg -->
 		<eccentricity>0</eccentricity>
 		<argumentperigee>0</argumentperigee><!-- in deg -->
@@ -54,7 +54,7 @@
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>PM</raan><!-- in deg -->
-		<period>101</period>
+		<period>6052.370108</period>
 		<meananomaly>0</meananomaly><!-- in deg -->
 		<eccentricity>0</eccentricity>
 		<argumentperigee>0</argumentperigee><!-- in deg -->

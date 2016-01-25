@@ -49,6 +49,8 @@ public class EOSSProblem extends AbstractProblem {
 
     private final boolean explanation;
 
+    private final boolean withSynergy;
+
     /**
      *
      * @param altnertivesForNumberOfSatellites
@@ -57,15 +59,18 @@ public class EOSSProblem extends AbstractProblem {
      * @param buses
      * @param type determines mode of evaluation (Fast, Capabilities or Slow)
      * @param explanation determines whether or not to attach the explanations
+     * @param withSynergy determines whether or not to evaluate the solutions
+     * with synergy rules.
      */
     public EOSSProblem(int[] altnertivesForNumberOfSatellites, ArrayList<Instrument> instruments,
-            ArrayList<Orbit> orbits, ArrayList<Bus> buses, String type, boolean explanation) {
+            ArrayList<Orbit> orbits, ArrayList<Bus> buses, String type, boolean explanation, boolean withSynergy) {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         this.type = type;
         this.resource = new Resource();
         this.explanation = explanation;
+        this.withSynergy = withSynergy;
     }
 
     /**
@@ -101,12 +106,7 @@ public class EOSSProblem extends AbstractProblem {
 //            evaluateCostEONRules(r, arch, qb); //compute cost
             evaluateCost(r, arch, qb);
 
-            String str = "";
-            for (Orbit orb : EOSSDatabase.getOrbits()) {
-                ArrayList<Instrument> payls = arch.getInstrumentsInOrbit(orb);
-                str = str + " " + orb + "{" + StringUtils.join(payls, ",") + "}";
-            }
-            System.out.println("Arch " + arch.toString() + " " + type + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + str);
+            System.out.println("Arch " + arch.toString() + " " + type + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -354,10 +354,10 @@ public class EOSSProblem extends AbstractProblem {
                         double dx = Double.parseDouble(inst.getProperty("dimension-x#"));
                         double dy = Double.parseDouble(inst.getProperty("dimension-y#"));
                         double dz = Double.parseDouble(inst.getProperty("dimension-z#"));
-                        payloadDimensions.set(0, Math.max(payloadDimensions.get(0),Math.max(Math.max(dx, dy), dz)));
-                        payloadDimensions.set(1, payloadDimensions.get(1) + dx*dy);
-                        payloadDimensions.set(2, Math.max(payloadDimensions.get(2),dz));
-                        
+                        payloadDimensions.set(0, Math.max(payloadDimensions.get(0), Math.max(Math.max(dx, dy), dz)));
+                        payloadDimensions.set(1, payloadDimensions.get(1) + dx * dy);
+                        payloadDimensions.set(2, Math.max(payloadDimensions.get(2), dz));
+
                         //manifest the instrument
                         String callManifestInstrument = "(assert (CAPABILITIES::Manifested-instrument ";
                         Iterator iter = inst.getProperties().iterator();
@@ -366,7 +366,7 @@ public class EOSSProblem extends AbstractProblem {
                             callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
                         }
                         callManifestInstrument += "(flies-in " + orbit.getName() + ")";
-                        callManifestInstrument += "(orbit-altitude# " + String.valueOf(orbit.getAltitude()) + ")";
+                        callManifestInstrument += "(orbit-altitude# " + String.valueOf((int)orbit.getAltitude()) + ")";
                         callManifestInstrument += "(orbit-inclination " + orbit.getInclination() + ")";
                         callManifestInstrument += "))";
                         r.eval(callManifestInstrument);
@@ -375,8 +375,8 @@ public class EOSSProblem extends AbstractProblem {
                     call += "(payload-mass# " + String.valueOf(payloadMass) + ")";
                     call += "(payload-power# " + String.valueOf(characteristicPower) + ")";
                     call += "(payload-data-rate# " + String.valueOf(dataRate) + ")";
-                    double perOrbit = (dataRate*1.2*orbit.getPeriod())/(1024*8); //(GByte/orbit) 20% overhead
-                    call += "(payload-dimensions# " + String.valueOf(payloadDimensions.get(0)) + " " + String.valueOf(payloadDimensions.get(1)) + " " +  String.valueOf(payloadDimensions.get(2)) + ")";
+                    double perOrbit = (dataRate * 1.2 * orbit.getPeriod()) / (1024 * 8); //(GByte/orbit) 20% overhead
+                    call += "(payload-dimensions# " + String.valueOf(payloadDimensions.get(0)) + " " + String.valueOf(payloadDimensions.get(1)) + " " + String.valueOf(payloadDimensions.get(2)) + ")";
                     call += "(sat-data-rate-per-orbit# " + String.valueOf(perOrbit) + ")";
                     call += "(num-of-sats-per-plane# " + String.valueOf(arch.getNumberOfSatellitesPerOrbit()) + ")))";
                     call += "(assert (SYNERGY::cross-registered-instruments "
@@ -434,24 +434,36 @@ public class EOSSProblem extends AbstractProblem {
 //                while (iter.hasNext()) {
 //                    r.removeDefrule(iter.next());
 //                }
-                 r.setFocus("FUZZY-CAPABILITY-ATTRIBUTE");
+                r.setFocus("FUZZY-CAPABILITY-ATTRIBUTE");
+                r.run();
+
+                //checks to see if a manifested-instrument cannot take a measurement or upgrades or downgrades it capabilities depending on LHS of rules in CAPABILITIES-CHECK
+                r.setFocus("CAPABILITIES-CHECK");
                 r.run();
                 
+                //computes values for some slots in CAPABILITIES::Manifested-instrument
                 r.setFocus("CAPABILITIES");
                 r.run();
-                
+
+                //generates the measurement capabilities (REQUIREMENT::Measurement)
+                r.setFocus("CAPABILITIES-GENERATE");
+                r.run();
+
                 if (type.equalsIgnoreCase("capabilities")) {
                     //This method only computes capabilities
                     ArrayList<Fact> capabilities = qb.makeQuery("REQUIREMENTS::Measurement");
                     capabilities.addAll(qb.makeQuery("SYNERGIES::cross-registered"));
                     capabilities.addAll(qb.makeQuery("SYNERGIES::NUM-CHANNELS"));
                     arch.setCapabilities(capabilities);
-                    System.out.println("Capabilities computed for arch " + arch.toFactString());
+                    System.out.println("Capabilities computed for arch " + arch.toString());
                     return;
                 }
-                
-                r.setFocus("SYNERGY");
-                r.run();
+
+                //This synergy rule call creates new measurement facts that may arise from interactions between instruments 
+                if (withSynergy) {
+                    r.setFocus("SYNERGY");
+                    r.run();
+                }
             }
 
             //Revisit times
@@ -487,12 +499,14 @@ public class EOSSProblem extends AbstractProblem {
 
             r.setFocus("FUZZY-REQUIREMENT-ATTRIBUTE");
             r.run();
-            
-            r.setFocus("SYNERGY");
-            r.run();
 
-            r.setFocus("SYNERGY-ACROSS-ORBITS");
-            r.run();
+            if (withSynergy) {
+                r.setFocus("SYNERGY");
+                r.run();
+
+                r.setFocus("SYNERGY-ACROSS-ORBITS");
+                r.run();
+            }
 
             if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
                 r.setFocus("FUZZY-REQUIREMENTS");
