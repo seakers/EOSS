@@ -61,9 +61,10 @@ public class RBSAEOSSSMAP {
 
         //PATH
         args = new String[3];
-        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+//        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-        args[1] = "2";
+         args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
+        args[1] = "1";
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
@@ -81,10 +82,10 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
-        properties.setInt("maxEvaluations", 100);
+        int popSize = 200;
+        properties.setInt("maxEvaluations", 5000);
         properties.setInt("populationSize", popSize);
-        double crossoverProbability = 0.8;
+        double crossoverProbability = 1.0;
         double mutationProbability = 0.01;
         Variation singlecross = new OnePointCrossover(crossoverProbability);
         Variation BitFlip = new BitFlip(mutationProbability);
@@ -111,13 +112,14 @@ public class RBSAEOSSSMAP {
                 Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, GAVariation,
                         initialization);
 
-                runSearch(nsga2, properties, path);
+                runSearch(nsga2, properties, path + File.separator + "result");
 
                 break;
             case 2: //Use epsilonMOEA
                 Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
 
-                runSearch(eMOEA, properties, path);
+                runSearch(eMOEA, properties, path + File.separator + "result");
+                break;
 
             case 3://Hyperheuristic search
                 IRewardDefinition creditAssignment;
@@ -145,7 +147,7 @@ public class RBSAEOSSSMAP {
 
                     HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                             initialization, selector, creditAssignment, injectionRate, lagWindow);
-                    InstrumentedAlgorithm instAlg = runSearch(hemoea, properties, path);
+                    InstrumentedAlgorithm instAlg = runSearch(hemoea, properties, path + File.separator + "result");
                 } catch (IOException ex) {
                     Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -266,7 +268,7 @@ public class RBSAEOSSSMAP {
         System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
 
         ResultIO resio = new ResultIO();
-        String filename = savePath + File.separator + "result";
+        String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" +System.currentTimeMillis();
         resio.saveMetrics(instAlgorithm, filename);
         resio.savePopulation(instAlgorithm.getResult(), filename);
         return instAlgorithm;
