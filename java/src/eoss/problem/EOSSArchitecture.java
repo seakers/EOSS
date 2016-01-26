@@ -64,11 +64,15 @@ public class EOSSArchitecture extends Architecture {
         super(Arrays.asList(new ArchitecturalDecision[]{nSatellitesChoice, inst2OrbAssingment}), numberOfObjectives);
     }
 
+    /**
+     * makes a copy soltion from the input solution 
+     * @param solution 
+     */
     public EOSSArchitecture(Solution solution) {
         super(solution);
         if (solution instanceof EOSSArchitecture) {
-            this.combine = (Combining) solution.getVariable(0);
-            this.assignment = (Assigning) solution.getVariable(1);
+            this.combine = (Combining)this.getVariable(0);
+            this.assignment = (Assigning)this.getVariable(1);
         } else {
             throw new IllegalArgumentException("Expected type EOSSArchitecture class. Found " + solution.getClass().getSimpleName());
         }

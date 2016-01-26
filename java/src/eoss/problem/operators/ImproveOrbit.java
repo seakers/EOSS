@@ -70,7 +70,6 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         @Override
         public int compare(Map.Entry<String, Double> a1, Map.Entry<String, Double> a2) {
             return a1.getValue().compareTo(a2.getValue());
-
         }
     };
 

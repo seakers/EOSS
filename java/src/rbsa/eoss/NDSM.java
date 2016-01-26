@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package rbsa.eoss;
 
 /**
@@ -11,18 +10,22 @@ package rbsa.eoss;
  */
 import java.util.HashMap;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class NDSM implements Serializable {
     private static final long serialVersionUID = -7003149292546882129L;
-    
+
     //private double[][] matrix;
     private String[] elements;
     private int numel;
     private HashMap<Nto1pair,Double> map;
     private HashMap<String,Integer> indices;
     private String description;
-    
+
     public NDSM(String[] el,String desc) {
         elements = el;
         numel = el.length;
@@ -30,14 +33,14 @@ public class NDSM implements Serializable {
         indices = new  HashMap<String,Integer>();
         for(int i = 0;i<numel;i++) {
             indices.put(el[i],i);
-        }
+    }
         description = desc;
     }
 
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
     }
@@ -61,26 +64,23 @@ public class NDSM implements Serializable {
         }
         return ret;
     }
-    
+
     /**
-     * 
+     *
      * @param operator "+" for filter in keeping positive values. "0" filter for keeping 0 values. "-" for keeping negative values
-     * @param ascending "+" for returning list in ascending order. "-"for returning list in descending order
-     * @return 
+     * @return an sorted Treeset of interactions in ascending order of the interaction values
      */
-    public TreeMap<Nto1pair,Double> getAllInteractions(String operator,String ascending) {
-        HashMap<Nto1pair,Double> unsorted_map = new HashMap<Nto1pair,Double>();
-        ValueComparator2 bvc =  new ValueComparator2(map,ascending);
-        TreeMap<Nto1pair,Double> sorted_map = new TreeMap<Nto1pair,Double>(bvc);
-        
+    public TreeSet<Interaction> getAllInteractions(String operator) {
+        HashSet<Interaction> unsorted_map = new HashSet<>();
         for (Nto1pair key : map.keySet()) {
-            Double val = map.get(key);
+            double val = map.get(key);
             if ((val==0.0 && operator.equalsIgnoreCase("0")) || (val>0.0 && operator.equalsIgnoreCase("+")) || (val<0.0 && operator.equalsIgnoreCase("-"))) {
-                unsorted_map.put(key,val);
+                unsorted_map.add(new Interaction(key,val));
             }
         }
-        sorted_map.putAll(unsorted_map);
-        return sorted_map;
+        TreeSet<Interaction> out = new TreeSet(new InteractionComparator());
+        out.addAll(unsorted_map);
+        return out;
     }
 
 
@@ -91,10 +91,10 @@ public class NDSM implements Serializable {
     public void setElements(String[] elements) {
         this.elements = elements;
     }
-
+    
     public int getNumel() {
         return numel;
-    }
+        }
 
     public void setNumel(int numel) {
         this.numel = numel;
@@ -102,7 +102,7 @@ public class NDSM implements Serializable {
 
     public HashMap<Nto1pair, Double> getMap() {
         return map;
-    }
+}
 
     public void setMap(HashMap<Nto1pair, Double> map) {
         this.map = map;

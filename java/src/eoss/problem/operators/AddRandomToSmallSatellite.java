@@ -7,6 +7,7 @@ package eoss.problem.operators;
 
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSDatabase;
+import eoss.problem.Instrument;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -22,14 +23,14 @@ public class AddRandomToSmallSatellite extends AbstractEOSSOperator {
     /**
      * the largest number of instruments that defines a small
      */
-    private final int maxSize;
+    private final double maxSize;
 
     /**
      *
-     * @param maxSize the largest number of instruments that defines a small
+     * @param maxSize the largest instrument mass (in kg) that defines a small
      * satellite
      */
-    public AddRandomToSmallSatellite(int maxSize) {
+    public AddRandomToSmallSatellite(double maxSize) {
         this.maxSize = maxSize;
     }
 
@@ -40,9 +41,26 @@ public class AddRandomToSmallSatellite extends AbstractEOSSOperator {
 
     @Override
     protected EOSSArchitecture evolve(EOSSArchitecture child) {
-        //Find random orbit with at most maxSize instruments
-        int randOrbIndex = getRandomOrbitWithAtMostNInstruments(child, maxSize);
-        if(randOrbIndex == -1)
+        //Find random orbit with less than maxSize mass of instruments
+        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
+        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+            orbitIndex.add(i);
+        }
+        Collections.shuffle(orbitIndex);//this sorts orbits in random order
+        
+        int randOrbIndex = -1;
+        for(Integer j : orbitIndex){
+            ArrayList<Integer> payload = child.getInstrumentsInOrbit(j);
+            double payloadMass = 0;
+            for(Integer k : payload){
+                payloadMass += Double.parseDouble(EOSSDatabase.getInstruments().get(k).getProperty("mass#"));
+            }
+            if(payloadMass >= maxSize){
+                randOrbIndex = j;
+                break;
+            }
+        }
+        if(randOrbIndex == -1) //if this condition occurs then no orbit has a small satellite
             return child;
         
         //Find a random instrument that has not yet been assigned to the random orbit found above 

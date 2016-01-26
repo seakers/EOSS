@@ -13,7 +13,10 @@ import eoss.problem.Params;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.List;
+import java.util.TreeSet;
+import org.moeaframework.core.ParallelPRNG;
+import rbsa.eoss.Interaction;
 import rbsa.eoss.NDSM;
 import rbsa.eoss.Nto1pair;
 
@@ -28,6 +31,19 @@ import rbsa.eoss.Nto1pair;
  */
 public class AddSynergy extends AbstractEOSSOperator {
 
+    /**
+     * The subset size relates to how many of the top costly superfluous
+     * interactions the heuristics should select randomly from
+     */
+    private final int subsetSize;
+
+    private final ParallelPRNG pprng;
+
+    public AddSynergy(int subsetSize) {
+        this.subsetSize = subsetSize;
+        this.pprng = new ParallelPRNG();
+    }
+
     @Override
     public int getArity() {
         return 1;
@@ -37,8 +53,9 @@ public class AddSynergy extends AbstractEOSSOperator {
     protected EOSSArchitecture evolve(EOSSArchitecture child) {
         //Find a random non-empty orbit and its payload 
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
-        if(randOrbitIndex == -1)
+        if (randOrbitIndex == -1) {
             return child;
+        }
         Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
 
         ArrayList<String> thepayload = new ArrayList<>();
@@ -61,35 +78,45 @@ public class AddSynergy extends AbstractEOSSOperator {
     }
 
     /**
-     * Checks for opportunities of missed synergies. 
+     * Checks for opportunities of missed synergies.
      *
      * @param thepayload the payload already assigned to the orbit
      * @param orbit the orbit to examine for missed synergies
-     * @param order the order is how many instruments should be considered at once.
+     * @param order the order is how many instruments should be considered at
+     * once.
      * @return
      */
     private int checkNthOrderSynergy(ArrayList<String> thepayload, Orbit orbit, int order) {
         NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
-        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("+","+");
+        TreeSet<Interaction> stm = dsm.getAllInteractions("+");
 
-        //Find a missing synergy from intreaction tree
-        Iterator<Nto1pair> it = tm.keySet().iterator();
-        int i;
-        for (i = 0; i < tm.size(); i++) {
-            //get next strongest interaction
-            Nto1pair nt = it.next();
+        //find all superfluous interactions that apply to this spacecraft
+        ArrayList<String> missingSynergisticInstrument = new ArrayList();
+        Iterator<Interaction> iter = stm.descendingIterator();
+        while (iter.hasNext()) {
+            Interaction key = iter.next();
+            ArrayList<String> al = new ArrayList<>();
+            al.addAll(Arrays.asList(key.getNtpair().getBase()));
+            al.add(key.getNtpair().getAdded());
 
-            //if architecture already contains that interaction, OR if does not contain N-1 elements from the interaction continue
-            ArrayList<String> al = new ArrayList<>(Arrays.asList(nt.getBase()));
-            al.add(nt.getAdded());
             int missingIndex = containsAllButOne(thepayload, al);
             if (!thepayload.containsAll(al) && missingIndex != -1) { //otherwise find missing element and return;
-                return findInstrument(al.get(missingIndex));
+                missingSynergisticInstrument.add(al.get(missingIndex));
             }
         }
-
-        return -1;
+        if (missingSynergisticInstrument.isEmpty()) {
+            return -1;
+        } else {
+            List<String> subset;
+            if(missingSynergisticInstrument.size()<subsetSize){
+                subset = missingSynergisticInstrument;
+            }else{
+                subset = missingSynergisticInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of synergistic interaction
+            }
+            String chosenInstrument = subset.get(pprng.nextInt(subset.size()));
+            return findInstrument(chosenInstrument);
+        }
     }
 
     /**

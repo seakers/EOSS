@@ -13,7 +13,10 @@ import eoss.problem.Params;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.List;
+import java.util.TreeSet;
+import org.moeaframework.core.ParallelPRNG;
+import rbsa.eoss.Interaction;
 import rbsa.eoss.NDSM;
 import rbsa.eoss.Nto1pair;
 
@@ -22,6 +25,23 @@ import rbsa.eoss.Nto1pair;
  * @author nozomihitomi
  */
 public class RemoveSuperfluous extends AbstractEOSSOperator {
+
+    /**
+     * The subset size relates to how many of the top costly superfluous
+     * interactions the heuristics should select randomly from
+     */
+    private final int subsetSize;
+
+    private final ParallelPRNG pprng;
+
+    /**
+     *
+     * @param subsetSize
+     */
+    public RemoveSuperfluous(int subsetSize) {
+        this.subsetSize = subsetSize;
+        this.pprng = new ParallelPRNG();
+    }
 
     @Override
     public int getArity() {
@@ -32,8 +52,9 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
     protected EOSSArchitecture evolve(EOSSArchitecture child) {
         //Find a random non-empty orbit and its payload 
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
-        if(randOrbitIndex == -1)
+        if (randOrbitIndex == -1) {
             return child;
+        }
         Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
 
         ArrayList<String> thepayload = new ArrayList<>();
@@ -49,6 +70,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
             extraInstrumentIndex = checkNthOrderSuperfluous(thepayload, randOrbit, 3);
         }
 
+        //If a superfluous interaction exists, remove it
         if (extraInstrumentIndex != -1) {
             child.removeInstrumentFromOrbit(extraInstrumentIndex, randOrbitIndex);
         }
@@ -56,7 +78,8 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
     }
 
     /**
-     * Checks for opportunities of removing a superfluous instrument that provides redundant capabilities.
+     * Checks for opportunities of removing a superfluous instrument that
+     * provides redundant capabilities.
      *
      * @param thepayload the payload already assigned to the orbit
      * @param orbit the orbit to examine for opportunity
@@ -66,26 +89,56 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
      * superfluous interaction. Else -1;
      */
     private int checkNthOrderSuperfluous(ArrayList<String> thepayload, Orbit orbit, int order) {
-        NDSM dsm = (NDSM) Params.all_dsms.get("RDSM" + order + "@" + orbit.getName());
+        NDSM rdsm = (NDSM) Params.all_dsms.get("RDSM" + order + "@" + orbit.getName());
+        TreeSet<Interaction> rtm = rdsm.getAllInteractions("0");
+        if (rtm.isEmpty()) {
+            return -1;
+        }
 
-        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("0","+");
-
-        //Find a missing interference from intreaction tree
-        Iterator<Nto1pair> it = tm.keySet().iterator();
-        int i;
-        for (i = 0; i < tm.size(); i++) {
-            //get next strongest interaction
-            Nto1pair nt = it.next();
-
-            //if architecture contains the interaction
-            ArrayList<String> al = new ArrayList<>(Arrays.asList(nt.getBase()));
-            al.add(nt.getAdded());
+        //find all superfluous interactions that apply to this spacecraft
+        ArrayList<Nto1pair> relevantInteractions = new ArrayList();
+        Iterator<Interaction> iter = rtm.iterator();
+        while (iter.hasNext()) {
+            Interaction key = iter.next();
+            ArrayList<String> al = new ArrayList<>();
+            al.addAll(Arrays.asList(key.getNtpair().getBase()));
+            al.add(key.getNtpair().getAdded());
             if (thepayload.containsAll(al)) {
-                return findInstrument(nt.getAdded());
+                relevantInteractions.add(key.getNtpair());
+            }
+        }
+        if(relevantInteractions.isEmpty())
+            return -1;
+
+        //now search for the cost of these superfluous interactions
+        NDSM edsm = (NDSM) Params.all_dsms.get("EDSM" + order + "@" + orbit.getName());
+        TreeSet<Interaction> etm = edsm.getAllInteractions("+");
+
+        //Get added cost of all superfluous interactions
+        ArrayList<Interaction> costRTM = new ArrayList<>();
+        Iterator<Interaction> iter2 = etm.descendingIterator(); //start with most expensive interactions
+        while (iter2.hasNext()) {
+            Interaction ntkey = iter2.next();
+            if (relevantInteractions.contains(ntkey.getNtpair())) {
+                costRTM.add(ntkey);
             }
         }
 
-        return -1;
+        //costRTM can have negative values (TODO check why) so it may be empty
+        if (!costRTM.isEmpty()) {
+            List<Interaction> subset;
+            if (costRTM.size() > subsetSize) {
+                //set is sorted is in descending order so take the most expensive interactions
+                subset = costRTM.subList(0, subsetSize);
+            } else {
+                subset = costRTM;
+            }
+            Interaction randCostInteraction = subset.get(pprng.nextInt(subset.size()));
+            return findInstrument(randCostInteraction.getNtpair().getAdded());
+        } else {
+            Nto1pair randpair= relevantInteractions.get(pprng.nextInt(relevantInteractions.size()));
+            return findInstrument(randpair.getAdded());
+        }
     }
 
 }
