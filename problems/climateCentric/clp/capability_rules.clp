@@ -3,7 +3,7 @@
 ;; ***************************
 
 
-(defrule CAPABILITIES::passive-optical-instruments-cannot-measure-in-dark
+(defrule CAPABILITIES-CHECK::passive-optical-instruments-cannot-measure-in-dark
     "Passive optical instruments cannot take their measurements in DD RAANs"
     (declare (salience 10))
     ?c <- (CAPABILITIES::can-measure (instrument ?ins) (orbit-RAAN DD) (can-take-measurements yes) )
@@ -14,7 +14,7 @@
     (modify ?c (can-take-measurements no) (reason "Passive optical instruments cannot take their measurements in DD RAANs") )
     )
 
-(defrule CAPABILITIES::chemistry-instruments-prefer-PM-orbits-effect-on-science-tropo
+(defrule CAPABILITIES-CHECK::chemistry-instruments-prefer-PM-orbits-effect-on-science-tropo
     "Decrease sensitivity of chemistry instruments flying in AM orbits"
     (declare (salience 10))
     ?i <- (CAPABILITIES::Manifested-instrument (Name ?ins) (Concept ?c) (orbit-RAAN AM) (sensitivity-in-low-troposphere-PBL High) )
@@ -27,7 +27,7 @@
     (modify ?i (sensitivity-in-low-troposphere-PBL Low) ) 
     )
 
-(defrule CAPABILITIES::chemistry-instruments-prefer-PM-orbits-effect-on-science-strato
+(defrule CAPABILITIES-CHECK::chemistry-instruments-prefer-PM-orbits-effect-on-science-strato
     "Decrease sensitivity of chemistry instruments flying in AM orbits"
     (declare (salience 10))
     ?i <- (CAPABILITIES::Manifested-instrument (Name ?ins) (Concept ?c) (orbit-RAAN AM) (sensitivity-in-upper-troposphere-and-stratosphere High) )
@@ -40,7 +40,7 @@
     (modify ?i (sensitivity-in-upper-troposphere-and-stratosphere Low) ) 
     )
 
-(defrule CAPABILITIES::hires-passive-optical-imagers-prefer-AM-orbits-effect-on-science
+(defrule CAPABILITIES-CHECK::hires-passive-optical-imagers-prefer-AM-orbits-effect-on-science
     "Passive optical all purpose hi res imagers such as Landsat or ASTER must fly in AM orbits to decrease cloudiness"
     (declare (salience 10))
     ?c <- (CAPABILITIES::can-measure (instrument ?ins) (orbit-RAAN PM) (can-take-measurements yes) )
@@ -51,7 +51,7 @@
     (modify ?c (can-take-measurements no) (reason "Passive optical all purpose hi res imagers such as Landsat or ASTER must fly in AM orbits to decrease cloudiness"))
     )
 
-(defrule CAPABILITIES::image-distortion-at-low-altitudes-in-side-looking-instruments
+(defrule CAPABILITIES-CHECK::image-distortion-at-low-altitudes-in-side-looking-instruments
     "Passive optical instruments cannot take their measurements in DD RAANs"
     (declare (salience 10))
     ?c <- (CAPABILITIES::can-measure (instrument ?ins) (orbit-altitude# ?h&~nil&:(<= ?h 400)) (can-take-measurements yes) )
@@ -61,7 +61,7 @@
     (modify ?c (can-take-measurements no) (reason "Side-looking instruments suffer from image distortion at low altitudes") )
     )
 
-(defrule CAPABILITIES::two-lidars-at-same-frequency-cannot-work
+(defrule CAPABILITIES-CHECK::two-lidars-at-same-frequency-cannot-work
     "Two lidars at same frequency can interfere with each other"
     (declare (salience 10))
     ?l1 <- (CAPABILITIES::can-measure (instrument ?ins1) (can-take-measurements yes) )
@@ -75,7 +75,7 @@
     (modify ?l2 (can-take-measurements no) (reason "Two lidars at same frequency can interfere with each other") )
     )
 
-(defrule CAPABILITIES::resource-limitations-datarate
+(defrule CAPABILITIES-CHECK::resource-limitations-datarate
     (declare (salience 10))
     ?l1 <- (CAPABILITIES::can-measure (instrument ?ins1) (in-orbit ?miss) (can-take-measurements yes) (data-rate-duty-cycle# nil) )
     ?i1 <- (CAPABILITIES::Manifested-instrument (Name ?ins1&~nil) (flies-in ?miss&~nil) )
@@ -87,7 +87,7 @@
     ;(if (< ?dc 1.0) then (printout t "resource-limitations-datarate " ?ins1 " dc = " ?dc crlf))
     )
 
-(defrule CAPABILITIES::resource-limitations-power
+(defrule CAPABILITIES-CHECK::resource-limitations-power
     (declare (salience 10))
     ?l1 <- (CAPABILITIES::can-measure (instrument ?ins1) (in-orbit ?miss) (can-take-measurements yes) (power-duty-cycle# nil) )
 	?i1 <- (CAPABILITIES::Manifested-instrument (Name ?ins1&~nil) (flies-in ?miss&~nil) )
@@ -100,7 +100,7 @@
     )
         
 
-(defrule CAPABILITIES::cryospheric-instruments-want-polar-orbits
+(defrule CAPABILITIES-CHECK::cryospheric-instruments-want-polar-orbits
     "If a cryospheric instrument is flown on a non polar orbit then 
     it loses coverage of the polar regions"
     

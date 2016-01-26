@@ -65,7 +65,6 @@ public class Params {
     public static String explanation_rules_clp;//Used
     public static String fuzzy_attribute_clp;
     public static String value_aggregation_clp;
-    public static String requirement_satisfaction_clp;
     public static String cost_estimation_rules_clp; // used
     public static String fuzzy_cost_estimation_rules_clp; //used
     public static String mass_budget_rules_clp;
@@ -188,9 +187,9 @@ public class Params {
         orbit_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("orbit_rules_clp");
         synergy_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("synergy_rules_clp");//Used
         explanation_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("explanation_rules_clp");//Used
+        capability_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("capability_rules_clp");//Used
         fuzzy_attribute_clp = path + File.separator + "clp" + File.separator + props.getProperty("fuzzy_attribute_clp");
         value_aggregation_clp = path + File.separator + "clp" + File.separator + props.getProperty("value_aggregation_clp");
-        requirement_satisfaction_clp = path + File.separator + "clp" + File.separator + props.getProperty("requirement_satisfaction_clp");
         cost_estimation_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("cost_estimation_rules_clp"); //Used
         fuzzy_cost_estimation_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("fuzzy_cost_estimation_rules_clp"); //Used
         mass_budget_rules_clp = path + File.separator + "clp" + File.separator + props.getProperty("mass_budget_rules_clp");

@@ -4,6 +4,7 @@
  */
 package rbsa.eoss;
 
+import eoss.problem.Instrument;
 import org.apache.commons.lang3.StringUtils;
 import org.paukov.combinatorics.ICombinatoricsVector;
 import java.io.Serializable;
@@ -14,9 +15,10 @@ import java.util.ArrayList;
  * @author Ana-Dani
  */
 public class Nto1pair implements Serializable {
+    private static final long serialVersionUID = -4233668079856223346L;
     private String[] base;
     private String added;
-
+    
     public Nto1pair(String[] base, String added) {
         this.base = base;
         this.added = added;

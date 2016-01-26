@@ -10,6 +10,7 @@ import architecturalpattern.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
 
 /**
@@ -218,72 +219,75 @@ public class EOSSArchitecture extends Architecture {
     public ArrayList<Instrument> getInstrumentsInOrbit(Orbit orb) {
         ArrayList<Instrument> payloads = new ArrayList<>();
         int orbIndex;
-        for (orbIndex = 0;  orbIndex< EOSSDatabase.getOrbits().size(); orbIndex++) {
+        for (orbIndex = 0; orbIndex < EOSSDatabase.getOrbits().size(); orbIndex++) {
             if (orb.equals(EOSSDatabase.getOrbits().get(orbIndex))) {
                 break;
             }
         }
-        
+
         //loop over the instruments
-        for (int i = 0; i<EOSSDatabase.getInstruments().size(); i++) {
-            if(assignment.isConnected(i, orbIndex))
+        for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+            if (assignment.isConnected(i, orbIndex)) {
                 payloads.add(EOSSDatabase.getInstruments().get((i)));
+            }
         }
         return payloads;
     }
-    
+
     /**
      * Gets the indices of the instruments assigned to a specified orbit
      *
      * @param orbIndex the index of the orbit as it is in the EOSSDatabase
      * @return the indices of the instruments as they are in the EOSSDatabase
      */
-    public ArrayList<Integer> getInstrumentsInOrbit(int orbIndex) {    
+    public ArrayList<Integer> getInstrumentsInOrbit(int orbIndex) {
         ArrayList<Integer> payloads = new ArrayList<>();
         //loop over the instruments
-        for (int i = 0; i<EOSSDatabase.getInstruments().size(); i++) {
-            if(assignment.isConnected(i, orbIndex))
+        for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+            if (assignment.isConnected(i, orbIndex)) {
                 payloads.add(i);
+            }
         }
         return payloads;
     }
-    
+
     /**
      * adds the instrument to the orbit
      *
-     * @param instrumentIndex the index of the instrument as it is in the EOSSDatabase
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
      * @param orbIndex the index of the orbit as it is in the EOSSDatabase
-     * @return true if adding the instrument to orbit changes the architecture decision
+     * @return true if adding the instrument to orbit changes the architecture
+     * decision
      */
-    public boolean addInstrumentToOrbit(int instrumentIndex, int orbIndex) {    
+    public boolean addInstrumentToOrbit(int instrumentIndex, int orbIndex) {
         boolean out = !assignment.isConnected(instrumentIndex, orbIndex);
         assignment.connect(instrumentIndex, orbIndex);
         return out;
     }
-    
+
     /**
-     *  removes the instrument from the orbit
+     * removes the instrument from the orbit
      *
-     * @param instrumentIndex the index of the instrument as it is in the EOSSDatabase
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
      * @param orbIndex the index of the orbit as it is in the EOSSDatabase
-     * @return true if removing the instrument to orbit changes the architecture decision
+     * @return true if removing the instrument to orbit changes the architecture
+     * decision
      */
-    public boolean removeInstrumentFromOrbit(int instrumentIndex, int orbIndex) {    
+    public boolean removeInstrumentFromOrbit(int instrumentIndex, int orbIndex) {
         boolean out = assignment.isConnected(instrumentIndex, orbIndex);
         assignment.disconnect(instrumentIndex, orbIndex);
         return out;
     }
-    
-    public String toFactString() {
 
-        String ret = "(MANIFEST::ARCHITECTURE (num-sats-per-plane " + this.getTotalNumberOfSatellites() + ") (bitString " + this.getVariable(1).toString() + ")";
-        if (getObjectives() != null) {
-            double[] objs = getObjectives();
-            ret = ret + " (benefit " + objs[0] + " ) (lifecycle-cost " + objs[1] + ")";
+    public String payloadToString() {
+        String str = String.valueOf(this.getNumberOfSatellitesPerOrbit()) + " x ";
+        for (Orbit orb : EOSSDatabase.getOrbits()) {
+            ArrayList<Instrument> payls = this.getInstrumentsInOrbit(orb);
+            str = str + " " + orb + "{" + StringUtils.join(payls, ",") + "}";
         }
-        ret = ret + ")";
-        return ret;
-
+        return str;
     }
 
     //Utils

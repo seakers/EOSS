@@ -243,7 +243,7 @@ public class RBSAEOSSSMAP {
     public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, String evalMode, boolean explanation, int numCPU) {
         EOSSDatabase.getInstance(); //to initiate database
         Params params = new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
-        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation);
+        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation, true);
     }
 
     public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath) {
@@ -269,8 +269,9 @@ public class RBSAEOSSSMAP {
 
         ResultIO resio = new ResultIO();
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" +System.currentTimeMillis();
-        resio.saveMetrics(instAlgorithm, filename);
+        resio.saveSearchMetrics(instAlgorithm, filename);
         resio.savePopulation(instAlgorithm.getResult(), filename);
+        resio.saveObjectives(instAlgorithm.getResult(), filename);
         return instAlgorithm;
     }
 }

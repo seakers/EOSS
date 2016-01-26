@@ -71,7 +71,7 @@ public class AddSynergy extends AbstractEOSSOperator {
     private int checkNthOrderSynergy(ArrayList<String> thepayload, Orbit orbit, int order) {
         NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
-        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("+");
+        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("+","+");
 
         //Find a missing synergy from intreaction tree
         Iterator<Nto1pair> it = tm.keySet().iterator();

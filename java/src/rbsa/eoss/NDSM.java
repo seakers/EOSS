@@ -14,6 +14,8 @@ import java.io.Serializable;
 import java.util.TreeMap;
 
 public class NDSM implements Serializable {
+    private static final long serialVersionUID = -7003149292546882129L;
+    
     //private double[][] matrix;
     private String[] elements;
     private int numel;
@@ -59,9 +61,16 @@ public class NDSM implements Serializable {
         }
         return ret;
     }
-    public TreeMap<Nto1pair,Double> getAllInteractions(String operator) {
+    
+    /**
+     * 
+     * @param operator "+" for filter in keeping positive values. "0" filter for keeping 0 values. "-" for keeping negative values
+     * @param ascending "+" for returning list in ascending order. "-"for returning list in descending order
+     * @return 
+     */
+    public TreeMap<Nto1pair,Double> getAllInteractions(String operator,String ascending) {
         HashMap<Nto1pair,Double> unsorted_map = new HashMap<Nto1pair,Double>();
-        ValueComparator2 bvc =  new ValueComparator2(map);
+        ValueComparator2 bvc =  new ValueComparator2(map,ascending);
         TreeMap<Nto1pair,Double> sorted_map = new TreeMap<Nto1pair,Double>(bvc);
         
         for (Nto1pair key : map.keySet()) {

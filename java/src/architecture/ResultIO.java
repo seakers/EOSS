@@ -36,7 +36,7 @@ public class ResultIO implements Serializable {
      * @param instAlgorithm
      * @param filename filename including the path
      */
-    public void saveMetrics(InstrumentedAlgorithm instAlgorithm, String filename) {
+    public void saveSearchMetrics(InstrumentedAlgorithm instAlgorithm, String filename) {
         Accumulator accum = instAlgorithm.getAccumulator();
 
         File results = new File(filename + ".res");
@@ -108,7 +108,7 @@ public class ResultIO implements Serializable {
         System.out.println("Saving population");
 
         try {
-            PopulationIO.write(new File(filename + ".obj"), pop);
+            PopulationIO.write(new File(filename + ".pop"), pop);
         } catch (IOException ex) {
             Logger.getLogger(ResultIO.class.getName()).log(Level.SEVERE, null, ex);
         }

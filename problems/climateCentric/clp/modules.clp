@@ -4,6 +4,8 @@
 (defmodule FUZZY)
 (defmodule ASSIMILATION)
 (defmodule CAPABILITIES)
+(defmodule CAPABILITIES-GENERATE)
+(defmodule CAPABILITIES-CHECK)
 (defmodule SATISFACTION)
 (defmodule SYNERGY)
 (defmodule SYNERGY-ACROSS-ORBITS)
