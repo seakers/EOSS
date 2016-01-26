@@ -74,17 +74,16 @@ public class RBSAEOSSSMAP {
 
         int MODE = Integer.parseInt(args[1]);
         int numCPU = Integer.parseInt(args[2]);
-//        ArchitectureEvaluator AE = ArchitectureEvaluator.getInstance();
 
-        Problem problem = initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal", "slow", true, numCPU);
+        Problem problem = initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal", true, numCPU);
 
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
         int popSize = 2;
-        properties.setInt("maxEvaluations", 100);
+        properties.setInt("maxEvaluations", 60);
         properties.setInt("populationSize", popSize);
-        double crossoverProbability = 0.8;
+        double crossoverProbability = 1.0;
         double mutationProbability = 0.01;
         Variation singlecross = new OnePointCrossover(crossoverProbability);
         Variation BitFlip = new BitFlip(mutationProbability);
@@ -108,6 +107,11 @@ public class RBSAEOSSSMAP {
                                 new ParetoDominanceComparator(),
                                 new CrowdingComparator()));
 
+                //NSGA crossover probability should be less than 1
+                double crossoverProbability08 = 0.8;
+                Variation singlecross08 = new OnePointCrossover(crossoverProbability08);
+                Variation NSGAVariation = new GAVariation(singlecross08, BitFlip);
+                
                 Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, GAVariation,
                         initialization);
 
@@ -130,15 +134,15 @@ public class RBSAEOSSSMAP {
 
                     ArrayList<Variation> heuristics = new ArrayList();
                     //add domain-specific heuristics
-//                    heuristics.add(new AddRandomToSmallSatellite(3));
-//                    heuristics.add(new RemoveRandomFromLoadedSatellite(8));
-//                    heuristics.add(new RemoveSuperfluous());
-//                    heuristics.add(new ImproveOrbit());
-                    heuristics.add(new RemoveInterference());
-//                    heuristics.add(new AddSynergy());
+                    heuristics.add(new AddRandomToSmallSatellite(300));
+                    heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
+                    heuristics.add(new RemoveSuperfluous(10));
+                    heuristics.add(new ImproveOrbit());
+                    heuristics.add(new RemoveInterference(10));
+                    heuristics.add(new AddSynergy(10));
                     //add domain-independent heuristics
-//                    heuristics.add(BitFlip);
-//                    heuristics.add(singlecross);
+                    heuristics.add(BitFlip);
+                    heuristics.add(singlecross);
 
                     //all other properties use default parameters
                     INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
@@ -168,22 +172,6 @@ public class RBSAEOSSSMAP {
 //                    file.close();
 //                } catch (Exception e) {
 //                    System.out.println( e.getMessage() );
-//                }
-//                System.out.println("DONE");
-//                break;
-//            case 6://Update capabilities file
-//                AE.init(numAE);
-//                AE.precomputeCapabilities();                
-//                try{
-//                    SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd-HH-mm-ss" );
-//                    String stamp = dateFormat.format( new Date() );
-//                    FileOutputStream fos = new FileOutputStream(Params.path_save_results + "\\capabilities" + stamp + ".dat");
-//                    ObjectOutputStream oos = new ObjectOutputStream(fos);
-//                    oos.writeObject(AE.getCapabilities());
-//                    oos.close();
-//                    fos.close();
-//                } catch(Exception e) {
-//                    System.out.println(e.getMessage());
 //                }
 //                System.out.println("DONE");
 //                break;
@@ -218,10 +206,10 @@ public class RBSAEOSSSMAP {
 
     }
 
-    public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, String evalMode, boolean explanation, int numCPU) {
+    public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, boolean explanation, int numCPU) {
         EOSSDatabase.getInstance(); //to initiate database
         Params params = new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
-        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, evalMode, explanation, true);
+        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, explanation, true);
     }
 
     public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath) {

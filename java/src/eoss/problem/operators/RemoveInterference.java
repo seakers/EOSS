@@ -13,10 +13,11 @@ import eoss.problem.Params;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.List;
+import java.util.TreeSet;
 import org.moeaframework.core.ParallelPRNG;
+import rbsa.eoss.Interaction;
 import rbsa.eoss.NDSM;
-import rbsa.eoss.Nto1pair;
 
 /**
  * This domain specific heuristic checks the architecture to see if there are
@@ -28,10 +29,16 @@ import rbsa.eoss.Nto1pair;
  */
 public class RemoveInterference extends AbstractEOSSOperator {
 
+    /**
+     * The subset size relates to how many of the top costly superfluous
+     * interactions the heuristics should select randomly from
+     */
+    private final int subsetSize;
+    
     private final ParallelPRNG pprng;
 
-    public RemoveInterference() {
-        super();
+    public RemoveInterference(int subsetSize) {
+        this.subsetSize = subsetSize;
         this.pprng = new ParallelPRNG();
     }
 
@@ -64,7 +71,7 @@ public class RemoveInterference extends AbstractEOSSOperator {
         if (interferingInstrumentIndex != -1) {
             child.removeInstrumentFromOrbit(interferingInstrumentIndex, randOrbitIndex);
             int orbitToAdd = randOrbitIndex;
-            while (orbitToAdd != randOrbitIndex) {
+            while (orbitToAdd == randOrbitIndex) {
                 orbitToAdd = pprng.nextInt(EOSSDatabase.getOrbits().size());
             }
             child.addInstrumentToOrbit(interferingInstrumentIndex, orbitToAdd);
@@ -86,24 +93,33 @@ public class RemoveInterference extends AbstractEOSSOperator {
 
         NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
-        TreeMap<Nto1pair, Double> tm = dsm.getAllInteractions("-","-");
+        TreeSet<Interaction> stm = dsm.getAllInteractions("-");
 
-        //Find a missing interference from intreaction tree
-        Iterator<Nto1pair> it = tm.keySet().iterator();
-        int i;
-        for (i = 0; i < tm.size(); i++) {
-            //get next strongest interaction
-            Nto1pair nt = it.next();
+         //find all superfluous interactions that apply to this spacecraft
+        ArrayList<String> interferingInstrument = new ArrayList();
+        Iterator<Interaction> iter = stm.iterator();
+        while (iter.hasNext()) {
+            Interaction key = iter.next();
+            ArrayList<String> al = new ArrayList<>();
+            al.addAll(Arrays.asList(key.getNtpair().getBase()));
+            al.add(key.getNtpair().getAdded());
 
-            //if architecture contains the interaction
-            ArrayList<String> al = new ArrayList<>(Arrays.asList(nt.getBase()));
-            al.add(nt.getAdded());
-            if (thepayload.containsAll(al)) {
-                return findInstrument(nt.getAdded());
+            if (thepayload.containsAll(al)) { //otherwise find missing element and return;
+                interferingInstrument.add(key.getNtpair().getAdded());
             }
         }
-
-        return -1;
+        if (interferingInstrument.isEmpty()) {
+            return -1;
+        } else {
+            List<String> subset;
+            if(interferingInstrument.size()<subsetSize){
+                subset = interferingInstrument;
+            }else{
+                subset = interferingInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of synergistic interaction
+            }
+            String chosenInstrument = subset.get(pprng.nextInt(subset.size()));
+            return findInstrument(chosenInstrument);
+        }
     }
 
 }

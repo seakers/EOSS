@@ -20,16 +20,16 @@ import java.util.Collections;
 public class RemoveRandomFromLoadedSatellite extends AbstractEOSSOperator {
 
     /**
-     * the largest number of instruments that defines a small
+     * the largest mass of instruments that defines a small
      */
-    private final int minSize;
+    private final double minSize;
 
     /**
      *
-     * @param minSize the smallest number of instruments that defines a loaded
+     * @param minSize the smallest mass of instruments that defines a loaded
      * satellite
      */
-    public RemoveRandomFromLoadedSatellite(int minSize) {
+    public RemoveRandomFromLoadedSatellite(double minSize) {
         this.minSize = minSize;
     }
 
@@ -40,9 +40,26 @@ public class RemoveRandomFromLoadedSatellite extends AbstractEOSSOperator {
 
     @Override
     protected EOSSArchitecture evolve(EOSSArchitecture child) {
-        //Find a random non-empty orbit and its payload 
-        int randOrbIndex = getRandomOrbitWithAtLeastNInstruments(child, minSize);
-        if(randOrbIndex == -1)
+        //Find random orbit with more than maxSize mass of instruments
+        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
+        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+            orbitIndex.add(i);
+        }
+        Collections.shuffle(orbitIndex);//this sorts orbits in random order
+        
+        int randOrbIndex = -1;
+        for(Integer j : orbitIndex){
+            ArrayList<Integer> payload = child.getInstrumentsInOrbit(j);
+            double payloadMass = 0;
+            for(Integer k : payload){
+                payloadMass += Double.parseDouble(EOSSDatabase.getInstruments().get(k).getProperty("mass#"));
+            }
+            if(payloadMass <= minSize){
+                randOrbIndex = j;
+                break;
+            }
+        }
+        if(randOrbIndex == -1) //if this condition occurs then no orbit has a small satellite
             return child;
 
         //Find a random instrument that has not yet been assigned to the random orbit found above 

@@ -152,7 +152,7 @@ public class Assigning extends BinaryVariable implements ArchitecturalDecision {
     }
 
     @Override
-    public BinaryVariable copy() {
+    public Assigning copy() {
         Assigning out =  new Assigning(mNodes, nNodes,infeasibleAssingments);
         BitSet bitset = this.getBitSet();
         for (int i = bitset.nextSetBit(0); i >= 0; i = bitset.nextSetBit(i + 1)) {
@@ -182,6 +182,13 @@ public class Assigning extends BinaryVariable implements ArchitecturalDecision {
         return nNodes;
     }
 
+    /**
+     * Gets the assignments that make this variable infeasible
+     * @return 
+     */
+    public Collection<OrderedPair<Integer>> getInfeasibleAssingments() {
+        return infeasibleAssingments;
+    }
     
     @Override
     public String toString(){

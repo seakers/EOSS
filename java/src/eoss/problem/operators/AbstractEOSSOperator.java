@@ -7,17 +7,10 @@ package eoss.problem.operators;
 
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSDatabase;
-import eoss.problem.Orbit;
-import eoss.problem.Params;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.TreeMap;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
-import rbsa.eoss.NDSM;
-import rbsa.eoss.Nto1pair;
 
 /**
  *

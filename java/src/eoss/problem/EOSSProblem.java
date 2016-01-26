@@ -9,7 +9,6 @@ import architecture.Explanation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,13 +37,6 @@ public class EOSSProblem extends AbstractProblem {
 
     private final int[] altnertivesForNumberOfSatellites;
 
-    /**
-     * Determines the mode of evaluation. Default is slow. Fast computes
-     * objectives from precomputed capabilities. Capabilities precomputes
-     * capabilities
-     */
-    private final String type;
-
     private final Resource resource;
 
     private final boolean explanation;
@@ -57,17 +49,15 @@ public class EOSSProblem extends AbstractProblem {
      * @param instruments
      * @param orbits
      * @param buses
-     * @param type determines mode of evaluation (Fast, Capabilities or Slow)
      * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
     public EOSSProblem(int[] altnertivesForNumberOfSatellites, ArrayList<Instrument> instruments,
-            ArrayList<Orbit> orbits, ArrayList<Bus> buses, String type, boolean explanation, boolean withSynergy) {
+            ArrayList<Orbit> orbits, ArrayList<Bus> buses, boolean explanation, boolean withSynergy) {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
-        this.type = type;
         this.resource = new Resource();
         this.explanation = explanation;
         this.withSynergy = withSynergy;
@@ -106,7 +96,7 @@ public class EOSSProblem extends AbstractProblem {
 //            evaluateCostEONRules(r, arch, qb); //compute cost
             evaluateCost(r, arch, qb);
 
-            System.out.println("Arch " + arch.toString() + " " + type + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
+            System.out.println("Arch " + arch.toString() + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -152,7 +142,7 @@ public class EOSSProblem extends AbstractProblem {
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
-        arch.setObjective(0, science);
+        arch.setObjective(0, -science); //negative because MOEAFramework assumes minimization problems
         if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
             arch.setFuzzyObjective(0, fuzzy_science);
         }
@@ -206,7 +196,7 @@ public class EOSSProblem extends AbstractProblem {
             panel_scores.add(innerProduct((ArrayList) Params.obj_weights.get(p), (ArrayList) obj_scores.get(p)));
         }
         double science = innerProduct(Params.panel_weights, panel_scores);
-        arch.setObjective(numberOfVariables, science);
+        arch.setObjective(numberOfVariables, -science); //negative because MOEAFramework assumes minimization problems
     }
 
     private double evaluateCostEONRules(Rete r, EOSSArchitecture arch, QueryBuilder qb) throws JessException {
@@ -366,7 +356,7 @@ public class EOSSProblem extends AbstractProblem {
                             callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
                         }
                         callManifestInstrument += "(flies-in " + orbit.getName() + ")";
-                        callManifestInstrument += "(orbit-altitude# " + String.valueOf((int)orbit.getAltitude()) + ")";
+                        callManifestInstrument += "(orbit-altitude# " + String.valueOf((int) orbit.getAltitude()) + ")";
                         callManifestInstrument += "(orbit-inclination " + orbit.getInclination() + ")";
                         callManifestInstrument += "))";
                         r.eval(callManifestInstrument);
@@ -401,31 +391,10 @@ public class EOSSProblem extends AbstractProblem {
 
             Explanation explanations = new Explanation();
 
-            if (type.equalsIgnoreCase("Fast")) {
-                for (Orbit orbit : EOSSDatabase.getOrbits()) {
-                    List<Instrument> instInOrb = arch.getInstrumentsInOrbit(orbit);
+            assertMissions(r, arch);
 
-                    if (instInOrb.size() > 0) {
-                        String key = arch.getNumberOfSatellitesPerOrbit() + " x " + orbit + "@" + StringUtils.join(instInOrb, " ");
-                        ArrayList<Fact> measurements = (ArrayList<Fact>) Params.capabilities.get(key);
-                        for (Fact measurement : measurements) {
-                            Fact tmp = (Fact) measurement.clone();
-                            r.assertString(tmp.toString());
-                        }
-                    }
-                }
-//                ArrayList<String> extraRules = addExtraRules(r);
-//                r.setFocus("CHANNELS");
-//                r.run();
-//                Iterator<String> iter = extraRules.iterator();
-//                while (iter.hasNext()) {
-//                    r.removeDefrule(iter.next());
-//                }
-            } else {
-                assertMissions(r, arch);
-
-                r.setFocus("MANIFEST");
-                r.run();
+            r.setFocus("MANIFEST");
+            r.run();
 
 //                ArrayList<String> extraRules = addExtraRules(r);
 //                r.setFocus("CHANNELS");
@@ -434,36 +403,25 @@ public class EOSSProblem extends AbstractProblem {
 //                while (iter.hasNext()) {
 //                    r.removeDefrule(iter.next());
 //                }
-                r.setFocus("FUZZY-CAPABILITY-ATTRIBUTE");
-                r.run();
+            r.setFocus("FUZZY-CAPABILITY-ATTRIBUTE");
+            r.run();
 
-                //checks to see if a manifested-instrument cannot take a measurement or upgrades or downgrades it capabilities depending on LHS of rules in CAPABILITIES-CHECK
-                r.setFocus("CAPABILITIES-CHECK");
-                r.run();
-                
-                //computes values for some slots in CAPABILITIES::Manifested-instrument
-                r.setFocus("CAPABILITIES");
-                r.run();
+            //checks to see if a manifested-instrument cannot take a measurement or upgrades or downgrades it capabilities depending on LHS of rules in CAPABILITIES-CHECK
+            r.setFocus("CAPABILITIES-CHECK");
+            r.run();
 
-                //generates the measurement capabilities (REQUIREMENT::Measurement)
-                r.setFocus("CAPABILITIES-GENERATE");
+            //computes values for some slots in CAPABILITIES::Manifested-instrument
+            r.setFocus("CAPABILITIES");
+            r.run();
+
+            //generates the measurement capabilities (REQUIREMENT::Measurement)
+            r.setFocus("CAPABILITIES-GENERATE");
+            r.run();
+
+            //This synergy rule call creates new measurement facts that may arise from interactions between instruments 
+            if (withSynergy) {
+                r.setFocus("SYNERGY");
                 r.run();
-
-                if (type.equalsIgnoreCase("capabilities")) {
-                    //This method only computes capabilities
-                    ArrayList<Fact> capabilities = qb.makeQuery("REQUIREMENTS::Measurement");
-                    capabilities.addAll(qb.makeQuery("SYNERGIES::cross-registered"));
-                    capabilities.addAll(qb.makeQuery("SYNERGIES::NUM-CHANNELS"));
-                    arch.setCapabilities(capabilities);
-                    System.out.println("Capabilities computed for arch " + arch.toString());
-                    return;
-                }
-
-                //This synergy rule call creates new measurement facts that may arise from interactions between instruments 
-                if (withSynergy) {
-                    r.setFocus("SYNERGY");
-                    r.run();
-                }
             }
 
             //Revisit times

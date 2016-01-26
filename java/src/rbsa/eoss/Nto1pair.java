@@ -4,7 +4,6 @@
  */
 package rbsa.eoss;
 
-import eoss.problem.Instrument;
 import org.apache.commons.lang3.StringUtils;
 import org.paukov.combinatorics.ICombinatoricsVector;
 import java.io.Serializable;
