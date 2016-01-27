@@ -59,6 +59,7 @@ public class Orbit {
      * @param semimajorAxis in km
      * @param inclination in degrees
      * @param RAAN in degrees 
+     * @param period 
      * @param meanAnomaly in degrees
      * @param eccentricity between [0,1]
      * @param argPeri argument of perigee in degrees

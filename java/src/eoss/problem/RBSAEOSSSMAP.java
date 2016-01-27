@@ -112,7 +112,7 @@ public class RBSAEOSSSMAP {
                 Variation singlecross08 = new OnePointCrossover(crossoverProbability08);
                 Variation NSGAVariation = new GAVariation(singlecross08, BitFlip);
                 
-                Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, GAVariation,
+                Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, NSGAVariation,
                         initialization);
 
                 runSearch(nsga2, properties, path);
