@@ -436,7 +436,7 @@
 ;	(assert (SYNERGY::cross-registered (measurements (str-cat $?m1 $?m2))))
 ;)
 
-(defrule CAPABILITIES::cross-register-measurements-from-cross-registered-instruments
+(defrule CAPABILITIES-GENERATE::cross-register-measurements-from-cross-registered-instruments
 	(SYNERGY::cross-registered-instruments (instruments $?ins) (platform ?sat) )
 	?c <- (accumulate (bind ?str "")                        ;; initializer
                 (bind ?str (str-cat ?str " " $?m1))                    ;; action

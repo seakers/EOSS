@@ -364,6 +364,7 @@ public class EOSSProblem extends AbstractProblem {
                     call += "(instruments " + payload + ") (launch-date 2015) (lifetime 5) (select-orbit no) " + orbit.toJessSlots();
                     call += "(payload-mass# " + String.valueOf(payloadMass) + ")";
                     call += "(payload-power# " + String.valueOf(characteristicPower) + ")";
+                    call += "(payload-peak-power# " + String.valueOf(characteristicPower) + ")";
                     call += "(payload-data-rate# " + String.valueOf(dataRate) + ")";
                     double perOrbit = (dataRate * 1.2 * orbit.getPeriod()) / (1024 * 8); //(GByte/orbit) 20% overhead
                     call += "(payload-dimensions# " + String.valueOf(payloadDimensions.get(0)) + " " + String.valueOf(payloadDimensions.get(1)) + " " + String.valueOf(payloadDimensions.get(2)) + ")";
