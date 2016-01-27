@@ -64,7 +64,7 @@ public class RBSAEOSSSMAP {
 //        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
          args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-        args[1] = "1";
+        args[1] = "3";
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
@@ -113,7 +113,7 @@ public class RBSAEOSSSMAP {
                 Variation singlecross08 = new OnePointCrossover(crossoverProbability08);
                 Variation NSGAVariation = new GAVariation(singlecross08, BitFlip);
                 
-                Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, GAVariation,
+                Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, NSGAVariation,
                         initialization);
 
                 runSearch(nsga2, properties, path + File.separator + "result");
@@ -145,6 +145,9 @@ public class RBSAEOSSSMAP {
                     //add domain-independent heuristics
                     heuristics.add(BitFlip);
                     heuristics.add(singlecross);
+                    
+                    
+                    properties.setDouble("pmin", 0.03);
 
                     //all other properties use default parameters
                     INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
