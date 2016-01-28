@@ -29,6 +29,8 @@ import eoss.problem.operators.ImproveOrbit;
 import eoss.problem.operators.RemoveInterference;
 import eoss.problem.operators.RemoveRandomFromLoadedSatellite;
 import eoss.problem.operators.RemoveSuperfluous;
+import hh.IO.IOCreditHistory;
+import hh.IO.IOSelectionHistory;
 import hh.hyperheuristics.HHFactory;
 import hh.hyperheuristics.HeMOEA;
 import hh.nextheuristic.INextHeuristic;
@@ -63,7 +65,7 @@ public class RBSAEOSSSMAP {
         args = new String[3];
 //        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-         args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
+        args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
         args[1] = "3";
         args[2] = "3";
 
@@ -97,6 +99,7 @@ public class RBSAEOSSSMAP {
         EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(new double[]{0.001, 10});
         final TournamentSelection selection = new TournamentSelection(2, comparator);
 
+        String time = String.valueOf(System.currentTimeMillis());
         switch (MODE) {
             case 1: //NSGAII Search
 
@@ -112,51 +115,61 @@ public class RBSAEOSSSMAP {
                 double crossoverProbability08 = 0.8;
                 Variation singlecross08 = new OnePointCrossover(crossoverProbability08);
                 Variation NSGAVariation = new GAVariation(singlecross08, BitFlip);
-                
+
                 Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, NSGAVariation,
                         initialization);
 
-                runSearch(nsga2, properties, path + File.separator + "result");
+                runSearch(nsga2, properties, path + File.separator + "result", time);
 
                 break;
             case 2: //Use epsilonMOEA
                 Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
 
-                runSearch(eMOEA, properties, path + File.separator + "result");
+                runSearch(eMOEA, properties, path + File.separator + "result", time);
                 break;
 
             case 3://Hyperheuristic search
                 IRewardDefinition creditAssignment;
-                try {
-                    creditAssignment = RewardDefFactory.getInstance().getCreditDef("CEA", properties, problem);
 
-                    int injectionRate = (int) properties.getDouble("injectionRate", 0.25);
-                    //for injection
-                    int lagWindow = (int) properties.getDouble("lagWindow", 50);
+                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA", "OPIR2", "OPopIEAR2", "CR2PF", "CR2EA"};
+                for (String credDef : creditDefs ) {
 
-                    ArrayList<Variation> heuristics = new ArrayList();
-                    //add domain-specific heuristics
-                    heuristics.add(new AddRandomToSmallSatellite(300));
-                    heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
-                    heuristics.add(new RemoveSuperfluous(10));
-                    heuristics.add(new ImproveOrbit());
-                    heuristics.add(new RemoveInterference(10));
-                    heuristics.add(new AddSynergy(10));
-                    //add domain-independent heuristics
-                    heuristics.add(BitFlip);
-                    heuristics.add(singlecross);
-                    
-                    
-                    properties.setDouble("pmin", 0.03);
+                    try {
+                        creditAssignment = RewardDefFactory.getInstance().getCreditDef(credDef, properties, problem);
 
-                    //all other properties use default parameters
-                    INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
+                        int injectionRate = (int) properties.getDouble("injectionRate", 0.25);
+                        //for injection
+                        int lagWindow = (int) properties.getDouble("lagWindow", 50);
 
-                    HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
-                            initialization, selector, creditAssignment, injectionRate, lagWindow);
-                    InstrumentedAlgorithm instAlg = runSearch(hemoea, properties, path + File.separator + "result");
-                } catch (IOException ex) {
-                    Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+                        ArrayList<Variation> heuristics = new ArrayList();
+                        //add domain-specific heuristics
+//                        heuristics.add(new AddRandomToSmallSatellite(300));
+//                        heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
+//                        heuristics.add(new RemoveSuperfluous(10));
+//                        heuristics.add(new ImproveOrbit());
+//                        heuristics.add(new RemoveInterference(10));
+//                        heuristics.add(new AddSynergy(10));
+                        //add domain-independent heuristics
+                        heuristics.add(BitFlip);
+                        heuristics.add(singlecross);
+
+                        properties.setDouble("pmin", 0.03);
+
+                        //all other properties use default parameters
+                        INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("FRRMAB", properties, heuristics);
+
+                        HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
+                                initialization, selector, creditAssignment, injectionRate, lagWindow);
+                        runSearch(hemoea, properties, path + File.separator + "result", "dom-ind" + time);
+
+                        String name = path + File.separator + "result" + File.separator + hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "dom-ind" + time;
+                        IOCreditHistory ioch = new IOCreditHistory();
+                        ioch.saveHistory(hemoea.getCreditHistory(), name + ".credit", ",");
+                        IOSelectionHistory iosh = new IOSelectionHistory();
+                        iosh.saveHistory(hemoea.getSelectionHistory(), name + ".hist", ",");
+                    } catch (IOException ex) {
+                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
                 break;
 //            case 5://Update DSMs
@@ -228,7 +241,6 @@ public class RBSAEOSSSMAP {
             default:
                 System.out.println("Choose a mode between 1 and 9");
         }
-
     }
 
     public static Problem initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode, boolean explanation, int numCPU) {
@@ -237,12 +249,12 @@ public class RBSAEOSSSMAP {
         return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, explanation, true);
     }
 
-    public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath) {
+    public static InstrumentedAlgorithm runSearch(Algorithm alg, TypedProperties properties, String savePath, String name) {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(populationSize)
-                .attachHypervolumeJmetalCollector(new Solution(new double[]{}))
+                .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 30000.0}))
                 .attachElapsedTimeCollector();
 
         InstrumentedAlgorithm instAlgorithm = instrumenter.instrument(alg);
@@ -259,7 +271,7 @@ public class RBSAEOSSSMAP {
         System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
 
         ResultIO resio = new ResultIO();
-        String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" +System.currentTimeMillis();
+        String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
         resio.saveSearchMetrics(instAlgorithm, filename);
         resio.savePopulation(instAlgorithm.getResult(), filename);
         resio.saveObjectives(instAlgorithm.getResult(), filename);
