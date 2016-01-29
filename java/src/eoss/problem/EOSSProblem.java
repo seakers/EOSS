@@ -89,12 +89,17 @@ public class EOSSProblem extends AbstractProblem {
         QueryBuilder qb = resource.getQueryBuilder();
 
         try {
-            evaluatePerformance(r, arch, qb); //compute science score
             r.reset();
+            assertMissions(r, arch);
+            double science = evaluatePerformance(r, arch, qb); //compute science score
+            arch.setObjective(0, -science); //negative because MOEAFramework assumes minimization problems
 
+            r.reset();
             assertMissions(r, arch);
 //            evaluateCostEONRules(r, arch, qb); //compute cost
-            evaluateCost(r, arch, qb);
+            double cost = evaluateCost(r, arch, qb);
+            arch.setObjective(1, cost);
+            r.reset();
 
             System.out.println("Arch " + arch.toString() + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
         } catch (JessException ex) {
@@ -142,7 +147,6 @@ public class EOSSProblem extends AbstractProblem {
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
-        arch.setObjective(0, -science); //negative because MOEAFramework assumes minimization problems
         if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
             arch.setFuzzyObjective(0, fuzzy_science);
         }
@@ -266,10 +270,11 @@ public class EOSSProblem extends AbstractProblem {
                 cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
             }
 
-            arch.setObjective(1, cost);
-            Explanation explanations = new Explanation();
-            explanations.put("cost", missions);
-            arch.setExplanation(1, explanations);
+            if (explanation) {
+                Explanation explanations = new Explanation();
+                explanations.put("cost", missions);
+                arch.setExplanation(1, explanations);
+            }
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -382,17 +387,14 @@ public class EOSSProblem extends AbstractProblem {
         }
     }
 
-    private void evaluatePerformance(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
+    private double evaluatePerformance(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
+        double science = 0;
         try {
-            r.reset();
-
             r.eval("(bind ?*science-multiplier* 1.0)");
             r.eval("(defadvice before (create$ >= <= < >) (foreach ?xxx $?argv (if (eq ?xxx nil) then (return FALSE))))");
             r.eval("(defadvice before (create$ sqrt + * **) (foreach ?xxx $?argv (if (eq ?xxx nil) then (bind ?xxx 0))))");
 
             Explanation explanations = new Explanation();
-
-            assertMissions(r, arch);
 
             r.setFocus("MANIFEST");
             r.run();
@@ -481,9 +483,13 @@ public class EOSSProblem extends AbstractProblem {
             }
             r.run();
 
-            if ((Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+            ArrayList<Fact> vals = qb.makeQuery("AGGREGATION::VALUE");
+            Fact val = vals.get(0);
+            science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
+
+            if (explanation && ((Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")))) {
                 aggregate_performance_score_facts(arch, r, qb);
-            } else if ((Params.req_mode.equalsIgnoreCase("CRISP-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-CASES"))) {
+            } else if (explanation && ((Params.req_mode.equalsIgnoreCase("CRISP-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-CASES")))) {
                 aggregate_performance_score(arch, r);
             }
 
@@ -495,6 +501,7 @@ public class EOSSProblem extends AbstractProblem {
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return science;
     }
 
 //    /**

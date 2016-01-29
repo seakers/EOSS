@@ -43,6 +43,7 @@ import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.DominanceComparator;
+import org.moeaframework.core.operator.CompoundVariation;
 
 /**
  *
@@ -80,8 +81,8 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 2;
-        properties.setInt("maxEvaluations", 60);
+        int popSize = 200;
+        properties.setInt("maxEvaluations", 5000);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
         double mutationProbability = 0.01;
@@ -134,15 +135,18 @@ public class RBSAEOSSSMAP {
 
                     ArrayList<Variation> heuristics = new ArrayList();
                     //add domain-specific heuristics
-                    heuristics.add(new AddRandomToSmallSatellite(300));
-                    heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
-                    heuristics.add(new RemoveSuperfluous(10));
-                    heuristics.add(new ImproveOrbit());
-                    heuristics.add(new RemoveInterference(10));
-                    heuristics.add(new AddSynergy(10));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddRandomToSmallSatellite(300),new BitFlip(mutationProbability)));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveRandomFromLoadedSatellite(1500),new BitFlip(mutationProbability)));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveSuperfluous(10),new BitFlip(mutationProbability)));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new ImproveOrbit(),new BitFlip(mutationProbability)));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(10),new BitFlip(mutationProbability)));
+                    heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddSynergy(10),new BitFlip(mutationProbability)));
                     //add domain-independent heuristics
-                    heuristics.add(BitFlip);
-                    heuristics.add(singlecross);
+//                    heuristics.add(BitFlip);
+//                    heuristics.add(singlecross);
+//                    heuristics.add(GAVariation);
+                    
+                    properties.setDouble("pmin", 0.03);
 
                     //all other properties use default parameters
                     INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
@@ -234,7 +238,7 @@ public class RBSAEOSSSMAP {
         System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
 
         ResultIO resio = new ResultIO();
-        String filename = savePath + File.separator + "result";
+        String filename = savePath + File.separator + "resultAllCross";
         resio.saveMetrics(instAlgorithm, filename);
         resio.savePopulation(instAlgorithm.getResult(), filename);
         return instAlgorithm;
