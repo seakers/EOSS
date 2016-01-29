@@ -266,10 +266,13 @@ public class EOSSProblem extends AbstractProblem {
                 cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
             }
 
-            arch.setObjective(1, cost);
-            Explanation explanations = new Explanation();
-            explanations.put("cost", missions);
-            arch.setExplanation(1, explanations);
+            arch.setObjective(1, cost/33000);
+
+            if (explanation) {
+                Explanation explanations = new Explanation();
+                explanations.put("cost", missions);
+                arch.setExplanation(1, explanations);
+            }
         } catch (JessException ex) {
             Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -487,7 +490,7 @@ public class EOSSProblem extends AbstractProblem {
                 aggregate_performance_score(arch, r);
             }
 
-            if (Params.run_mode.equalsIgnoreCase("DEBUG")) {
+            if (explanation) {
                 explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
                 explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
                 arch.setExplanation(0, explanations);

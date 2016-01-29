@@ -45,6 +45,7 @@ import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.DominanceComparator;
+import org.moeaframework.core.operator.CompoundVariation;
 
 /**
  *
@@ -66,7 +67,7 @@ public class RBSAEOSSSMAP {
 //        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
         args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-        args[1] = "3";
+        args[1] = "2";
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
@@ -78,12 +79,12 @@ public class RBSAEOSSSMAP {
         int MODE = Integer.parseInt(args[1]);
         int numCPU = Integer.parseInt(args[2]);
 
-        Problem problem = initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal", true, numCPU);
+        Problem problem = initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal", false, numCPU);
 
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 200;
+        int popSize = 20;
         properties.setInt("maxEvaluations", 5000);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
@@ -96,7 +97,7 @@ public class RBSAEOSSSMAP {
         //setup for epsilon MOEA
         Population population = new Population();
         DominanceComparator comparator = new ParetoDominanceComparator();
-        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(new double[]{0.001, 10});
+        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(new double[]{0.001, 0.001});
         final TournamentSelection selection = new TournamentSelection(2, comparator);
 
         String time = String.valueOf(System.currentTimeMillis());
@@ -131,7 +132,9 @@ public class RBSAEOSSSMAP {
             case 3://Hyperheuristic search
                 IRewardDefinition creditAssignment;
 
-                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA", "OPIR2", "OPopIEAR2", "CR2PF", "CR2EA"};
+//                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA"};
+                String[] creditDefs = new String[]{"OPIR2", "OPopIPFR2", "OPopIEAR2", "CR2PF", "CR2EA"};
+//                String[] creditDefs = new String[]{"CEA"};
                 for (String credDef : creditDefs ) {
 
                     try {
@@ -143,26 +146,25 @@ public class RBSAEOSSSMAP {
 
                         ArrayList<Variation> heuristics = new ArrayList();
                         //add domain-specific heuristics
-//                        heuristics.add(new AddRandomToSmallSatellite(300));
-//                        heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
-//                        heuristics.add(new RemoveSuperfluous(10));
-//                        heuristics.add(new ImproveOrbit());
-//                        heuristics.add(new RemoveInterference(10));
-//                        heuristics.add(new AddSynergy(10));
+                        heuristics.add(new CompoundVariation(new AddRandomToSmallSatellite(300),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new RemoveRandomFromLoadedSatellite(1500),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new RemoveSuperfluous(10),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new ImproveOrbit(),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new RemoveInterference(10),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new AddSynergy(10),new BitFlip(mutationProbability)));
                         //add domain-independent heuristics
-                        heuristics.add(BitFlip);
-                        heuristics.add(singlecross);
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new BitFlip(mutationProbability)));
 
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
-                        INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("FRRMAB", properties, heuristics);
+                        INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                         HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, injectionRate, lagWindow);
-                        runSearch(hemoea, properties, path + File.separator + "result", "dom-ind" + time);
+                        String name = path + File.separator + "result" + File.separator + hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "allCross" + time;
+                        runSearch(hemoea, properties, path + File.separator + "result",name);
 
-                        String name = path + File.separator + "result" + File.separator + hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "dom-ind" + time;
                         IOCreditHistory ioch = new IOCreditHistory();
                         ioch.saveHistory(hemoea.getCreditHistory(), name + ".credit", ",");
                         IOSelectionHistory iosh = new IOSelectionHistory();
@@ -254,7 +256,7 @@ public class RBSAEOSSSMAP {
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(populationSize)
-                .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 30000.0}))
+                .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 2.0}))
                 .attachElapsedTimeCollector();
 
         InstrumentedAlgorithm instAlgorithm = instrumenter.instrument(alg);
