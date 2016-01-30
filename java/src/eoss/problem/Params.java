@@ -28,11 +28,16 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import eoss.problem.Orbit.OrbitType;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import jess.Fact;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import org.moeaframework.util.TypedProperties;
+import rbsa.eoss.NDSM;
 
 public class Params {
     //public static String master_xls;
@@ -78,44 +83,24 @@ public class Params {
     public static String adhoc_rules_clp;
 
     // Instruments and orbits
-    public static ArrayList<Orbit> orbits;
     public static int[] altnertivesForNumberOfSatellites = {1};
 
     // Results
     public static String path_save_results;
 
     // Intermediate results
-    public static HashMap requirement_rules;
-    public static HashMap measurements_to_subobjectives;
-    public static HashMap measurements_to_objectives;
-    public static HashMap measurements_to_panels;
-    public static ArrayList objectives;
-    public static ArrayList subobjectives;
-    public static HashMap instruments_to_measurements;
-    public static HashMap instruments_to_subobjectives;
-    public static HashMap instruments_to_objectives;
-    public static HashMap instruments_to_panels;
-    public static HashMap measurements_to_instruments;
-    public static HashMap subobjectives_to_instruments;
-    public static HashMap objectives_to_instruments;
-    public static HashMap panels_to_instruments;
-    public static HashMap subobjectives_to_measurements;
-    public static HashMap objectives_to_measurements;
-    public static HashMap panels_to_measurements;
+    public static HashMap<String,ArrayList<String>> measurements_to_subobjectives;
+    public static HashSet<String> measurements;
 
     public static int npanels;
     public static ArrayList<Double> panel_weights;
     public static ArrayList<String> panel_names;
-    public static ArrayList obj_weights;
-    public static ArrayList<Integer> num_objectives_per_panel;
-    public static ArrayList subobj_weights;
-    public static HashMap subobj_weights_map;
-    public static HashMap revtimes;
-    public static HashMap<ArrayList<String>, HashMap<String,Double>> scores;
-    public static HashMap subobj_scores;
-    public static HashMap capabilities;
-    public static HashMap all_dsms;
-    //Cubesat costs model
+    public static Map<String, HashMap<String, Double>> revtimes;
+    public static Map<ArrayList<String>, HashMap<String,Double>> scores;
+    public static Map<String,ArrayList<Fact>> capabilities;
+    public static Map<String,NDSM> all_dsms;
+    
+    //precomputed models
     public static String capability_dat_file;
     public static String revtimes_dat_file;
     public static String dsm_dat_file;
@@ -204,23 +189,7 @@ public class Params {
 
         // Intermediate results
         measurements_to_subobjectives = new HashMap();
-        measurements_to_objectives = new HashMap();
-        measurements_to_panels = new HashMap();
-        objectives = new ArrayList();
-        subobjectives = new ArrayList();
-        instruments_to_measurements = new HashMap();
-        instruments_to_subobjectives = new HashMap();
-        instruments_to_objectives = new HashMap();
-        instruments_to_panels = new HashMap();
-
-        measurements_to_instruments = new HashMap();
-        subobjectives_to_instruments = new HashMap();
-        objectives_to_instruments = new HashMap();
-        panels_to_instruments = new HashMap();
-
-        subobjectives_to_measurements = new HashMap();
-        objectives_to_measurements = new HashMap();
-        panels_to_measurements = new HashMap();
+        measurements = new HashSet<>();
 
         //Load specific adhoc parameters from config folder
         DocumentBuilder dBuilder;
@@ -251,7 +220,7 @@ public class Params {
                 System.out.println("Loading revisit time look-up table...");
                 try {
                     ObjectInputStream ois = new ObjectInputStream(fis);
-                    revtimes = (HashMap) ois.readObject();
+                    revtimes = Collections.unmodifiableMap((HashMap<String,HashMap<String,Double>>) ois.readObject());
                     ois.close();
                 } catch (IOException ex) {
                     Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
@@ -263,7 +232,7 @@ public class Params {
                 System.out.println("Loading precomputed capabiltiy look-up table...");
                 try {
                     ObjectInputStream ois2 = new ObjectInputStream(fis2);
-                    capabilities = (HashMap) ois2.readObject();
+                    capabilities = Collections.unmodifiableMap((HashMap<String,ArrayList<Fact>>) ois2.readObject());
                     ois2.close();
                 } catch (IOException ex) {
                     Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
@@ -274,7 +243,7 @@ public class Params {
                 System.out.println("Loading dsm_dat ...");
                 try {
                     ObjectInputStream ois3 = new ObjectInputStream(fis3);
-                    all_dsms = (HashMap) ois3.readObject();
+                    all_dsms = Collections.unmodifiableMap((HashMap<String,NDSM>) ois3.readObject());
                     ois3.close();
                 } catch (IOException ex) {
                     Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
@@ -285,8 +254,7 @@ public class Params {
                 System.out.println("Loading scores_dat_file ...");
                 try {
                     ObjectInputStream ois4 = new ObjectInputStream(fis4);
-                    scores = (HashMap) ois4.readObject();
-                    subobj_scores = (HashMap) ois4.readObject();
+                    scores = Collections.unmodifiableMap((HashMap<ArrayList<String>,HashMap<String,Double>>) ois4.readObject());
                     ois4.close();
                 } catch (IOException ex) {
                     Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);

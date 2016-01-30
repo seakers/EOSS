@@ -7,7 +7,6 @@ package eoss.problem.operators;
 
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSDatabase;
-import eoss.problem.Instrument;
 import java.util.ArrayList;
 import java.util.Collections;
 

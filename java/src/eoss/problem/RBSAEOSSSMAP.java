@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.moeaframework.algorithm.AbstractEvolutionaryAlgorithm;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
@@ -63,12 +64,14 @@ public class RBSAEOSSSMAP {
     public static void main(String[] args) {
 
         //PATH
-        args = new String[3];
 //        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-        args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-        args[1] = "2";
-        args[2] = "3";
+        if (args.length==0) {
+            args = new String[3];
+            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
+            args[1] = "3";
+            args[2] = "3";
+        }
 
         System.out.println("Path set to " + args[0]);
         System.out.println("Running mode " + args[1]);
@@ -84,7 +87,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 20;
+        int popSize = 200;
         properties.setInt("maxEvaluations", 5000);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
@@ -124,18 +127,22 @@ public class RBSAEOSSSMAP {
 
                 break;
             case 2: //Use epsilonMOEA
+                for(int i=0; i<30; i++){
                 Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
 
                 runSearch(eMOEA, properties, path + File.separator + "result", time);
+                }
                 break;
 
             case 3://Hyperheuristic search
+                
+                for(int i=0; i<30; i++){
                 IRewardDefinition creditAssignment;
 
 //                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA"};
-                String[] creditDefs = new String[]{"OPIR2", "OPopIPFR2", "OPopIEAR2", "CR2PF", "CR2EA"};
-//                String[] creditDefs = new String[]{"CEA"};
-                for (String credDef : creditDefs ) {
+//                String[] creditDefs = new String[]{"OPIR2", "OPopIPFR2", "OPopIEAR2", "CR2PF", "CR2EA"};
+                String[] creditDefs = new String[]{"OPopPF"};
+                for (String credDef : creditDefs) {
 
                     try {
                         creditAssignment = RewardDefFactory.getInstance().getCreditDef(credDef, properties, problem);
@@ -146,14 +153,14 @@ public class RBSAEOSSSMAP {
 
                         ArrayList<Variation> heuristics = new ArrayList();
                         //add domain-specific heuristics
-                        heuristics.add(new CompoundVariation(new AddRandomToSmallSatellite(300),new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new RemoveRandomFromLoadedSatellite(1500),new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new RemoveSuperfluous(10),new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new ImproveOrbit(),new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new RemoveInterference(10),new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new AddSynergy(10),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddRandomToSmallSatellite(300), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new RemoveRandomFromLoadedSatellite(1500), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveSuperfluous(10), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new ImproveOrbit(), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(10), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddSynergy(10), new BitFlip(mutationProbability)));
                         //add domain-independent heuristics
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new BitFlip(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
 
                         properties.setDouble("pmin", 0.03);
 
@@ -162,16 +169,18 @@ public class RBSAEOSSSMAP {
 
                         HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, injectionRate, lagWindow);
-                        String name = path + File.separator + "result" + File.separator + hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "allCross" + time;
-                        runSearch(hemoea, properties, path + File.separator + "result",name);
+                        String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "allCross" + time;
+                        String name = path + File.separator + "result" + File.separator;
+                        runSearch(hemoea, properties, path + File.separator + "result", fileName);
 
                         IOCreditHistory ioch = new IOCreditHistory();
-                        ioch.saveHistory(hemoea.getCreditHistory(), name + ".credit", ",");
+                        ioch.saveHistory(hemoea.getCreditHistory(), name + fileName + ".credit", ",");
                         IOSelectionHistory iosh = new IOSelectionHistory();
-                        iosh.saveHistory(hemoea.getSelectionHistory(), name + ".hist", ",");
+                        iosh.saveHistory(hemoea.getSelectionHistory(), name + fileName + ".hist", ",");
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                }
                 }
                 break;
 //            case 5://Update DSMs
@@ -265,6 +274,12 @@ public class RBSAEOSSSMAP {
         System.out.println("Starting " + alg.getClass().getSimpleName() + " on " + alg.getProblem().getName() + " with pop size: " + populationSize);
         long startTime = System.currentTimeMillis();
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
+            if (instAlgorithm.getNumberOfEvaluations() % 500 == 0) {
+                ((EOSSProblem) instAlgorithm.getProblem()).renewJess();
+                System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
+                System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
+                System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());
+            }
             instAlgorithm.step();
         }
 
@@ -275,7 +290,7 @@ public class RBSAEOSSSMAP {
         ResultIO resio = new ResultIO();
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
         resio.saveSearchMetrics(instAlgorithm, filename);
-        resio.savePopulation(instAlgorithm.getResult(), filename);
+        resio.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
         resio.saveObjectives(instAlgorithm.getResult(), filename);
         return instAlgorithm;
     }
