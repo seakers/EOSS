@@ -64,10 +64,10 @@ public class RBSAEOSSSMAP {
 
         //PATH
         args = new String[3];
-//        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-        args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-        args[1] = "3";
+//        args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
+        args[1] = "2";
         args[2] = "3";
 
         System.out.println("Path set to " + args[0]);
