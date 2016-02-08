@@ -64,9 +64,9 @@ public class RemoveInterference extends AbstractEOSSOperator {
         int interferingInstrumentIndex = checkNthOrderInterference(thepayload, randOrbit, 2);
 
         //try with 3-lateral synergies
-        if (interferingInstrumentIndex == -1) {
-            interferingInstrumentIndex = checkNthOrderInterference(thepayload, randOrbit, 3);
-        }
+//        if (interferingInstrumentIndex == -1) {
+//            interferingInstrumentIndex = checkNthOrderInterference(thepayload, randOrbit, 3);
+//        }
 
         if (interferingInstrumentIndex != -1) {
             child.removeInstrumentFromOrbit(interferingInstrumentIndex, randOrbitIndex);
@@ -91,13 +91,13 @@ public class RemoveInterference extends AbstractEOSSOperator {
      */
     private int checkNthOrderInterference(ArrayList<String> thepayload, Orbit orbit, int order) {
 
-        NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
+        NDSM dsm = (NDSM) Params.all_dsms.get("EDSM" + order + "@" + orbit.getName());
 
-        TreeSet<Interaction> stm = dsm.getAllInteractions("-");
+        TreeSet<Interaction> stm = dsm.getAllInteractions("+");
 
          //find all superfluous interactions that apply to this spacecraft
         ArrayList<String> interferingInstrument = new ArrayList();
-        Iterator<Interaction> iter = stm.iterator();
+        Iterator<Interaction> iter = stm.descendingIterator();
         while (iter.hasNext()) {
             Interaction key = iter.next();
             ArrayList<String> al = new ArrayList<>();
@@ -115,7 +115,7 @@ public class RemoveInterference extends AbstractEOSSOperator {
             if(interferingInstrument.size()<subsetSize){
                 subset = interferingInstrument;
             }else{
-                subset = interferingInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of synergistic interaction
+                subset = interferingInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of cost
             }
             String chosenInstrument = subset.get(pprng.nextInt(subset.size()));
             return findInstrument(chosenInstrument);

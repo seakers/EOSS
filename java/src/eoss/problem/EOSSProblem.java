@@ -98,6 +98,7 @@ public class EOSSProblem extends AbstractProblem {
         EOSSArchitecture arch = (EOSSArchitecture) sltn;
 
         try {
+             long startTime = System.currentTimeMillis();
             r.reset();
             assertMissions(arch);
             double science = evaluatePerformance(arch); //compute science score

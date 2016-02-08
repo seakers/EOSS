@@ -87,8 +87,8 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 200;
-        properties.setInt("maxEvaluations", 5000);
+        int popSize = 100;
+        properties.setInt("maxEvaluations", 5025);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
         double mutationProbability = 0.01;
@@ -98,16 +98,16 @@ public class RBSAEOSSSMAP {
         Initialization initialization = new ArchitectureGenerator(problem, popSize, "random");
 
         //setup for epsilon MOEA
-        Population population = new Population();
+        
         DominanceComparator comparator = new ParetoDominanceComparator();
-        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(new double[]{0.001, 0.001});
+        double[] epsilonDouble = new double[]{0.001, 0.001};
         final TournamentSelection selection = new TournamentSelection(2, comparator);
 
         String time = String.valueOf(System.currentTimeMillis());
         switch (MODE) {
-            case 1: //NSGAII Search
+            case 1: //MOEA/D
 
-                //setup NSGAII
+                //setup MOEAD
                 NondominatedSortingPopulation ndsPopulation = new NondominatedSortingPopulation();
 
                 TournamentSelection tSelection = new TournamentSelection(2,
@@ -127,21 +127,23 @@ public class RBSAEOSSSMAP {
 
                 break;
             case 2: //Use epsilonMOEA
-                for(int i=0; i<30; i++){
-                Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
-
-                runSearch(eMOEA, properties, path + File.separator + "result", time);
+                for(int i = 0; i < 30; i++) {
+                    Population population = new Population();
+                    EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
+                    time = String.valueOf(System.currentTimeMillis());
+                    runSearch(eMOEA, properties, path + File.separator + "result", time);
                 }
                 break;
 
             case 3://Hyperheuristic search
-                
-                for(int i=0; i<30; i++){
-                IRewardDefinition creditAssignment;
 
+                for (int i = 0; i < 30; i++) {
+                    IRewardDefinition creditAssignment;
+                    time = String.valueOf(System.currentTimeMillis());
 //                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA"};
 //                String[] creditDefs = new String[]{"OPIR2", "OPopIPFR2", "OPopIEAR2", "CR2PF", "CR2EA"};
-                String[] creditDefs = new String[]{"OPopPF"};
+                String[] creditDefs = new String[]{"OPopEA"};
                 for (String credDef : creditDefs) {
 
                     try {
@@ -153,12 +155,12 @@ public class RBSAEOSSSMAP {
 
                         ArrayList<Variation> heuristics = new ArrayList();
                         //add domain-specific heuristics
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddRandomToSmallSatellite(300), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new RemoveRandomFromLoadedSatellite(1500), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveSuperfluous(10), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new ImproveOrbit(), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(10), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddSynergy(10), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddRandomToSmallSatellite(500), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveRandomFromLoadedSatellite(1500), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveSuperfluous(5), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new ImproveOrbit(2), new BitFlip(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(5), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddSynergy(5), new BitFlip(mutationProbability)));
                         //add domain-independent heuristics
 //                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
 
@@ -167,9 +169,11 @@ public class RBSAEOSSSMAP {
                         //all other properties use default parameters
                         INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
+                        Population population = new Population();
+                        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                         HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, injectionRate, lagWindow);
-                        String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "allCross" + time;
+                        String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "moreCrossNoInterNoSingle10" + time;
                         String name = path + File.separator + "result" + File.separator;
                         runSearch(hemoea, properties, path + File.separator + "result", fileName);
 
@@ -264,7 +268,8 @@ public class RBSAEOSSSMAP {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 
-        Instrumenter instrumenter = new Instrumenter().withFrequency(populationSize)
+        Instrumenter instrumenter = new Instrumenter().withFrequency(20)
+                .withReferenceSet(new File(savePath + File.separator + "ref.obj"))
                 .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 2.0}))
                 .attachElapsedTimeCollector();
 

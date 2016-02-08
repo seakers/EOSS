@@ -67,9 +67,9 @@ public class AddSynergy extends AbstractEOSSOperator {
         int missingInstrumentIndex = checkNthOrderSynergy(thepayload, randOrbit, 2);
 
         //try with 3-lateral synergies
-        if (missingInstrumentIndex == -1) {
-            missingInstrumentIndex = checkNthOrderSynergy(thepayload, randOrbit, 3);
-        }
+//        if (missingInstrumentIndex == -1) {
+//            missingInstrumentIndex = checkNthOrderSynergy(thepayload, randOrbit, 3);
+//        }
 
         if (missingInstrumentIndex != -1) {
             child.addInstrumentToOrbit(missingInstrumentIndex, randOrbitIndex);
