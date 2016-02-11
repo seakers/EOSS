@@ -69,7 +69,7 @@ public class RBSAEOSSSMAP {
         if (args.length==0) {
             args = new String[3];
             args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-            args[1] = "3";
+            args[1] = "2";
             args[2] = "3";
         }
 
@@ -162,18 +162,18 @@ public class RBSAEOSSSMAP {
 //                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(5), new BitFlip(mutationProbability)));
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new AddSynergy(5), new BitFlip(mutationProbability)));
                         //add domain-independent heuristics
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
 
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
-                        INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
+                        INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("Random", properties, heuristics);
 
                         Population population = new Population();
                         EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                         HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, injectionRate, lagWindow);
-                        String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "moreCrossNoInterNoSingle10" + time;
+                        String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "moreCrossNoInter10" + time;
                         String name = path + File.separator + "result" + File.separator;
                         runSearch(hemoea, properties, path + File.separator + "result", fileName);
 
@@ -268,7 +268,7 @@ public class RBSAEOSSSMAP {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 
-        Instrumenter instrumenter = new Instrumenter().withFrequency(20)
+        Instrumenter instrumenter = new Instrumenter().withFrequency(5)
                 .withReferenceSet(new File(savePath + File.separator + "ref.obj"))
                 .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 2.0}))
                 .attachElapsedTimeCollector();

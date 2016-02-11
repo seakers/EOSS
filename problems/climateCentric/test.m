@@ -19,7 +19,7 @@ while(iter.hasNext)
     ind = ind + 1;
 end
 % obj = dlmread(files(randi(length(files))).name);
-scatter(-pop(:,1),pop(:,2)*33495.939796,'filled')
+scatter(-pop(:,1),pop(:,2)*33495.939796,'r','filled')
 hold on
 clear pop
 files = dir('HeMOEA_AdaptivePursuit_SI-PF_moreCrossNoInter10*.pop');
@@ -33,7 +33,7 @@ while(iter.hasNext)
     ind = ind + 1;
 end
 % obj = dlmread(files(randi(length(files))).name);
-scatter(-pop(:,1),pop(:,2)*33495.939796)
+scatter(-pop(:,1),pop(:,2)*33495.939796,'b')
 
 axis([0,0.35,0,12000])
 legend('eMOEA','oneCross','Location','NorthWest')
