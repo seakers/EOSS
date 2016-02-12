@@ -84,7 +84,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 200;
+        int popSize = 2;
         properties.setInt("maxEvaluations", 5000);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
@@ -144,10 +144,10 @@ public class RBSAEOSSSMAP {
 
                         ArrayList<Variation> heuristics = new ArrayList();
                         //add domain-specific heuristics
-//                        heuristics.add(new AddRandomToSmallSatellite(300));
+                        heuristics.add(new AddRandomToSmallSatellite(300));
 //                        heuristics.add(new RemoveRandomFromLoadedSatellite(1500));
 //                        heuristics.add(new RemoveSuperfluous(10));
-//                        heuristics.add(new ImproveOrbit());
+                        heuristics.add(new ImproveOrbit());
 //                        heuristics.add(new RemoveInterference(10));
 //                        heuristics.add(new AddSynergy(10));
                         //add domain-independent heuristics
@@ -255,6 +255,7 @@ public class RBSAEOSSSMAP {
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(populationSize)
+                .withReferenceSet(new File(savePath + File.separator + "ref.obj"))
                 .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 30000.0}))
                 .attachElapsedTimeCollector();
 

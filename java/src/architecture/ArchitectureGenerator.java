@@ -90,12 +90,37 @@ public class ArchitectureGenerator implements Initialization {
         } else if (variable instanceof Assigning) {
             //this covers initialization for both assigning and connecting
             Assigning assign = (Assigning) variable;
-            for (int i = 0; i < assign.getNumberOfLHS(); i++) {
-                for (int j = 0; j < assign.getNumberOfRHS(); j++) {
-                    if(pprng.nextBoolean())
-                        assign.connect(i,j);
-                }
-            }
+//            for (int i = 0; i < assign.getNumberOfLHS(); i++) {
+//                for (int j = 0; j < assign.getNumberOfRHS(); j++) {
+//                    if(pprng.nextBoolean())
+//                        assign.connect(i,j);
+//                }
+//            }
+//            assign.connect(0,0);
+//            assign.connect(0,1);
+            assign.connect(1,1);
+            assign.connect(4,1);
+//            assign.connect(3,3);
+//            assign.connect(3,4);
+//            assign.connect(4,4);
+//            assign.connect(5,3);
+//            assign.connect(6,0);
+//            assign.connect(6,1);
+//            assign.connect(6,4);
+//            assign.connect(7,1);
+//            assign.connect(7,2);
+//            assign.connect(7,3);
+//            assign.connect(7,4);
+//            assign.connect(8,4);
+//            assign.connect(9,2);
+//            assign.connect(9,3);
+//            assign.connect(9,4);
+//            assign.connect(10,0);
+//            assign.connect(10,1);
+//            assign.connect(10,3);
+//            assign.connect(10,4);
+//            assign.connect(11,0);
+//            assign.connect(11,4);
         } else {
             System.err.println("can not initialize unknown type");
         }
