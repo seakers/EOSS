@@ -23,8 +23,8 @@ import org.moeaframework.core.Solution;
 import org.moeaframework.problem.AbstractProblem;
 import architecture.util.FuzzyValue;
 import architecture.util.Interval;
+import eoss.jess.JessInitializer;
 import eoss.jess.QueryBuilder;
-import eoss.jess.Resource;
 
 /**
  * An assigning problem to optimize the allocation of n instruments to m orbits.
@@ -37,7 +37,9 @@ public class EOSSProblem extends AbstractProblem {
 
     private final int[] altnertivesForNumberOfSatellites;
 
-    private final Resource resource;
+    private  Rete r;
+    
+    private  QueryBuilder qb;
 
     private final boolean explanation;
 
@@ -58,9 +60,19 @@ public class EOSSProblem extends AbstractProblem {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
-        this.resource = new Resource();
+        this.r = new Rete();
+        this.qb = new QueryBuilder( r );
+        JessInitializer ji = new JessInitializer();
+        ji.initializeJess( r, qb);
         this.explanation = explanation;
         this.withSynergy = withSynergy;
+    }
+    
+    public void renewJess(){
+            this.r = new Rete();
+            this.qb = new QueryBuilder(r);
+        JessInitializer ji = new JessInitializer();
+        ji.initializeJess( r, qb);
     }
 
     /**
@@ -85,21 +97,20 @@ public class EOSSProblem extends AbstractProblem {
     public void evaluate(Solution sltn) {
         EOSSArchitecture arch = (EOSSArchitecture) sltn;
 
-        Rete r = resource.getRete();
-        QueryBuilder qb = resource.getQueryBuilder();
-
         try {
+             long startTime = System.currentTimeMillis();
             r.reset();
-            assertMissions(r, arch);
-            double science = evaluatePerformance(r, arch, qb); //compute science score
+            assertMissions(arch);
+            double science = evaluatePerformance(arch); //compute science score
             arch.setObjective(0, -science); //negative because MOEAFramework assumes minimization problems
 
             r.reset();
-            assertMissions(r, arch);
+            assertMissions(arch);
 //            evaluateCostEONRules(r, arch, qb); //compute cost
-            double cost = evaluateCost(r, arch, qb);
-            arch.setObjective(1, cost);
-            r.reset();
+            double cost = evaluateCost(arch);
+            arch.setObjective(1, cost / 33495.939796); //normalize cost to maximum value
+            r.clearStorage();
+            
 
             System.out.println("Arch " + arch.toString() + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
         } catch (JessException ex) {
@@ -112,7 +123,7 @@ public class EOSSProblem extends AbstractProblem {
         return new EOSSArchitecture(altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments().size(), EOSSDatabase.getOrbits().size(), 2);
     }
 
-    private void aggregate_performance_score_facts(EOSSArchitecture arch, Rete r, QueryBuilder qb) {
+    private void aggregate_performance_score_facts(EOSSArchitecture arch) {
         ArrayList subobj_scores = new ArrayList();
         ArrayList obj_scores = new ArrayList();
         ArrayList panel_scores = new ArrayList();
@@ -127,7 +138,7 @@ public class EOSSProblem extends AbstractProblem {
             if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
                 fuzzy_science = (FuzzyValue) val.getSlotValue("fuzzy-value").javaObjectValue(r.getGlobalContext());
             }
-            panel_scores = jessList2ArrayList(val.getSlotValue("sh-scores").listValue(r.getGlobalContext()), r);
+            panel_scores = jessList2ArrayList(val.getSlotValue("sh-scores").listValue(r.getGlobalContext()));
 
             ArrayList<Fact> subobj_facts = qb.makeQuery("AGGREGATION::SUBOBJECTIVE");
             for (int n = 0; n < subobj_facts.size(); n++) {
@@ -156,54 +167,7 @@ public class EOSSProblem extends AbstractProblem {
         }
     }
 
-    private void aggregate_performance_score(EOSSArchitecture arch, Rete r) {
-        ArrayList subobj_scores = new ArrayList();
-        ArrayList obj_scores = new ArrayList();
-        ArrayList panel_scores = new ArrayList();
-        //Subobjective scores
-        for (int p = 0; p < Params.npanels; p++) {
-            int nob = Params.num_objectives_per_panel.get(p);
-            ArrayList subobj_scores_p = new ArrayList(nob);
-            for (int o = 0; o < nob; o++) {
-                ArrayList subobj_p = (ArrayList) Params.subobjectives.get(p);
-                ArrayList subobj_o = (ArrayList) subobj_p.get(o);
-                int nsubob = subobj_o.size();
-                ArrayList subobj_scores_o = new ArrayList(nsubob);
-                for (int so = 0; so < nsubob; so++) {
-                    String var_name = "?*subobj-" + subobj_o.get(so) + "*";
-                    try {
-                        subobj_scores_o.add(r.eval(var_name).floatValue(r.getGlobalContext()));
-                    } catch (JessException ex) {
-                        Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                subobj_scores_p.add(subobj_scores_o);
-            }
-            subobj_scores.add(subobj_scores_p);
-        }
-
-        //Objective scores
-        for (int p = 0; p < Params.npanels; p++) {
-            int nob = Params.num_objectives_per_panel.get(p);
-            ArrayList obj_scores_p = new ArrayList(nob);
-            for (int o = 0; o < nob; o++) {
-                ArrayList subobj_weights_p = (ArrayList) Params.subobj_weights.get(p);
-                ArrayList subobj_weights_o = (ArrayList) subobj_weights_p.get(o);
-                ArrayList subobj_scores_p = (ArrayList) subobj_scores.get(p);
-                ArrayList subobj_scores_o = (ArrayList) subobj_scores_p.get(o);
-                obj_scores_p.add(innerProduct(subobj_weights_o, subobj_scores_o));
-            }
-            obj_scores.add(obj_scores_p);
-        }
-        //Stakeholder and final score
-        for (int p = 0; p < Params.npanels; p++) {
-            panel_scores.add(innerProduct((ArrayList) Params.obj_weights.get(p), (ArrayList) obj_scores.get(p)));
-        }
-        double science = innerProduct(Params.panel_weights, panel_scores);
-        arch.setObjective(numberOfVariables, -science); //negative because MOEAFramework assumes minimization problems
-    }
-
-    private double evaluateCostEONRules(Rete r, EOSSArchitecture arch, QueryBuilder qb) throws JessException {
+    private double evaluateCostEONRules(EOSSArchitecture arch) throws JessException {
         r.setFocus("MANIFEST");
         r.run();
 
@@ -236,14 +200,14 @@ public class EOSSProblem extends AbstractProblem {
         return cost;
     }
 
-    private double evaluateCost(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
+    private double evaluateCost(EOSSArchitecture arch) {
         double cost = 0.0;
         try {
             //
             r.eval("(focus MANIFEST)");
             r.run();
 
-            designSpacecraft(r, arch, qb);
+            designSpacecraft();
             r.eval("(focus SAT-CONFIGURATION)");
             r.run();
 
@@ -282,7 +246,7 @@ public class EOSSProblem extends AbstractProblem {
         return cost;
     }
 
-    private void designSpacecraft(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
+    private void designSpacecraft() {
         try {
             r.eval("(focus PRELIM-MASS-BUDGET)");
             r.run();
@@ -326,7 +290,7 @@ public class EOSSProblem extends AbstractProblem {
         }
     }
 
-    private void assertMissions(Rete r, EOSSArchitecture arch) {
+    private void assertMissions(EOSSArchitecture arch) {
         try {
             for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
                 Orbit orbit = EOSSDatabase.getOrbits().get(i);
@@ -387,7 +351,7 @@ public class EOSSProblem extends AbstractProblem {
         }
     }
 
-    private double evaluatePerformance(Rete r, EOSSArchitecture arch, QueryBuilder qb) {
+    private double evaluatePerformance(EOSSArchitecture arch) {
         double science = 0;
         try {
             r.eval("(bind ?*science-multiplier* 1.0)");
@@ -428,10 +392,8 @@ public class EOSSProblem extends AbstractProblem {
             }
 
             //Revisit times
-            Iterator parameters = Params.measurements_to_instruments.keySet().iterator();
-            while (parameters.hasNext()) {
-                String param = (String) parameters.next();
-                Value v = r.eval("(update-fovs " + param + " (create$ " + StringUtils.join(EOSSDatabase.getOrbits(), " ") + "))");
+            for (String measurement : Params.measurements) {
+                Value v = r.eval("(update-fovs " + measurement + " (create$ " + StringUtils.join(EOSSDatabase.getOrbits(), " ") + "))");
                 if (RU.getTypeName(v.type()).equalsIgnoreCase("LIST")) {
                     ValueVector thefovs = v.listValue(r.getGlobalContext());
                     ArrayList<String> fovs = new ArrayList<>(thefovs.size());
@@ -444,13 +406,14 @@ public class EOSSProblem extends AbstractProblem {
                     //System.out.println(param);
                     //key = "5 x -1  -1  -1  -1  50";
                     //}
-                    HashMap therevtimes = (HashMap) Params.revtimes.get(key); //key: 'Global' or 'US', value Double
+                    HashMap<String, Double> therevtimes = Params.revtimes.get(key); //key: 'Global' or 'US', value Double
 
+                    //there were two different maps at one point. one with spaces and the other without spaces and commas
                     if (therevtimes == null) {
                         key = arch.getNumberOfSatellitesPerOrbit() + " x " + StringUtils.join(fovs, "  ");
-                        therevtimes = (HashMap) Params.revtimes.get(key); //key: 'Global' or 'US', value Double
+                        therevtimes = Params.revtimes.get(key); //key: 'Global' or 'US', value Double
                     }
-                    String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + param + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
+                    String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
                             + "(avg-revisit-time-US# " + therevtimes.get("US") + ")))";
                     r.eval(call);
                 }
@@ -487,13 +450,9 @@ public class EOSSProblem extends AbstractProblem {
             Fact val = vals.get(0);
             science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
 
-            if (explanation && ((Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")))) {
-                aggregate_performance_score_facts(arch, r, qb);
-            } else if (explanation && ((Params.req_mode.equalsIgnoreCase("CRISP-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-CASES")))) {
-                aggregate_performance_score(arch, r);
-            }
+            aggregate_performance_score_facts(arch);
 
-            if (Params.run_mode.equalsIgnoreCase("DEBUG")) {
+            if (explanation) {
                 explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
                 explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
                 arch.setExplanation(0, explanations);
@@ -538,7 +497,7 @@ public class EOSSProblem extends AbstractProblem {
 //        }
 //        return out;
 //    }
-    private ArrayList jessList2ArrayList(ValueVector vv, Rete r) {
+    private ArrayList jessList2ArrayList(ValueVector vv) {
         ArrayList al = new ArrayList();
         try {
             for (int i = 0; i < vv.size(); i++) {

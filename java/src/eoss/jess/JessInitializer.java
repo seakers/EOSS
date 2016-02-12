@@ -38,23 +38,18 @@ import rbsa.eoss.Weight;
 
 public class JessInitializer {
 
-    private static JessInitializer instance = null;
+//    private static JessInitializer instance = null;
 
-    private HashMap<String,SlotType> capabilitiesToRequirementAttribInheritance;
+    private HashMap<String, SlotType> capabilitiesToRequirementAttribInheritance;
 
-    private JessInitializer() {
-    }
-
-    public static JessInitializer getInstance() {
-        if (instance == null) {
-            instance = new JessInitializer();
-        }
-        return instance;
+    public JessInitializer() {
     }
 
     public void initializeJess(Rete r, QueryBuilder qb) {
         System.out.println("Initializing Jess...");
         try {
+            r.eval("(set-node-index-hash 13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)
+            
             // Create global variable path
             String tmp = Params.path.replaceAll("\\\\", "\\\\\\\\");
             r.eval("(defglobal ?*app_path* = \"" + tmp + "\")");
@@ -115,11 +110,7 @@ public class JessInitializer {
 
             //Load requirement rules
             Workbook requirements_xls = Workbook.getWorkbook(new File(Params.requirement_satisfaction_xls));
-            if (Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) {
-                loadFuzzyRequirementRules(r, requirements_xls, "Requirement rules");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
-            } else if (Params.req_mode.equalsIgnoreCase("CRISP-CASES")) {
-                loadRequirementRules(r, requirements_xls, "Requirement rules");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
-            } else if (Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) {
+            if (Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) {
 //                loadRequirementRulesAttribsWithContinuousSatisfactionScore(r, requirements_xls, "Attributes");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
                 loadRequirementRulesAttribs(r, requirements_xls, "Attributes");
             } else if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
@@ -127,7 +118,7 @@ public class JessInitializer {
             }
 
             //Load capability rules
-            loadCapabilityRules(r, instrument_xls,Params.capability_rules_clp);
+            loadCapabilityRules(r, instrument_xls, Params.capability_rules_clp);
 
             //Load synergy rules
             loadSynergyRules(r, Params.synergy_rules_clp);
@@ -182,12 +173,12 @@ public class JessInitializer {
     }
 
     private void loadTemplates(Rete r, Workbook xls) {
-        HashMap<String,SlotType> measurementAttribs = loadMeasurementTemplate(r, xls);
-        HashMap<String,SlotType> instrumentAttribs = loadInstrumentTemplate(r, xls);
+        HashMap<String, SlotType> measurementAttribs = loadMeasurementTemplate(r, xls);
+        HashMap<String, SlotType> instrumentAttribs = loadInstrumentTemplate(r, xls);
         capabilitiesToRequirementAttribInheritance = new HashMap<>();
         for (String attrib : instrumentAttribs.keySet()) {
             if (measurementAttribs.containsKey(attrib)) {
-                capabilitiesToRequirementAttribInheritance.put(attrib,measurementAttribs.get(attrib));
+                capabilitiesToRequirementAttribInheritance.put(attrib, measurementAttribs.get(attrib));
             }
         }
         loadSimpleTemplate(r, xls, "Mission", "MANIFEST::Mission");
@@ -208,8 +199,8 @@ public class JessInitializer {
      * @param xls
      * @return
      */
-    private HashMap<String,SlotType> loadMeasurementTemplate(Rete r, Workbook xls) {
-        HashMap<String,SlotType> out = new HashMap<>();
+    private HashMap<String, SlotType> loadMeasurementTemplate(Rete r, Workbook xls) {
+        HashMap<String, SlotType> out = new HashMap<>();
         try {
             HashMap<String, Integer> attribs_to_keys = new HashMap();
             HashMap<Integer, String> keys_to_attribs = new HashMap();
@@ -247,15 +238,16 @@ public class JessInitializer {
                 }
                 attribSet.put(name, attrib);
                 call = call.concat(" (" + slot_type + " " + name + ") ");
-                
+
                 //when storing the attribute names get rid of any calls to default values for the slots
                 String[] attribName = name.split(" ");
-                if(slot_type.equalsIgnoreCase("slot"))
-                    out.put(attribName[0],SlotType.SLOT);
-                else if(slot_type.equalsIgnoreCase("multislot"))
-                    out.put(attribName[0],SlotType.MULTISLOT);
-                else
+                if (slot_type.equalsIgnoreCase("slot")) {
+                    out.put(attribName[0], SlotType.SLOT);
+                } else if (slot_type.equalsIgnoreCase("multislot")) {
+                    out.put(attribName[0], SlotType.MULTISLOT);
+                } else {
                     throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
+                }
             }
 
             GlobalAttributes.defineMeasurement(attribs_to_keys, keys_to_attribs, attribs_to_types, attribSet);
@@ -276,8 +268,8 @@ public class JessInitializer {
      * @param xls
      * @return
      */
-    private HashMap<String,SlotType> loadInstrumentTemplate(Rete r, Workbook xls) {
-        HashMap<String,SlotType> out = new HashMap<>();
+    private HashMap<String, SlotType> loadInstrumentTemplate(Rete r, Workbook xls) {
+        HashMap<String, SlotType> out = new HashMap<>();
         try {
             Sheet meas = xls.getSheet("Instrument");
             String call = "(deftemplate CAPABILITIES::Manifested-instrument ";
@@ -290,15 +282,16 @@ public class JessInitializer {
 
                 call = call.concat(" (" + slot_type + " " + name + ") ");
                 call2 = call2.concat(" (" + slot_type + " " + name + ") ");
-                
+
                 //when storing the attribute names get rid of any calls to default values for the slots
                 String[] attribName = name.split(" ");
-                if(slot_type.equalsIgnoreCase("slot"))
-                    out.put(attribName[0],SlotType.SLOT);
-                else if(slot_type.equalsIgnoreCase("multislot"))
-                    out.put(attribName[0],SlotType.MULTISLOT);
-                else
+                if (slot_type.equalsIgnoreCase("slot")) {
+                    out.put(attribName[0], SlotType.SLOT);
+                } else if (slot_type.equalsIgnoreCase("multislot")) {
+                    out.put(attribName[0], SlotType.MULTISLOT);
+                } else {
                     throw new IllegalArgumentException("Slot type " + slot_type + " not recognized");
+                }
             }
 
             call = call.concat(")");
@@ -591,20 +584,20 @@ public class JessInitializer {
                 String[] fuzzy_values = new String[num_values];
                 String[] mins = new String[num_values];
                 String[] maxs = new String[num_values];
-                String call_values = "(create$ ";
-                String call_mins = "(create$ ";
-                String call_maxs = "(create$ ";
+                StringBuilder call_values = new StringBuilder("(create$ ");
+                StringBuilder call_mins = new StringBuilder("(create$ ");
+                StringBuilder call_maxs = new StringBuilder("(create$ ");
                 for (int j = 1; j <= num_values; j++) {
                     fuzzy_values[j - 1] = row[4 * j].getContents();
-                    call_values = call_values + fuzzy_values[j - 1] + " ";
+                    call_values.append(fuzzy_values[j - 1]).append(" ");
                     mins[j - 1] = row[1 + 4 * j].getContents();
-                    call_mins = call_mins + mins[j - 1] + " ";
+                    call_mins.append(mins[j - 1]).append(" ");
                     maxs[j - 1] = row[3 + 4 * j].getContents();
-                    call_maxs = call_maxs + maxs[j - 1] + " ";
+                    call_maxs.append(maxs[j - 1]).append(" ");
                 }
-                call_values = call_values + ")";
-                call_mins = call_mins + ")";
-                call_maxs = call_maxs + ")";
+                call_values.append(")");
+                call_mins.append(")");
+                call_maxs.append(")");
 
                 String call = "(defrule " + module + "::numerical-to-fuzzy-" + att + " ";
                 if (param.equalsIgnoreCase("all")) {
@@ -619,141 +612,6 @@ public class JessInitializer {
 
             }
         } catch (NumberFormatException | JessException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void loadRequirementRules(Rete r, Workbook xls, String sheet) {
-        try {
-            Sheet meas = xls.getSheet(sheet);
-
-            int nrules = meas.getRows();
-            int nobj = 0;
-            int nsubobj = 0;
-            String current_obj = "";
-            String current_subobj = "";
-            String var_name = "";
-            for (int i = 1; i < nrules; i++) {
-                Cell[] row = meas.getRow(i);
-                String obj = row[0].getContents();
-                String explan = row[1].getContents();
-                if (!obj.equalsIgnoreCase(current_obj)) {
-                    nobj++;
-                    nsubobj = 0;
-                    var_name = "?*obj-" + obj + "*";
-                    r.eval("(defglobal " + var_name + " = 0)");
-                    current_obj = obj;
-                }
-                String subobj = row[2].getContents();
-                if (!subobj.equalsIgnoreCase(current_subobj)) {
-                    nsubobj++;
-                    var_name = "?*subobj-" + subobj + "*";
-                    r.eval("(defglobal " + var_name + " = 0)");
-                    current_subobj = subobj;
-                }
-                String type = row[5].getContents();
-                String value = row[6].getContents();
-                String desc = row[7].getContents();
-                String param = row[8].getContents();
-
-                String tmp = "?*subobj-" + subobj + "*";
-
-                if (Params.measurements_to_subobjectives.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_subobjectives.get(param);
-                    if (!list.contains(tmp)) {
-                        list.add(tmp);
-                        Params.measurements_to_subobjectives.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(tmp);
-                    Params.measurements_to_subobjectives.put(param, list);
-                }
-
-                if (Params.measurements_to_objectives.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_objectives.get(param);
-                    if (!list.contains(obj)) {
-                        list.add(obj);
-                        Params.measurements_to_objectives.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(obj);
-                    Params.measurements_to_objectives.put(param, list);
-                }
-                String pan = obj.substring(0, 2);
-                if (Params.measurements_to_panels.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_panels.get(param);
-                    if (!list.contains(pan)) {
-                        list.add(pan);
-                        Params.measurements_to_panels.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(pan);
-                    Params.measurements_to_panels.put(param, list);
-                }
-
-                String call = "(defrule REQUIREMENTS::subobjective-" + subobj + "-" + type + " " + desc + " (REQUIREMENTS::Measurement (Parameter " + param + ") ";
-                //boolean more_attributes = true;
-                int ntests = 0;
-                String calls_for_later = "";
-                for (int j = 9; j < row.length; j++) {
-                    if (row[j].getType().toString().equalsIgnoreCase("Empty")) {
-                        break;
-                    }
-                    String attrib = row[j].getContents();
-
-                    String[] tokens = attrib.split(" ", 2);// limit = 2 so that remain contains RegionofInterest Global
-                    String header = tokens[0];
-                    String remain = tokens[1];
-                    if (attrib.equalsIgnoreCase("")) {
-                        call = call + " (taken-by ?who))";
-                        //more_attributes = false;
-                    } else if (header.startsWith("SameOrBetter")) {
-                        ntests++;
-                        String[] tokens2 = remain.split(" ");
-                        String att = tokens2[0];
-                        String val = tokens2[1];
-                        String new_var_name = "?x" + ntests;
-                        String match = att + " " + new_var_name + "&~nil";
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (>= (SameOrBetter " + att + " " + new_var_name + " " + val + ") 0))";
-                    } else if (header.startsWith("ContainsRegion")) {
-                        ntests++;
-                        String[] tokens2 = remain.split(" ");
-                        String att = tokens2[0];
-                        String val = tokens2[1];
-                        String new_var_name = "?x" + ntests;
-                        String match = att + " " + new_var_name + "&~nil";
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (ContainsRegion " + new_var_name + " " + val + "))";
-                    } else if (header.startsWith("ContainsBands")) {
-                        ntests++;
-                        String new_var_name = "?x" + ntests;
-                        String match = " spectral-bands $" + new_var_name;
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (ContainsBands  (create$ " + remain + ") $" + new_var_name + "))";
-                    } else {
-                        call = call + "(" + attrib + ")";
-                    }
-                }
-                call = call + "(taken-by ?who)) " + calls_for_later + " => ";
-                var_name = "?*subobj-" + subobj + "*";
-
-                if (type.startsWith("nominal")) {
-                    call = call + "(assert (REASONING::fully-satisfied (subobjective " + subobj + ") (parameter " + param + ") (objective \" " + explan + "\") (taken-by ?who)))";
-                } else {
-                    call = call + "(assert (REASONING::partially-satisfied (subobjective " + subobj + ") (parameter " + param + ") (objective \" " + explan + "\") (attribute " + desc + ") (taken-by ?who)))";
-                }
-                call = call + "(bind " + var_name + " (max " + var_name + " " + value + " )))";
-                r.eval(call);
-                r.eval("(defglobal ?*num-soundings-per-day* = 0)");
-            }
-            Params.subobjectives_to_measurements = getInverseHashMap(Params.measurements_to_subobjectives);
-            Params.objectives_to_measurements = getInverseHashMap(Params.measurements_to_objectives);
-            Params.panels_to_measurements = getInverseHashMap(Params.measurements_to_panels);
-        } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -774,7 +632,6 @@ public class JessInitializer {
             String param = "";
             String current_param = "";
             HashMap<String, ArrayList<String>> subobj_tests = null;
-            Params.requirement_rules = new HashMap();
             for (int i = 1; i < nlines; i++) {
                 Cell[] row = meas.getRow(i);
                 String subobj = row[0].getContents();
@@ -792,8 +649,6 @@ public class JessInitializer {
                         String rhs0 = ") => (bind ?reason \"\") (bind ?new-reasons (create$ " + StringUtils.repeat("N-A ", nattrib) + "))";
                         req_rule = lhs + rhs0 + rhs + rhs2 + ")) (assert (AGGREGATION::SUBOBJECTIVE (id " + current_subobj + ") (attributes " + attribs + ") (index " + index + ") (parent " + parent + " ) (attrib-scores ?list) (satisfaction (*$ ?list)) (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
                         req_rule = req_rule + ")";
-                        Params.requirement_rules.put(current_subobj, subobj_tests);
-                        Params.subobjectives_to_measurements.put(current_subobj, current_param);
                         r.eval(req_rule);
 
                         //start next requirement rule
@@ -845,8 +700,6 @@ public class JessInitializer {
             req_rule = req_rule + ")";
 
             r.eval(req_rule);
-            Params.requirement_rules.put(current_subobj, subobj_tests);
-            Params.subobjectives_to_measurements.put(current_subobj, current_param);
             call2 = call2 + ")";
             r.eval(call2);
         } catch (JessException ex) {
@@ -871,7 +724,6 @@ public class JessInitializer {
             String param = "";
             String current_param = "";
             HashMap<String, ArrayList<String>> subobj_tests = null;
-            Params.requirement_rules = new HashMap();
 
             for (int i = 1; i < nlines; i++) {
                 Cell[] row = meas.getRow(i);
@@ -894,8 +746,6 @@ public class JessInitializer {
                                 + "(call ValueMap getIntervalValue)) getFuzzy_val) \"utils\" (call ValueMap getValueInterval))) "
                                 + " (reasons ?new-reasons) (satisfied-by ?whom) (reason ?reason )))";
                         req_rule = req_rule + ")";
-                        Params.requirement_rules.put(current_subobj, subobj_tests);
-                        Params.subobjectives_to_measurements.put(current_subobj, current_param);
                         r.eval(req_rule);
 
                         //start next requirement rule
@@ -956,163 +806,11 @@ public class JessInitializer {
             req_rule = req_rule + ")";
 
             r.eval(req_rule);
-            Params.requirement_rules.put(current_subobj, subobj_tests);
-            Params.subobjectives_to_measurements.put(current_subobj, current_param);
             call2 = call2 + ")";
             r.eval(call2);
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
 
-        }
-    }
-
-    private void loadFuzzyRequirementRules(Rete r, Workbook xls, String sheet) {
-        try {
-            Sheet meas = xls.getSheet(sheet);
-
-            int nrules = meas.getRows();
-            int nobj = 0;
-            int nsubobj = 0;
-            String current_obj = "";
-            String current_subobj = "";
-            String var_name = "";
-            String call2 = "(deffacts REQUIREMENTS::init-subobjectives ";
-
-            for (int i = 1; i < nrules; i++) {
-                Cell[] row = meas.getRow(i);
-                String obj = row[0].getContents();
-                String explan = row[1].getContents();
-                if (!obj.equalsIgnoreCase(current_obj)) {
-                    nobj++;
-                    nsubobj = 0;
-                    var_name = "?*obj-" + obj + "*";
-                    r.eval("(defglobal " + var_name + " = 0)");
-                    current_obj = obj;
-                }
-                String subobj = row[2].getContents();
-                if (!subobj.equalsIgnoreCase(current_subobj)) {
-                    nsubobj++;
-                    var_name = "?*subobj-" + subobj + "*";
-                    r.eval("(defglobal " + var_name + " = 0)");
-                    current_subobj = subobj;
-                }
-                String type = row[5].getContents();
-                String value = row[6].getContents();
-                String desc = row[7].getContents();
-                String param = row[8].getContents();
-
-                String tmp = "?*subobj-" + subobj + "*";
-
-                if (Params.measurements_to_subobjectives.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_subobjectives.get(param);
-                    if (!list.contains(tmp)) {
-                        list.add(tmp);
-                        Params.measurements_to_subobjectives.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(tmp);
-                    Params.measurements_to_subobjectives.put(param, list);
-                }
-
-                if (Params.measurements_to_objectives.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_objectives.get(param);
-                    if (!list.contains(obj)) {
-                        list.add(obj);
-                        Params.measurements_to_objectives.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(obj);
-                    Params.measurements_to_objectives.put(param, list);
-                }
-                String pan = obj.substring(0, 2);
-                if (Params.measurements_to_panels.containsKey(param)) {
-                    ArrayList list = (ArrayList) Params.measurements_to_panels.get(param);
-                    if (!list.contains(pan)) {
-                        list.add(pan);
-                        Params.measurements_to_panels.put(param, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(pan);
-                    Params.measurements_to_panels.put(param, list);
-                }
-
-                String call = "(defrule FUZZY-REQUIREMENTS::subobjective-" + subobj + "-" + type + " " + desc + " (REQUIREMENTS::Measurement (Parameter " + param + ") ";
-
-                //boolean more_attributes = true;
-                int ntests = 0;
-                String calls_for_later = "";
-                for (int j = 9; j < row.length; j++) {
-                    if (row[j].getType().toString().equalsIgnoreCase("Empty")) {
-                        break;
-                    }
-                    String attrib = row[j].getContents();
-
-                    String[] tokens = attrib.split(" ", 2);// limit = 2 so that remain contains RegionofInterest Global
-                    String header = tokens[0];
-                    String remain = tokens[1];
-                    if (attrib.equalsIgnoreCase("")) {
-                        call = call + " (taken-by ?who))";
-                        //more_attributes = false;
-                    } else if (header.startsWith("SameOrBetter")) {
-                        ntests++;
-                        String[] tokens2 = remain.split(" ");
-                        String att = tokens2[0];
-                        String val = tokens2[1];
-                        String new_var_name = "?x" + ntests;
-                        String match = att + " " + new_var_name + "&~nil";
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (>= (SameOrBetter " + att + " " + new_var_name + " " + val + ") 0))";
-                    } else if (header.startsWith("ContainsRegion")) {
-                        ntests++;
-                        String[] tokens2 = remain.split(" ");
-                        String att = tokens2[0];
-                        String val = tokens2[1];
-                        String new_var_name = "?x" + ntests;
-                        String match = att + " " + new_var_name + "&~nil";
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (ContainsRegion " + new_var_name + " " + val + "))";
-                    } else if (header.startsWith("ContainsBands")) {
-                        ntests++;
-                        String new_var_name = "?x" + ntests;
-                        String match = " spectral-bands $" + new_var_name;
-                        call = call + "(" + match + ")";
-                        calls_for_later = calls_for_later + " (test (ContainsBands  (create$ " + remain + ") $" + new_var_name + "))";
-                    } else {
-                        call = call + "(" + attrib + ")";
-                    }
-                }
-                call = call + "(taken-by ?who)) " + calls_for_later + " => ";
-                var_name = "?*subobj-" + subobj + "*";
-
-                if (type.startsWith("nominal")) {
-                    call = call + "(assert (REASONING::fully-satisfied (subobjective " + subobj + ") (parameter " + param + ") (objective \" " + explan + "\") (taken-by ?who)))";
-                } else {
-                    call = call + "(assert (REASONING::partially-satisfied (subobjective " + subobj + ") (parameter " + param + ") (objective \" " + explan + "\") (attribute " + desc + ") (taken-by ?who)))";
-                }
-                //Addition for fuzzy rules
-                //tmpp = regexp(subobj,'(?<parent>.+)-(?<index>.+)','names');
-                String the_index = "";
-                String the_parent = "";
-
-                call2 = call2 + " (AGGREGATION::SUBOBJECTIVE (satisfaction 0.0) (fuzzy-value (new FuzzyValue \"Value\" 0.0 0.0 0.0 \"utils\" (matlabf get_value_inv_hashmap))) (id " + subobj + ") (index "
-                        + the_index + ") parent " + the_parent + " )) ";
-                call = call + "(assert (AGGREGATION::SUBOBJECTIVE (id " + subobj + ") (index " + the_index + " ) (parent " + the_parent
-                        + " ) (fuzzy-value (new FuzzyValue \"Value\" (call (new FuzzyValue \"Value\" (new Interval \"interval\" " + value
-                        + " " + value + ") \"utils\" (matlabf get_value_hashmap)) getFuzzy_val) \"utils\" (matlabf get_value_inv_hashmap))) (satisfaction " + value + ")  (satisfied-by ?who) ))";
-
-                //Back to normal rules
-                call = call + " (bind " + var_name + " (max " + var_name + " " + value + " )))";
-                r.eval(call);
-                r.eval("(defglobal ?*num-soundings-per-day* = 0)");
-            }
-            Params.subobjectives_to_measurements = getInverseHashMap(Params.measurements_to_subobjectives);
-            Params.objectives_to_measurements = getInverseHashMap(Params.measurements_to_objectives);
-            Params.panels_to_measurements = getInverseHashMap(Params.measurements_to_panels);
-        } catch (JessException ex) {
-            Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -1124,7 +822,7 @@ public class JessInitializer {
      * @param r
      * @param xls
      */
-    private void loadCapabilityRules(Rete r, Workbook xls,String clp) {
+    private void loadCapabilityRules(Rete r, Workbook xls, String clp) {
         try {
             r.batch(clp);
             for (Instrument instrument : EOSSDatabase.getInstruments()) {
@@ -1132,7 +830,6 @@ public class JessInitializer {
                 Sheet sh = xls.getSheet(instrumentName);
                 int nmeasurements = sh.getRows();
                 System.out.println("Loading capabilities for " + instrumentName + "...");
-                ArrayList meas = new ArrayList();
                 String call = "(defrule MANIFEST::" + instrumentName + "-init-can-measure " + "(declare (salience -20)) ?this <- (CAPABILITIES::Manifested-instrument  (Name ?ins&" + instrumentName
                         + ") (Id ?id) (flies-in ?miss) (Intent ?int) (Spectral-region ?sr) (orbit-type ?typ) (orbit-altitude# ?h) (orbit-inclination ?inc) (orbit-RAAN ?raan) (orbit-anomaly# ?ano) (Illumination ?il)) "
                         + " (not (CAPABILITIES::can-measure (instrument ?ins) (can-take-measurements no))) => "
@@ -1141,11 +838,11 @@ public class JessInitializer {
                 r.eval(call);
 
                 String lhs1 = "(defrule CAPABILITIES-GENERATE::" + instrumentName + "-measurements " + "?this <- (CAPABILITIES::Manifested-instrument  (Name " + instrumentName + ") (Id ?id)(generated-measurements ?gm&nil)";
-                String lhs2 = "";
+                StringBuilder lhs2 = null;
                 String lhs3 = " (CAPABILITIES::can-measure (instrument " + instrumentName + ") (can-take-measurements yes) (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p)) => ";
                 String rhs1 = "(assert (CAPABILITIES::resource-limitations (data-rate-duty-cycle# ?dc-d) (power-duty-cycle# ?dc-p))) ";
                 String list_of_measurements = "";
-                String rhs2 = "";
+                StringBuilder rhs2 = new StringBuilder();
                 for (int i = 0; i < nmeasurements; i++) {
                     Cell[] row = sh.getRow(i);
                     if (row.length == 0) {
@@ -1154,10 +851,10 @@ public class JessInitializer {
                     if (row[0].getType().equals(jxl.CellType.EMPTY)) {
                         continue;
                     }
-                    rhs2 = rhs2 + "(assert (REQUIREMENTS::Measurement";
+                    rhs2.append("(assert (REQUIREMENTS::Measurement");
 
                     //inherit slots from capabilities to requirements that are not defined in the instumnt capability xls
-                    HashMap<String,SlotType> needsInheritcance = new HashMap<>(capabilitiesToRequirementAttribInheritance);
+                    HashMap<String, SlotType> needsInheritance = new HashMap<>(capabilitiesToRequirementAttribInheritance);
 
                     String capability_type = row[0].getContents();//Measurement
                     if (!capability_type.equalsIgnoreCase("Measurement")) {
@@ -1166,87 +863,58 @@ public class JessInitializer {
                     String att_value_pair = row[1].getContents();
                     String[] tokens2 = att_value_pair.split(" ", 2);
                     String att = tokens2[0];//Parameter
-                    String val = tokens2[1];//"x.x.x Soil moisture"
-                    meas.add(val);
+                    String meas = tokens2[1];//"x.x.x Soil moisture"
+                    Params.measurements.add(meas);
 
                     for (int j = 1; j < row.length; j++) {
                         String att_value_pair2 = row[j].getContents();
-                        rhs2 = rhs2 + " (" + att_value_pair2 + ") ";
+                        rhs2.append(" (").append(att_value_pair2).append(") ");
                         String[] tokens = att_value_pair2.split(" ", 2);
-                        needsInheritcance.remove(tokens[0]);
+                        needsInheritance.remove(tokens[0]);
                     }
-                    rhs2 += "(taken-by " + instrumentName + ") (Id " + instrumentName + i + ") (Instrument " + instrumentName + ")(synergy-level# 0) ";
+                    rhs2.append("(taken-by ").append(instrumentName).append(") (Id ").append(instrumentName).append(i).append(") (Instrument ").append(instrumentName).append(")(synergy-level# 0) ");
 
                     //create part of the rule to inherit the rest of the 
-                    lhs2 = "";
-                    Iterator<String> iter = needsInheritcance.keySet().iterator();
+                    lhs2 = new StringBuilder();
+                    Iterator<String> iter = needsInheritance.keySet().iterator();
                     int ind = 0;
-                    while(iter.hasNext()) {
+                    while (iter.hasNext()) {
                         String slotName = iter.next();
-                        SlotType slotType = needsInheritcance.get(slotName);
+                        SlotType slotType = needsInheritance.get(slotName);
                         if (slotName.equalsIgnoreCase("Id")) {
                             //since id is used in assert, need to make it a special case
                             continue;
-                        } else if(slotType.equals(SlotType.SLOT)){
-                            lhs2 += "(" + slotName + " ?var" + String.valueOf(ind) + ")";
-                            rhs2 += "(" + slotName + " ?var" + String.valueOf(ind) + ")";
-                        } else if(slotType.equals(SlotType.MULTISLOT)){
-                            lhs2 += "(" + slotName + " $?var" + String.valueOf(ind) + ")";
-                            rhs2 += "(" + slotName + " $?var" + String.valueOf(ind) + ")";
+                        } else if (slotType.equals(SlotType.SLOT)) {
+                            lhs2.append("(").append(slotName).append(" ?var").append(String.valueOf(ind)).append(")");
+                            rhs2.append("(").append(slotName).append(" ?var").append(String.valueOf(ind)).append(")");
+                        } else if (slotType.equals(SlotType.MULTISLOT)) {
+                            lhs2.append("(").append(slotName).append(" $?var").append(String.valueOf(ind)).append(")");
+                            rhs2.append("(").append(slotName).append(" $?var").append(String.valueOf(ind)).append(")");
                         }
                         ind++;
                     }
-                    lhs2 += ")";
-                    rhs2 += "))";
+                    lhs2.append(")");
+                    rhs2.append("))");
 
                     list_of_measurements = list_of_measurements + " " + instrumentName + i + " ";
                 }
-
                 String rhs3 = "(assert (SYNERGY::cross-registered (measurements " + list_of_measurements + " ) (degree-of-cross-registration instrument) (platform ?id  )))";
                 rhs3 = rhs3 + "(modify ?this (measurement-ids " + list_of_measurements + ")(generated-measurements TRUE)))";
                 r.eval(lhs1 + lhs2 + lhs3 + rhs1 + rhs2 + rhs3);
-                Params.instruments_to_measurements.put(instrumentName, meas);
             }
-            Params.measurements_to_instruments = getInverseHashMap(Params.instruments_to_measurements);
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private HashMap getInverseHashMap(HashMap hm) {
-        HashMap inverse = new HashMap();
-        Iterator es = hm.entrySet().iterator();
-        while (es.hasNext()) {
-            Map.Entry<String, ArrayList> entr = (Map.Entry<String, ArrayList>) es.next();
-            String key = (String) entr.getKey();
-            ArrayList vals = (ArrayList) entr.getValue();
-            Iterator vals2 = vals.iterator();
-            while (vals2.hasNext()) {
-                String val = (String) vals2.next();
-                if (inverse.containsKey(val)) {
-                    ArrayList list = (ArrayList) inverse.get(val);
-                    if (!list.contains(key)) {
-                        list.add(key);
-                        inverse.put(val, list);
-                    }
-                } else {
-                    ArrayList list = new ArrayList();
-                    list.add(key);
-                    inverse.put(val, list);
-                }
-            }
-        }
-        return inverse;
-    }
-
     private void loadSynergyRules(Rete r, String clp) {
         try {
             r.batch(clp);
-            Iterator it = Params.measurements_to_subobjectives.entrySet().iterator();
+            Iterator<Map.Entry<String, ArrayList<String>>> it = Params.measurements_to_subobjectives.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry<String, ArrayList> es = (Map.Entry<String, ArrayList>) it.next();
+                Map.Entry<String, ArrayList<String>> es = it.next();
                 String meas = (String) es.getKey();
-                ArrayList subobjs2 = (ArrayList) es.getValue();
+                ArrayList<String> subobjs2 = (ArrayList<String>) es.getValue();
                 Iterator subobjs = subobjs2.iterator();
                 String call = "(defrule SYNERGIES::stop-improving-" + meas.substring(1, meas.indexOf(" ")) + " ";
                 while (subobjs.hasNext()) {
@@ -1276,10 +944,6 @@ public class JessInitializer {
         String call = "(deffacts AGGREGATION::init-aggregation-facts ";
         Params.panel_names = new ArrayList(Params.npanels);
         Params.panel_weights = new ArrayList(Params.npanels);
-        Params.obj_weights = new ArrayList();
-        Params.subobj_weights = new ArrayList();
-        Params.num_objectives_per_panel = new ArrayList();
-        Params.subobj_weights_map = new HashMap();
 
         for (int i = 0; i < panelNode.getLength(); i++) {
             Element panel = (Element) panelNode.item(i);
@@ -1289,41 +953,24 @@ public class JessInitializer {
         call = call + " (AGGREGATION::VALUE (sh-scores (repeat$ -1.0 " + Params.npanels + ")) (sh-fuzzy-scores (repeat$ -1.0 " + Params.npanels + ")) (weights " + javaArrayList2JessList(Params.panel_weights) + "))";
 
         //load objectives and subobjective weights
-        Params.subobjectives = new ArrayList();
         for (int i = 0; i < panelNode.getLength(); i++) {
             Element panel = (Element) panelNode.item(i);
             NodeList objNode = panel.getElementsByTagName("objective");
             ArrayList<Double> obj_weights = new ArrayList();
 
-            ArrayList<ArrayList> subobj_weights_p = new ArrayList();
-            ArrayList subobj_p = new ArrayList();
             for (int j = 0; j < objNode.getLength(); j++) { //cycle through objectives
                 Element obj = (Element) objNode.item(j);
-                String obj_name = obj.getElementsByTagName("id").item(0).getTextContent();
                 obj_weights.add(Weight.parseWeight(obj.getElementsByTagName("weight").item(0).getTextContent()));
                 NodeList subobjNode = obj.getElementsByTagName("subobjective");
 
-                ArrayList<Double> subobj_weights_o = new ArrayList<Double>();
-                ArrayList subobj_o = new ArrayList();
+                ArrayList<Double> subobj_weights_o = new ArrayList<>();
                 for (int k = 0; k < subobjNode.getLength(); k++) { //cycle through subobjectives
                     Element subobj = (Element) subobjNode.item(k);
-                    String subobj_name = subobj.getElementsByTagName("id").item(0).getTextContent();
                     Double weight = Weight.parseWeight(subobj.getElementsByTagName("weight").item(0).getTextContent());
-                    Params.subobj_weights_map.put(subobj_name, weight);
-
-                    subobj_o.add(subobj_name);
                     subobj_weights_o.add(weight);
                 }
-
-                subobj_weights_p.add(subobj_weights_o);
-                subobj_p.add(subobj_o);
                 call = call + " (AGGREGATION::OBJECTIVE (id " + Params.panel_names.get(i) + (j + 1) + " ) (parent " + Params.panel_names.get(i) + ") (index " + (j + 1) + " ) (subobj-fuzzy-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (subobj-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (weights " + javaArrayList2JessList(subobj_weights_o) + ")) ";
             }
-
-            Params.obj_weights.add(obj_weights);
-            Params.num_objectives_per_panel.add(obj_weights.size());
-            Params.subobj_weights.add(subobj_weights_p);
-            Params.subobjectives.add(subobj_p);
             call = call + " (AGGREGATION::STAKEHOLDER (id " + Params.panel_names.get(i) + " ) (index " + (i + 1) + " ) (obj-fuzzy-scores (repeat$ -1.0 " + obj_weights.size() + ")) (obj-scores (repeat$ -1.0 " + obj_weights.size() + ")) (weights " + javaArrayList2JessList(obj_weights) + ")) ";
         }
 

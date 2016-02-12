@@ -66,9 +66,9 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
         int extraInstrumentIndex = checkNthOrderSuperfluous(thepayload, randOrbit, 2);
 
         //try with 3-lateral synergies
-        if (extraInstrumentIndex == -1) {
-            extraInstrumentIndex = checkNthOrderSuperfluous(thepayload, randOrbit, 3);
-        }
+//        if (extraInstrumentIndex == -1) {
+//            extraInstrumentIndex = checkNthOrderSuperfluous(thepayload, randOrbit, 3);
+//        }
 
         //If a superfluous interaction exists, remove it
         if (extraInstrumentIndex != -1) {
