@@ -8,7 +8,6 @@ package architecture;
  *
  * @author Marc
  */
-import hh.credittest.HHCreditTest;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -60,7 +59,7 @@ public class ResultIO implements Serializable {
             writer.flush();
 
         } catch (IOException ex) {
-            Logger.getLogger(HHCreditTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ResultIO.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

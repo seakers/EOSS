@@ -15,7 +15,9 @@ import org.moeaframework.Instrumenter;
 import org.moeaframework.algorithm.AbstractEvolutionaryAlgorithm;
 import org.moeaframework.analysis.collector.InstrumentedAlgorithm;
 import org.moeaframework.core.Algorithm;
+import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
+import org.moeaframework.core.PopulationIO;
 import org.moeaframework.core.Solution;
 import org.moeaframework.util.TypedProperties;
 
@@ -42,9 +44,10 @@ public class InstrumentedSearch implements Callable<Algorithm>{
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
         
+        Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(5)
-                .withReferenceSet(new File(savePath + File.separator + "ref.obj"))
+                .withReferenceSet(new NondominatedPopulation(referencePopulation))
                 .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 2.0}))
                 .attachElapsedTimeCollector();
 

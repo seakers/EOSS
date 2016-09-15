@@ -7,9 +7,10 @@ package architecturalpattern;
 
 import org.moeaframework.core.Variable;
 import static architecturalpattern.DecisionPattern.COMBINING;
+import org.moeaframework.core.PRNG;
 
 /**
- *
+ * 
  * @author nozomihitomi
  */
 public class Combining implements ArchitecturalDecision, Variable {
@@ -29,7 +30,7 @@ public class Combining implements ArchitecturalDecision, Variable {
         this.alternatives = alternatives;
     }
     
-    public Combining(int[] alternatives,int value) {
+    public Combining(int[] alternatives, int value) {
         this(alternatives);
         this.value = value;
     }
@@ -54,6 +55,11 @@ public class Combining implements ArchitecturalDecision, Variable {
         return alternatives.length;
     }
     
+    
+    @Override
+    public void randomize(){
+        setValue(PRNG.nextInt(alternatives.length));
+    } 
     
 
     @Override

@@ -10,10 +10,14 @@ import architecture.util.OrderedPair;
 import static architecturalpattern.DecisionPattern.CONNECTING;
 
 /**
+ * There is a set of entities that can be seen as the nodes in a graph and an
+ * architecture fragment is defined by the set of edges in the graph, i.e. the
+ * way of connecting those nodes.
  *
  * @author nozomihitomi
  */
 public class Connecting extends Assigning implements ArchitecturalDecision {
+
     private static final long serialVersionUID = -193099801348840331L;
 
     /**
@@ -25,9 +29,7 @@ public class Connecting extends Assigning implements ArchitecturalDecision {
      * The number of nodes in the graph
      */
     private final int nNodes;
-    
 
-    
     /**
      * This constuctor creates a graph with no connected edges.
      *
@@ -35,12 +37,12 @@ public class Connecting extends Assigning implements ArchitecturalDecision {
      * @param isDirected flag to determine if graph is directed
      * @param infeasibleEdges
      */
-    public Connecting( int nNodes, boolean isDirected, Collection<OrderedPair<Integer>> infeasibleEdges) {
+    public Connecting(int nNodes, boolean isDirected, Collection<OrderedPair<Integer>> infeasibleEdges) {
         super(nNodes, nNodes, infeasibleEdges);
         this.isDirected = isDirected;
         this.nNodes = nNodes;
     }
-    
+
     /**
      * This constuctor creates a graph with no connected edges.
      *
@@ -48,7 +50,7 @@ public class Connecting extends Assigning implements ArchitecturalDecision {
      * @param isDirected flag to determine if graph is directed
      */
     public Connecting(int nNodes, boolean isDirected) {
-        this(nNodes,isDirected,null);
+        this(nNodes, isDirected, null);
     }
 
     /**
@@ -58,16 +60,17 @@ public class Connecting extends Assigning implements ArchitecturalDecision {
      *
      * @param i
      * @param j
-     * @return the value of the adjacency matrix in cell i,j before the change. True = connected. False = not connected.
+     * @return the value of the adjacency matrix in cell i,j before the change.
+     * True = connected. False = not connected.
      */
     @Override
     public boolean connect(int i, int j) {
-        boolean out = this.get(i*nNodes+j);
+        boolean out = this.get(i * nNodes + j);
         if (isDirected) {
-            this.set(i*nNodes+j,true);
+            this.set(i * nNodes + j, true);
         } else {
-            this.set(i*nNodes+j,true);
-            this.set(j*nNodes+i,true);
+            this.set(i * nNodes + j, true);
+            this.set(j * nNodes + i, true);
         }
 
         return out;

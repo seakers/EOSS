@@ -4,6 +4,12 @@
  */
 package eoss.problem;
 
+import aos.IO.IOCreditHistory;
+import aos.aos.AOSEpsilonMOEA;
+import aos.aos.AOSFactory;
+import aos.creditassigment.CreditDefFactory;
+import aos.creditassigment.ICreditAssignment;
+import aos.nextoperator.INextOperator;
 import java.io.File;
 import org.moeaframework.algorithm.NSGAII;
 import org.moeaframework.analysis.collector.InstrumentedAlgorithm;
@@ -35,14 +41,6 @@ import eoss.problem.operators.KnowledgeHumanGood;
 import eoss.problem.operators.KnowledgeHumanPoor;
 import eoss.problem.operators.RemoveRandomFromLoadedSatellite;
 import eoss.problem.operators.RemoveSuperfluous;
-import hh.IO.IOCreditHistory;
-import hh.IO.IOSelectionHistory;
-import hh.hyperheuristics.HHFactory;
-import hh.hyperheuristics.HeMOEA;
-import hh.hyperheuristics.IHyperHeuristic;
-import hh.nextheuristic.INextHeuristic;
-import hh.rewarddefinition.IRewardDefinition;
-import hh.rewarddefinition.RewardDefFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -187,21 +185,15 @@ public class RBSAEOSSSMAP {
             case 3://Hyperheuristic search
                 String origname = "";
                 for (int i = 0; i < numRuns; i++) {
-                    IRewardDefinition creditAssignment;
+                    ICreditAssignment creditAssignment;
                     time = String.valueOf(System.currentTimeMillis() + (long) i);
-//                String[] creditDefs = new String[]{"ODP", "OPopPF", "OPopEA", "CPF", "CEA"};
-//                String[] creditDefs = new String[]{"OPIR2", "OPopIPFR2", "OPopIEAR2", "CR2PF", "CR2EA"};
                     String[] creditDefs = new String[]{"OPopEA"};
                     for (String credDef : creditDefs) {
 
                         try {
                             problem = getEOSSProblem(false);
                             
-                            creditAssignment = RewardDefFactory.getInstance().getCreditDef(credDef, properties, problem);
-
-                            int injectionRate = (int) properties.getDouble("injectionRate", 0.25);
-                            //for injection
-                            int lagWindow = (int) properties.getDouble("lagWindow", 50);
+                            creditAssignment = CreditDefFactory.getInstance().getCreditDef(credDef, properties, problem);
 
                             ArrayList<Variation> heuristics = new ArrayList();
                             //add domain-specific heuristics
@@ -227,7 +219,7 @@ public class RBSAEOSSSMAP {
                             properties.setDouble("pmin", 0.03);
 
                             //all other properties use default parameters
-                            INextHeuristic selector = HHFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
+                            INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                             Population population = new Population();
                             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
@@ -237,8 +229,8 @@ public class RBSAEOSSSMAP {
                             origname = "HeMOEA_AdaptivePursuit_SI-A_1ptC+BitM1464548365178";
                             population = resio.loadPopulation(path+"/result/CESUN/"+ origname + ".pop");
                             initialization = new ArchitectureGenerator(problem, 0, "random");
-                            HeMOEA hemoea = new HeMOEA(problem, population, archive, selection,
-                                    initialization, selector, creditAssignment, injectionRate, lagWindow);
+                            AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
+                                    initialization, selector, creditAssignment);
                             String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "noKnow" + time;
 
                             InstrumentedSearch run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + "_ARC");
@@ -251,7 +243,7 @@ public class RBSAEOSSSMAP {
 
                 for (Future<Algorithm> run : futures) {
                     try {
-                        HeMOEA hemoea = (HeMOEA)run.get();
+                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA)run.get();
                         IOCreditHistory ioch = new IOCreditHistory();
                         ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator+ origname+ "ARC.credit", ",");
 //                        IOSelectionHistory iosh = new IOSelectionHistory();
@@ -263,72 +255,6 @@ public class RBSAEOSSSMAP {
                 
                 pool.shutdown();
                 break;
-//            case 5://Update DSMs
-//                AE.init(numAE);
-//                //AE.recomputeAllDSM();
-//                AE.recomputeNDSM(2);
-//                AE.clearResults();
-//                AE.recomputeNDSM(3);
-//                AE.clearResults();
-//                AE.recomputeNDSM(Params.nInstruments);
-//                try {
-//                    SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd-HH-mm-ss" );
-//                    String stamp = dateFormat.format( new Date() );
-//                    FileOutputStream file = new FileOutputStream( Params.path_save_results + "\\all_dsms" + stamp + ".dat");
-//                    ObjectOutputStream os = new ObjectOutputStream( file );
-//                    os.writeObject( AE.getDsm_map() );
-//                    os.close();
-//                    file.close();
-//                } catch (Exception e) {
-//                    System.out.println( e.getMessage() );
-//                }
-//                System.out.println("DONE");
-//                break;
-//             case 7://Update scores file
-//                AE.init(numAE);
-//                AE.recomputeScores(1);
-//                AE.clearResults();
-//                AE.recomputeScores(2);
-//                AE.clearResults();
-//                AE.recomputeScores(3);
-//                AE.clearResults();
-//                AE.recomputeScores(Params.nInstruments);
-//                AE.clearResults();
-//                AE.recomputeScores(Params.nInstruments-1);
-//                try{
-//                    SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd-HH-mm-ss" );
-//                    String stamp = dateFormat.format( new Date() );
-//                    FileOutputStream fos = new FileOutputStream(Params.path_save_results + "\\scores" + stamp + ".dat");
-//                    ObjectOutputStream oos = new ObjectOutputStream(fos);
-//                    oos.writeObject(AE.getScores());
-//                    oos.writeObject(AE.getSubobj_scores());
-//                    oos.close();
-//                    fos.close();
-//                } catch(Exception e) {
-//                    System.out.println(e.getMessage());
-//                }
-//                System.out.println("DONE");
-//                break;
-//            case 10: //use when you have data files you can load (maybe useful if computer restarts mid way through a run)
-//                POP_SIZE = 500;
-//                MAX_SEARCH_ITS = 2;
-//                
-//                params = new Params( path, "CRISP-ATTRIBUTES", "test","normal","search_heuristic_rules_smap_2");//FUZZY or CRISP
-//                ResultCollection loadedResCol = RM.loadResultCollectionFromFile(Params.path_save_results + "\\2015-01-07_06-14-26_test.rs");
-//                ArrayList<EOSSArchitecture> init_popul = loadedResCol.getPopulation();    //ArrayList<Architecture> init_pop = ResultIO.getInstance().loadResultCollectionFromFile(params.initial_pop).getPopulation();
-//                for (int i = 0;i<9;i++) {
-//                    params = new Params( path, "CRISP-ATTRIBUTES", "test","normal","search_heuristic_rules_smap_2");//FUZZY or CRISP
-//                    AE.init(numAE);
-//                    AE.evalMinMax();
-//                    ATE.setTerm_crit(new SearchOptions(POP_SIZE,MAX_SEARCH_ITS,0.5,0.1,0.5));
-//                    ATE.search_NSGA2();
-//                    System.out.println("PERF: " + ATE.getSp().toString());
-//                    ResultCollection c = new ResultCollection(AE.getResults());//
-//                    init_popul = c.getPopulation();
-//                    RM.saveResultCollection(c);
-//                    ATE.clear();
-//                    AE.clear();
-//                }
             default:
                 System.out.println("Choose a mode between 1 and 9");
         }
