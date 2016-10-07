@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package architecturalpattern;
+package architecture.pattern;
 
 import java.util.Collection;
 import java.util.Iterator;
 import org.moeaframework.core.variable.BinaryVariable; 
 import architecture.util.OrderedPair;
 import architecture.util.UnorderedPair;
-import static architecturalpattern.DecisionPattern.*;
+import static architecture.pattern.DecisionPattern.*;
 import java.util.BitSet;
 
 /**

@@ -3,9 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem;
+package eoss.search;
 
 import architecture.ResultIO;
+import eoss.problem.EOSSArchitecture;
+import eoss.problem.EOSSProblem;
 import java.io.File;
 import java.util.BitSet;
 import java.util.HashMap;

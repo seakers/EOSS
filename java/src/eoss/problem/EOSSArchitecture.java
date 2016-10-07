@@ -4,9 +4,10 @@
  */
 package eoss.problem;
 
+import architecture.pattern.Combining;
+import architecture.pattern.Assigning;
 import architecture.Architecture;
-import architecturalpattern.ArchitecturalDecision;
-import architecturalpattern.*;
+import architecture.pattern.ArchitecturalDecision;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -146,12 +147,31 @@ public class EOSSArchitecture extends Architecture {
      *
      * @return
      */
-    public Orbit[] getOrbits() {
-        BitSet inst = getUniqueOrbits();
-        Orbit[] out = new Orbit[inst.cardinality()];
+    public Orbit[] getOccupiedOrbits() {
+        BitSet orbs = getUniqueOrbits();
+        Orbit[] out = new Orbit[orbs.cardinality()];
         int strInd = 0;
         //loop over the indices that have been set true
-        for (int i = inst.nextSetBit(0); i >= 0; i = inst.nextSetBit(i + 1)) {
+        for (int i = orbs.nextSetBit(0); i >= 0; i = orbs.nextSetBit(i + 1)) {
+            out[strInd] = EOSSDatabase.getOrbits().get(i);
+            strInd++;
+        }
+        return out;
+    }
+    
+    /**
+     * Gets the names of the orbits that have no instruments assigned
+     * to it
+     *
+     * @return
+     */
+    public Orbit[] getEmptyOrbits() {
+        BitSet orbs = getUniqueOrbits();
+        orbs.flip(0, orbs.length());
+        Orbit[] out = new Orbit[orbs.cardinality()];
+        int strInd = 0;
+        //loop over the indices that have been set true
+        for (int i = orbs.nextSetBit(0); i >= 0; i = orbs.nextSetBit(i + 1)) {
             out[strInd] = EOSSDatabase.getOrbits().get(i);
             strInd++;
         }
@@ -174,7 +194,7 @@ public class EOSSArchitecture extends Architecture {
     }
 
     /**
-     * Gets the number of unique instruments that are assigned
+     * Gets the number of unique orbits that are assigned
      *
      * @return
      */

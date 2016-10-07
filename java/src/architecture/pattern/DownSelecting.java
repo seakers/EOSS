@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package architecturalpattern;
+package architecture.pattern;
 
 import java.util.BitSet;
 import java.util.Collection;

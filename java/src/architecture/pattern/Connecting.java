@@ -3,11 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package architecturalpattern;
+package architecture.pattern;
 
 import java.util.Collection;
 import architecture.util.OrderedPair;
-import static architecturalpattern.DecisionPattern.CONNECTING;
+import static architecture.pattern.DecisionPattern.CONNECTING;
 
 /**
  * There is a set of entities that can be seen as the nodes in a graph and an

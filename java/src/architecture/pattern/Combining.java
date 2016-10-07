@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package architecturalpattern;
+package architecture.pattern;
 
 import org.moeaframework.core.Variable;
-import static architecturalpattern.DecisionPattern.COMBINING;
+import static architecture.pattern.DecisionPattern.COMBINING;
 import org.moeaframework.core.PRNG;
 
 /**

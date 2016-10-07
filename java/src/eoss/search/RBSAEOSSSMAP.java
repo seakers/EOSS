@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem;
+package eoss.search;
 
 import aos.IO.IOCreditHistory;
 import aos.aos.AOSEpsilonMOEA;
@@ -10,9 +10,11 @@ import aos.aos.AOSFactory;
 import aos.creditassigment.CreditDefFactory;
 import aos.creditassigment.ICreditAssignment;
 import aos.nextoperator.INextOperator;
+import aos.operatorselectors.replacement.EpochTrigger;
+import aos.operatorselectors.replacement.OperatorReplacementStrategy;
+import aos.operatorselectors.replacement.RemoveNLowest;
 import java.io.File;
 import org.moeaframework.algorithm.NSGAII;
-import org.moeaframework.analysis.collector.InstrumentedAlgorithm;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.Initialization;
 import org.moeaframework.core.NondominatedSortingPopulation;
@@ -27,20 +29,9 @@ import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 import architecture.ArchitectureGenerator;
-import architecture.ResultIO;
-import eoss.problem.operators.AddRandomToSmallSatellite;
-import eoss.problem.operators.AddSynergy;
-import eoss.problem.operators.ImproveOrbit;
-import eoss.problem.operators.Knowledge1;
-import eoss.problem.operators.Knowledge2;
-import eoss.problem.operators.Knowledge3;
-import eoss.problem.operators.Knowledge4;
-import eoss.problem.operators.KnowledgeARMGood;
-import eoss.problem.operators.KnowledgeARMPoor;
-import eoss.problem.operators.KnowledgeHumanGood;
-import eoss.problem.operators.KnowledgeHumanPoor;
-import eoss.problem.operators.RemoveRandomFromLoadedSatellite;
-import eoss.problem.operators.RemoveSuperfluous;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.EOSSProblem;
+import eoss.problem.Params;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +40,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import knowledge.operator.EOSSOperatorCreator;
+import mining.label.ParetoFrontLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
@@ -86,9 +79,9 @@ public class RBSAEOSSSMAP {
         if (args.length == 0) {
             args = new String[4];
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-            args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
-//            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[1] = "3"; //Mode
+//            args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
+            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+            args[1] = "4"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -110,11 +103,13 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
-        properties.setInt("maxEvaluations", 2500);
+        int popSize = 5;
+        int maxEvals = 100;
+        int epochLength = 5; //for learning rate
+        properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
-        double mutationProbability = 0.01;
+        double mutationProbability = 1./60.;
         Variation singlecross;
         Variation BitFlip;
         Variation GAVariation;
@@ -126,9 +121,14 @@ public class RBSAEOSSSMAP {
         double[] epsilonDouble = new double[]{0.001, 0.001};
         final TournamentSelection selection = new TournamentSelection(2, comparator);
         
+        //setup for saving results
+        properties.setBoolean("saveQuality", true);
+        properties.setBoolean("saveCredits", true);
+        properties.setBoolean("saveSelection", true);
+        
+
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
 
-        String time = String.valueOf(System.currentTimeMillis());
         switch (MODE) {
             case 1: //MOEA/D
 
@@ -146,9 +146,7 @@ public class RBSAEOSSSMAP {
 
                 singlecross = new OnePointCrossover(crossoverProbability);
                 BitFlip = new BitFlip(mutationProbability);
-                GAVariation = new GAVariation(singlecross, BitFlip);
                 Variation NSGAVariation = new GAVariation(singlecross08, BitFlip);
-                
 
                 problem = getEOSSProblem(false);
 
@@ -165,12 +163,11 @@ public class RBSAEOSSSMAP {
                     GAVariation = new GAVariation(singlecross, BitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-                    
+
                     problem = getEOSSProblem(false);
                     initialization = new ArchitectureGenerator(problem, popSize, "random");
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
-                    time = String.valueOf(System.currentTimeMillis() + (long) i);
-                    InstrumentedSearch run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", time);
+                    InstrumentedSearch run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", String.valueOf(i));
                     futures.add(pool.submit(run));
                 }
                 for (Future<Algorithm> run : futures) {
@@ -186,33 +183,16 @@ public class RBSAEOSSSMAP {
                 String origname = "";
                 for (int i = 0; i < numRuns; i++) {
                     ICreditAssignment creditAssignment;
-                    time = String.valueOf(System.currentTimeMillis() + (long) i);
-                    String[] creditDefs = new String[]{"OPopEA"};
+                    String[] creditDefs = new String[]{"SIDo"};
                     for (String credDef : creditDefs) {
 
                         try {
                             problem = getEOSSProblem(false);
-                            
+
                             creditAssignment = CreditDefFactory.getInstance().getCreditDef(credDef, properties, problem);
 
                             ArrayList<Variation> heuristics = new ArrayList();
-                            //add domain-specific heuristics
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new AddRandomToSmallSatellite(500), new BitFlip(mutationProbability)));
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new RemoveRandomFromLoadedSatellite(1500), new BitFlip(mutationProbability)));
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new RemoveSuperfluous(5), new BitFlip(mutationProbability)));
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new ImproveOrbit(2), new BitFlip(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability),new RemoveInterference(5), new BitFlip(mutationProbability)));
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new AddSynergy(5), new BitFlip(mutationProbability)));
-                            
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new Knowledge1(), new BitFlip(mutationProbability)) );
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new Knowledge2(), new BitFlip(mutationProbability)) );
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new Knowledge3(), new BitFlip(mutationProbability)) );
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new KnowledgeARMGood(), new BitFlip(mutationProbability)) );
-//                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new KnowledgeARMPoor(), new BitFlip(mutationProbability)) );
-                            
-                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new KnowledgeHumanGood(), new BitFlip(mutationProbability)) );
-                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new KnowledgeHumanPoor(), new BitFlip(mutationProbability)) );
-                            
+
                             //add domain-independent heuristics
                             heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
 
@@ -223,15 +203,12 @@ public class RBSAEOSSSMAP {
 
                             Population population = new Population();
                             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-                            
-//                            initialization = new ArchitectureGenerator(problem, popSize, "random");
-                            ResultIO resio = new ResultIO();
+
+                            initialization = new ArchitectureGenerator(problem, popSize, "random");
+
                             origname = "HeMOEA_AdaptivePursuit_SI-A_1ptC+BitM1464548365178";
-                            population = resio.loadPopulation(path+"/result/CESUN/"+ origname + ".pop");
-                            initialization = new ArchitectureGenerator(problem, 0, "random");
                             AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                     initialization, selector, creditAssignment);
-                            String fileName = hemoea.getNextHeuristicSupplier() + "_" + hemoea.getCreditDefinition() + "_" + "noKnow" + time;
 
                             InstrumentedSearch run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + "_ARC");
                             futures.add(pool.submit(run));
@@ -243,18 +220,73 @@ public class RBSAEOSSSMAP {
 
                 for (Future<Algorithm> run : futures) {
                     try {
-                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA)run.get();
+                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
                         IOCreditHistory ioch = new IOCreditHistory();
-                        ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator+ origname+ "ARC.credit", ",");
+                        ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator + origname + "ARC.credit", ",");
 //                        IOSelectionHistory iosh = new IOSelectionHistory();
 //                        iosh.saveHistory(hemoea.getSelectionHistory(), name + fileName + ".hist", ",");
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                
+
                 pool.shutdown();
                 break;
+            case 4://innovization search
+                String fileName = "AIAA_innovize_";
+                for (int i = 0; i < numRuns; i++) {
+                    try {
+                        problem = getEOSSProblem(false);
+
+                        ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
+
+                        ArrayList<Variation> operators = new ArrayList();
+
+                        //add domain-independent heuristics
+                        Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability));
+                        operators.add(SingleCross);
+
+                        //set up OperatorReplacementStrategy
+                        EpochTrigger epochTrigger = new EpochTrigger(epochLength);
+                        EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator(mutationProbability);
+                        ArrayList<Variation> permanentOps = new ArrayList();
+                        permanentOps.add(SingleCross);
+                        RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, 2);
+                        OperatorReplacementStrategy ops = new OperatorReplacementStrategy(epochTrigger, operatorRemover, eossOpCreator);
+
+                        properties.setDouble("pmin", 0.03);
+
+                        //all other properties use default parameters
+                        INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators);
+
+                        Population population = new Population();
+                        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
+
+                        initialization = new ArchitectureGenerator(problem, popSize, "random");
+
+                        AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
+                                initialization, selector, creditAssignment);
+
+                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, new ParetoFrontLabeler(), ops, path + File.separator + "result", fileName + i);
+                        futures.add(pool.submit(run));
+                    } catch (IOException ex) {
+                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+
+                for (Future<Algorithm> run : futures) {
+                    try {
+                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
+                        
+                    } catch (InterruptedException | ExecutionException ex) {
+                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+                pool.shutdown();
+                break;
+
             default:
                 System.out.println("Choose a mode between 1 and 9");
         }
@@ -264,8 +296,8 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.getInstance(); //to initiate database
         new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
     }
-    
-     public static Problem getEOSSProblem(boolean explanation) {
+
+    public static Problem getEOSSProblem(boolean explanation) {
         return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, explanation, true);
     }
 

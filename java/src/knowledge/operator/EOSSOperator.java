@@ -1,0 +1,237 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package knowledge.operator;
+
+import eoss.problem.EOSSArchitecture;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Orbit;
+import eoss.problem.operators.AbstractEOSSOperator;
+import java.util.ArrayList;
+import java.util.Arrays;
+import org.moeaframework.core.ParallelPRNG;
+
+/**
+ *
+ * @author nozomihitomi
+ */
+public class EOSSOperator extends AbstractEOSSOperator {
+
+    /**
+     * Mode = {0,1,2}. 0 for orbit2instrument assignment, 1 for counting number
+     * of orbits, 2 for counting number of instruments
+     */
+    private final int mode;
+
+    /**
+     * In mode 0 this is used as a negation if 0. For modes 1 and 2, its used to
+     * specify how many orbits or instruments
+     */
+    private final int arg;
+
+    /**
+     * the orbit id as specified in binary matrix, or -1 for wildcard
+     */
+    private final int orbit;
+
+    /**
+     * the instrument id as specified in binary matrix or -1 for wildcard
+     */
+    private final int[] instrument;
+
+    private final ParallelPRNG pprng;
+
+    /**
+     *
+     * @param strMode Mode = {0,1,2}. 0 for orbit2instrument assignment, 1 for
+     * counting number of orbits, 2 for counting number of instruments
+     * @param strArg In mode 0 this is used as a negation if 0. For modes 1 and
+     * 2, its used to specify how many orbits or instruments
+     * @param strOrbit the orbit id as specified in binary matrix, or * for
+     * wildcard
+     * @param strInstrument the instrument id as specified in binary matrix or *
+     * for wildcard
+     */
+    public EOSSOperator(String strMode, String strArg, String strOrbit, String[] strInstrument) {
+        this.mode = Integer.parseInt(strMode);
+        this.arg = Integer.parseInt(strArg);
+        if (strOrbit.matches("\\*")) {
+            this.orbit = -1;
+        } else {
+            this.orbit = Integer.parseInt(strOrbit);
+        }
+
+        this.instrument = new int[strInstrument.length];
+        for (int i = 0; i < strInstrument.length; i++) {
+            if (strInstrument[i].matches("\\*")) {
+                if (strInstrument.length > 1) {
+                    throw new IllegalArgumentException("Wildcard * for instruments cannot be used in addition to specifying other instruments");
+                } else {
+                    this.instrument[i] = -1;
+                }
+            } else {
+                this.instrument[i] = Integer.parseInt(strInstrument[i]);
+            }
+        }
+
+        checkParameters();
+
+        this.pprng = new ParallelPRNG();
+    }
+
+    /**
+     * This method checks that the input parameters are valid with respect to
+     * the database and the actions available.
+     *
+     * @return
+     * @throws IllegalArgumentException
+     */
+    private boolean checkParameters() throws IllegalArgumentException {
+        int nInst = EOSSDatabase.getInstruments().size();
+        int nOrb = EOSSDatabase.getInstruments().size();
+
+        //check mode is = {0, 1, 2}
+        switch (this.mode) {
+            case 0:
+                if (arg != 0 && arg != 1) {
+                    throw new IllegalArgumentException(String.format("For mode = %d expected arg = {0, 1}. Found %d", this.mode, this.arg));
+                }
+                break;
+            case 1:
+                if (arg > nOrb) {
+                    throw new IllegalArgumentException(String.format("For mode = %d expected arg < %d (number of available orbits). Found %d", this.mode, nOrb, this.arg));
+                }
+                break;
+
+            case 2:
+                if (arg > nInst) {
+                    throw new IllegalArgumentException(String.format("For mode = %d expected arg < %d (number of available instruments). Found %d", this.mode, nInst, this.arg));
+                }
+                break;
+            default:
+                throw new IllegalArgumentException(String.format("Expected mode = {0, 1, 2}. Found %d", this.mode));
+        }
+
+        //check that the instrument id is not greater than the number of available instruments in the database
+        if (this.orbit
+                != -1) {
+            if (this.orbit > nOrb) {
+                throw new IllegalArgumentException(String.format(
+                        "For mode = %d expected orbit id to be"
+                        + " less than number of orbits"
+                        + " (%d) available in the database."
+                        + " Found %d", this.mode, nOrb, this.orbit));
+
+            }
+        }
+
+        //check that the instrument id is not greater than the number of available instruments in the database
+        for (int inst : instrument) {
+            if (inst != -1) {
+                if (inst > nInst) {
+                    throw new IllegalArgumentException(String.format(
+                            "For mode = %d expected instrument id to be"
+                            + " less than number of instruments"
+                            + " (%d) available in the database."
+                            + " Found %d", this.mode, nInst, inst));
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * This operator only takes in one solution and modifies it
+     *
+     * @return
+     */
+    @Override
+    public int getArity() {
+        return 1;
+    }
+    
+    @Override
+    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+        EOSSArchitecture arch = (EOSSArchitecture) child.copy();
+
+        switch (mode) {
+            //mode when we want specific orbit to instrument patterns
+            case 0:
+                int[] instID = new int[instrument.length];
+                //case when instrument id is a wildcard
+                if (instrument[0] == -1) {
+                    //select a random instrument for the orbit
+                    instID[0] = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                } else {
+                    instID = instrument;
+                }
+
+                for (int index : instID) {
+                    //Case when we want to have instruments absent
+                    if (arg == 0) {
+                        arch.removeInstrumentFromOrbit(index, orbit);
+                    } else {
+                        //case when we want to have instruments present
+                        arch.addInstrumentToOrbit(index, orbit);
+                    }
+                }
+                break;
+
+            //mode when we want to match the number of orbits occupied
+            case 1:
+                //case when there are more orbits occupied than the target value
+                if (arch.getNorbits() > arg) {
+                    while (arch.getNorbits() > arg) {
+                        Orbit[] occupiedOrbits = arch.getOccupiedOrbits();
+                        Orbit orbitToRemove = occupiedOrbits[pprng.nextInt(occupiedOrbits.length)];
+                        int orbitIndexToRemove = EOSSDatabase.findOrbitIndex(orbitToRemove);
+                        ArrayList<Integer> instrumentsToRemove = arch.getInstrumentsInOrbit(orbitIndexToRemove);
+                        for (Integer inst : instrumentsToRemove) {
+                            arch.removeInstrumentFromOrbit(inst, orbitIndexToRemove);
+                        }
+                    }
+                } else if (arch.getNorbits() < arg) {
+                    while (arch.getNorbits() < arg) {
+                        Orbit[] emptyOrbits = arch.getEmptyOrbits();
+                        Orbit orbitToAdd = emptyOrbits[pprng.nextInt(emptyOrbits.length)];
+                        int orbitIndexToAdd = EOSSDatabase.findOrbitIndex(orbitToAdd);
+                        int randInstToAdd = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                        arch.addInstrumentToOrbit(randInstToAdd, orbitIndexToAdd);
+                    }
+                }
+                break;
+            //mode when we want to match the number of instruments used in a particular orbit
+            case 2:
+                if (arch.getInstrumentsInOrbit(orbit).size() > arg) {
+                    while (arch.getInstrumentsInOrbit(orbit).size() > arg) {
+                        ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbit);
+                        arch.removeInstrumentFromOrbit(insts.get(pprng.nextInt(insts.size())), orbit);
+                    }
+                } else if (arch.getInstrumentsInOrbit(orbit).size() < arg) {
+                    while (arch.getInstrumentsInOrbit(orbit).size() < arg) {
+                        ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbit);
+                        ArrayList<Integer> unassignedInst = new ArrayList<>(insts.size());
+                        for (int i = 0; i < insts.size(); i++) {
+                            unassignedInst.add(i);
+                        }
+                        unassignedInst.removeAll(insts);
+                        arch.removeInstrumentFromOrbit(unassignedInst.get(pprng.nextInt(unassignedInst.size())), orbit);
+                    }
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException(String.format("Expected mode to be {0,1,2}. Found %d", mode));
+        }
+
+        return arch;
+    }
+
+    @Override
+    public String toString() {
+        return "EOSSOperator{" + "mode=" + mode + ", arg=" + arg + ", orbit=" + orbit + ", instrument=" + Arrays.toString(instrument) + '}';
+    }
+    
+}

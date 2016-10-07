@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package architecturalpattern;
+package architecture.pattern;
 
 import org.moeaframework.core.Variable;
 

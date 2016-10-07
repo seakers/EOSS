@@ -5,7 +5,7 @@
  */
 package architecture;
 
-import architecturalpattern.ArchitecturalDecision;
+import architecture.pattern.ArchitecturalDecision;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;

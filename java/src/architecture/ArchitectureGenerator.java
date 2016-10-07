@@ -8,8 +8,8 @@ package architecture;
  *
  * @author Nozomi Hitomi
  */
-import architecturalpattern.Assigning;
-import architecturalpattern.Combining;
+import architecture.pattern.Assigning;
+import architecture.pattern.Combining;
 import org.moeaframework.core.Initialization;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Problem;

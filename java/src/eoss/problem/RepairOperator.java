@@ -6,7 +6,7 @@
 
 package eoss.problem;
 
-import architecturalpattern.Assigning;
+import architecture.pattern.Assigning;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variable;
 import org.moeaframework.core.Variation;

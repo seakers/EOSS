@@ -50,10 +50,10 @@ public class LabelIO implements Serializable {
             //write the header
             fw.append("Label" + separator);
             for (int i = 0; i < population.get(0).getNumberOfVariables(); i++) {
-                fw.append(String.format("dec%d%s", i, separator));
+                    fw.append(String.format("dec%d%s", i, separator));
             }
-            for (int i = 0; i < population.get(0).getObjective(i); i++) {
-                if (i == population.get(0).getObjective(i) - 1) {
+            for (int i = 0; i < population.get(0).getNumberOfObjectives(); i++) {
+                if (i == population.get(0).getNumberOfObjectives() - 1) {
                     fw.append(String.format("obj%d\n", i));
                 } else {
                     fw.append(String.format("obj%d%s", i, separator));
@@ -67,13 +67,13 @@ public class LabelIO implements Serializable {
                 if (individual.hasAttribute(AbstractPopulationLabeler.LABELATTRIB)) {
                     fw.append(individual.getAttribute(AbstractPopulationLabeler.LABELATTRIB) + separator);
                     for (int i = 0; i < numDec; i++) {
-                        fw.append(String.format("%f%s", individual.getVariable(i), separator));
+                        fw.append(String.format("%s%s", individual.getVariable(i), separator));
                     }
                     for (int i = 0; i < numObj; i++) {
                         if (i == numObj - 1) {
-                            fw.append(String.format("obj%f\n", individual.getObjective(i)));
+                            fw.append(String.format("%f\n", individual.getObjective(i)));
                         } else {
-                            fw.append(String.format("obj%f%s", individual.getObjective(i), separator));
+                            fw.append(String.format("%f%s", individual.getObjective(i), separator));
                         }
                     }
                 }
