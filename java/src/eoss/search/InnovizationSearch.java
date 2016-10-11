@@ -14,12 +14,15 @@ import architecture.ResultIO;
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSProblem;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 import knowledge.operator.EOSSOperatorCreator;
+import mining.DrivingFeature;
+import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
 import org.moeaframework.Instrumenter;
@@ -120,6 +123,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
             allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
         }
 
+        //The association rule mining engine
+        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
+
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
@@ -136,7 +142,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 System.out.println(String.format("Operator replacement event triggered at %d func eval", nFuncEvals));
                 //for now reset the qualities
                 alg.getNextHeuristicSupplier().reset();
-                
+
                 //remove inefficient operators
                 Collection<Variation> removedOperators = ops.removeOperators(alg);
                 for (Variation op : removedOperators) {
@@ -146,14 +152,21 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 //conduct learning
                 Population allSolnPop = new Population(allSolutions.values());
                 dataLabeler.label(allSolnPop);
-                lableIO.saveLabels(allSolnPop, savePath + File.separator + name + "_labels.csv", ",");
-                opCreator.learnFeatures(new File(savePath + File.separator + name + "_features.txt"));
+                String labledDataFile = savePath + File.separator + name + "_labels.csv";
+                lableIO.saveLabels(allSolnPop, labledDataFile, ",");
+                // Find driving features
+                dfg.getDrivingFeatures(labledDataFile);
+                // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
+                String featureDataFile = savePath + File.separator + name + "_features.txt";
+                dfg.exportDrivingFeatures(1, featureDataFile);
+
+                opCreator.learnFeatures(new File(featureDataFile));
 
                 //add new operators
                 Collection<Variation> newOperators = ops.addNewOperator(alg, 1);
                 for (Variation op : newOperators) {
                     if (op instanceof CompoundVariation) {
-                        System.out.println(String.format("Added: %s", ((CompoundVariation)op).getName()));
+                        System.out.println(String.format("Added: %s", ((CompoundVariation) op).getName()));
                     } else {
                         System.out.println(String.format("Added: %s", op.toString()));
                     }

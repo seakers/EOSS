@@ -30,13 +30,16 @@ import org.moeaframework.core.operator.binary.BitFlip;
  * @author nozomihitomi
  */
 public class EOSSOperatorCreator implements OperatorCreator {
-
+    
+    private final String delimiter = ",";
+    
     /**
      * Each feature should be in the form of (0 0 1 2 3)(1 3 -1 -1)(2 2 * -1)
      */
-    private static final Pattern compositeFeature = Pattern.compile("(\\([-\\d\\* ]*\\))");
+    private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*%s]*\\)).*",delimiter));
 
     private final ArrayList<Variation> operatorSet;
+    
 
     /**
      * The mutation probability of the bit flip mutator
@@ -108,7 +111,7 @@ public class EOSSOperatorCreator implements OperatorCreator {
             //i=1 is the first matched group as explained in Matcher Javadoc
             for (int i = 1; i <= m.groupCount(); i++) {
                 String feature = m.group(i);
-                String[] params = feature.substring(1, feature.length()-1).split(" ");
+                String[] params = feature.substring(1, feature.length()-1).split(delimiter);
                 //assumes that first 3 arguments are not the instruments and the rest are instruments
                 String[] insts = new String[params.length - 3];
                 System.arraycopy(params, 3, insts, 0, insts.length);
