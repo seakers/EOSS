@@ -104,30 +104,30 @@ public class DrivingFeaturesGenerator {
 
         parseCSV(labeledDataFile);
         Scheme scheme = new Scheme();
-        int ind = 0;
+        int ind=0;
 
         scheme.setName("present");
         for (int i = 0; i < ninstr; ++i) {
-            scheme.setInstrument(i);
+            scheme.setInstrument (i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int[] param = new int[1];
                 param[0] = i;
                 String featureName = "present[" + instrument_list[i] + "]";
-                drivingFeatures.add(new DrivingFeature(ind, featureName, "present", param, metrics));
+                drivingFeatures.add(new DrivingFeature(ind,featureName,"present", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
         scheme.setName("absent");
         for (int i = 0; i < ninstr; ++i) {
-            scheme.setInstrument(i);
+            scheme.setInstrument (i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
-                int[] param = new int[1];
+                int [] param = new int[1];
                 param[0] = i;
                 String featureName = "absent[" + instrument_list[i] + "]";
-                drivingFeatures.add(new DrivingFeature(ind, featureName, "absent", param, metrics));
+                drivingFeatures.add(new DrivingFeature(ind,featureName,"absent", param, metrics));
                 ind++;
             }
         }
@@ -135,7 +135,7 @@ public class DrivingFeaturesGenerator {
         scheme.setName("inOrbit");
         for (int i = 0; i < norb; ++i) {
             for (int j = 0; j < ninstr; ++j) {
-                scheme.setInstrument(j);
+                scheme.setInstrument (j);
                 scheme.setOrbit(i);
                 double[] metrics = computeMetrics(scheme);
                 if (checkThreshold(metrics)) {
@@ -143,7 +143,7 @@ public class DrivingFeaturesGenerator {
                     param[0] = i;
                     param[1] = j;
                     String featureName = "inOrbit[" + orbit_list[i] + ", " + instrument_list[j] + "]";
-                    drivingFeatures.add(new DrivingFeature(ind, featureName, "inOrbit", param, metrics));
+                    drivingFeatures.add(new DrivingFeature(ind,featureName,"inOrbit", param, metrics));
                     ind++;
                 }
             }
@@ -152,7 +152,7 @@ public class DrivingFeaturesGenerator {
         scheme.setName("notInOrbit");
         for (int i = 0; i < norb; ++i) {
             for (int j = 0; j < ninstr; ++j) {
-                scheme.setInstrument(j);
+                scheme.setInstrument (j);
                 scheme.setOrbit(i);
                 double[] metrics = computeMetrics(scheme);
                 if (checkThreshold(metrics)) {
@@ -160,9 +160,9 @@ public class DrivingFeaturesGenerator {
                     param[0] = i;
                     param[1] = j;
                     String featureName = "notInOrbit[" + orbit_list[i] + ", " + instrument_list[j] + "]";
-                    drivingFeatures.add(new DrivingFeature(ind, featureName, "notInOrbit", param, metrics));
+                    drivingFeatures.add(new DrivingFeature(ind,featureName,"notInOrbit", param, metrics));
                     ind++;
-                }
+                } 
             }
         }
         scheme.resetArg();
@@ -177,11 +177,11 @@ public class DrivingFeaturesGenerator {
                     param[0] = i;
                     param[1] = j;
                     String featureName = "together2[" + instrument_list[i] + ", " + instrument_list[j] + "]";
-                    drivingFeatures.add(new DrivingFeature(ind, featureName, "together2", param, metrics));
+                    drivingFeatures.add(new DrivingFeature(ind,featureName,"together2", param, metrics));
                     ind++;
                 }
             }
-        }
+        }    
         scheme.resetArg();
         scheme.setName("togetherInOrbit2");
         for (int i = 0; i < norb; ++i) {
@@ -196,9 +196,9 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "togetherInOrbit2[" + orbit_list[i] + ", " + instrument_list[j]
-                                + ", " + instrument_list[k] + "]";
-                        drivingFeatures.add(new DrivingFeature(ind, featureName, "togetherInOrbit2", param, metrics));
+                        String featureName = "togetherInOrbit2[" + orbit_list[i] + ", " + instrument_list[j] + 
+                                ", " + instrument_list[k] + "]"; 
+                        drivingFeatures.add(new DrivingFeature(ind,featureName,"togetherInOrbit2", param,metrics));
                         ind++;
                     }
                 }
@@ -212,14 +212,14 @@ public class DrivingFeaturesGenerator {
                 scheme.setInstrument2(j);
                 double[] metrics = computeMetrics(scheme);
                 if (checkThreshold(metrics)) {
-                    int[] param = new int[2];
-                    param[0] = i;
-                    param[1] = j;
-                    String featureName = "separate2[" + instrument_list[i] + ", " + instrument_list[j] + "]";
-                    drivingFeatures.add(new DrivingFeature(ind, featureName, "separate2", param, metrics));
-                    ind++;
-                }
-            }
+                        int[] param = new int[2];
+                        param[0] = i;
+                        param[1] = j;
+                        String featureName = "separate2[" + instrument_list[i] + ", " + instrument_list[j] + "]";
+                        drivingFeatures.add(new DrivingFeature(ind,featureName,"separate2", param, metrics));
+                        ind++;
+                    }
+            }            
         }
         scheme.resetArg();
         scheme.setName("together3");
@@ -235,13 +235,13 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "together3[" + instrument_list[i] + ", "
-                                + instrument_list[j] + ", " + instrument_list[k] + "]";
-                        drivingFeatures.add(new DrivingFeature(ind, featureName, "together3", param, metrics));
+                        String featureName = "together3[" + instrument_list[i] + ", " + 
+                        		instrument_list[j] + ", " + instrument_list[k] + "]";
+                        drivingFeatures.add(new DrivingFeature(ind,featureName,"together3", param, metrics));
                         ind++;
                     }
                 }
-            }
+            }            
         }
         scheme.resetArg();
         scheme.setName("togetherInOrbit3");
@@ -261,9 +261,9 @@ public class DrivingFeaturesGenerator {
                             param[1] = j;
                             param[2] = k;
                             param[3] = l;
-                            String featureName = "togetherInOrbit3[" + orbit_list[i] + ", "
-                                    + instrument_list[j] + ", " + instrument_list[k] + "," + instrument_list[l] + "]";
-                            drivingFeatures.add(new DrivingFeature(ind, featureName, "togetherInOrbit3", param, metrics));
+                            String featureName = "togetherInOrbit3[" + orbit_list[i] + ", " + 
+                            		instrument_list[j] + ", " + instrument_list[k] + "," + instrument_list[l] + "]";
+                            drivingFeatures.add(new DrivingFeature(ind,featureName,"togetherInOrbit3", param, metrics));
                             ind++;
                         }
                     }
@@ -284,9 +284,9 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "separate3[" + instrument_list[i] + ", "
-                                + instrument_list[j] + ", " + instrument_list[k] + "]";
-                        drivingFeatures.add(new DrivingFeature(ind, featureName, "separate3", param, metrics));
+                        String featureName = "separate3[" + instrument_list[i] + ", " + 
+                        		instrument_list[j] + ", " + instrument_list[k] + "]";
+                        drivingFeatures.add(new DrivingFeature(ind,featureName,"separate3", param, metrics));
                         ind++;
                     }
                 }
@@ -301,59 +301,56 @@ public class DrivingFeaturesGenerator {
                 int[] param = new int[1];
                 param[0] = i;
                 String featureName = "emptyOrbit[" + orbit_list[i] + "]";
-                drivingFeatures.add(new DrivingFeature(ind, featureName, "emptyOrbit", param, metrics));
+                drivingFeatures.add(new DrivingFeature(ind,featureName,"emptyOrbit", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
         scheme.setName("numOrbitUsed");
-        for (int i = 1; i < norb + 1; i++) {
+        for (int i = 1; i < norb+1; i++) {
             scheme.setCount(i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int[] param = new int[1];
                 param[0] = i;
                 String featureName = "numOrbitUsed[" + param[0] + "]";
-                drivingFeatures.add(new DrivingFeature(ind, featureName, "numOrbitUsed", param, metrics));
+                drivingFeatures.add(new DrivingFeature(ind,featureName,"numOrbitUsed", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
-        scheme.setName("numInstruments");
+        scheme.setName("numInstruments"); 
         // Total number of instruments
         for (int i = 1; i < max_num_of_instruments; i++) {
             scheme.setCount(i);
-            scheme.setOrbit(-1);
-            scheme.setInstrument(-1);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int[] param = new int[1];
                 param[0] = i;
                 String featureName = "numInstruments[" + param[0] + "]";
-                drivingFeatures.add(new DrivingFeature(ind, featureName, "numInstruments", param, metrics));
+                drivingFeatures.add(new DrivingFeature(ind,featureName,"numInstruments", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
-        scheme.setName("numInstruments");
+        scheme.setName("numInstruments"); 
         // Number of each instrument
-        for (int i = 0; i < ninstr; i++) {
-            for (int j = 0; j < norb; j++) {
-                scheme.setInstrument(i);
-                scheme.setCount(j);
-                scheme.setOrbit(-1);
-                double[] metrics = computeMetrics(scheme);
-                if (checkThreshold(metrics)) {
-                    int[] param = new int[2];
-                    param[0] = i;
-                    param[1] = j;
-                    String featureName = "numInstruments[" + param[0] + "," + param[1] + "]";
-                    drivingFeatures.add(new DrivingFeature(ind, featureName, "numInstruments", param, metrics));
-                    ind++;
-                }
-            }
+        for (int i=0;i<ninstr;i++){
+        	for (int j=0;j<norb;j++){
+        		scheme.setInstrument(i);
+	            scheme.setCount(j);
+	            double[] metrics = computeMetrics(scheme);
+	            if (checkThreshold(metrics)) {
+	                int[] param = new int[2];
+	                param[0] = i;
+	                param[1] = j;
+	                String featureName = "numInstruments[" + param[0] + ","+ param[1] +"]";
+	                drivingFeatures.add(new DrivingFeature(ind,featureName,"numInstruments", param, metrics));
+	                ind++;
+	            }
+        	}
         }
-//        this.dataMat = getDataFeatureMat();
+
         return drivingFeatures;
     }
 
@@ -388,7 +385,8 @@ public class DrivingFeaturesGenerator {
                 if (count >= topN) {
                     break;
                 }
-
+                
+                String name = df.getName();
                 double[] metrics = df.getMetrics();
                 String type = df.getType();
                 int[] param = df.getParam();
@@ -407,34 +405,34 @@ public class DrivingFeaturesGenerator {
                 }
 
                 if (type.equalsIgnoreCase("present")) {
-                    w.println("(0,1,*," + i + ")/" + metrics[0] + "/" + metrics[1] + " // present");
+                    w.println("(0,1,*," + i + ")/" + metrics[0] + "/" + metrics[1] + " //" + name);
                 } else if (type.equalsIgnoreCase("absent")) {
-                    w.println("(0,0,*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  // absent");
+                    w.println("(0,0,*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("inOrbit")) {
-                    w.println("(0,1," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  // inOrbit");
+                    w.println("(0,1," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("notInOrbit")) {
-                    w.println("(0,0," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  // notInOrbit");
+                    w.println("(0,0," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("together2")) {
-                    w.println("(0,1,*," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  // together2");
+                    w.println("(0,1,*," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("togetherInOrbit2")) {
-                    w.println("(0,1," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  // togetherInOrbit2");
+                    w.println("(0,1," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("separate2")) {
-                    w.println("(0,0,*," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  // separate2");
+                    w.println("(0,0,*," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("together3")) {
-                    w.println("(0,1,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  // together3");
+                    w.println("(0,1,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("togetherInOrbit3")) {
-                    w.println("(0,1," + i + "," + j + "," + k + "," + l + ")/" + metrics[0] + "/" + metrics[1] + "  // togetherInOrbit3");
+                    w.println("(0,1," + i + "," + j + "," + k + "," + l + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("separate3")) {
-                    w.println("(0,0,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  // separate3");
+                    w.println("(0,0,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("emptyOrbit")) {
-                    w.println("(0,0," + i + ",*)/" + metrics[0] + "/" + metrics[1] + "  // emptyOrbit");
+                    w.println("(0,0," + i + ",*)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("numOrbitUsed")) {
-                    w.println("(1," + i + ",*,*)/" + metrics[0] + "/" + metrics[1] + "  // numOrbitUsed");
+                    w.println("(1," + i + ",*,*)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("numInstruments")) {
                     if (j == -1) {
-                        w.println("(2," + i + ",*,*)/" + metrics[0] + "/" + metrics[1] + "  // numInstruments");
+                        w.println("(2," + i + ",*,*)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                     } else {
-                        w.println("(2," + j + ",*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  // numInstruments");
+                        w.println("(2," + j + ",*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                     }
                 }
                 count++;
@@ -477,50 +475,57 @@ public class DrivingFeaturesGenerator {
         return sortedDF;
     }
 
-//    public int[][] getDataFeatureMat(){
-//        
-//        int numData = behavioral.size() + non_behavioral.size();
-//        int numFeature = drivingFeatures.size() + 1; // add class label as a last feature
-//        int[][] dataMat = new int[numData][numFeature];
-//        
-//        for(int i=0;i<numData;i++){
-//        	
-//        	int[][] d;
-//        	boolean classLabel;
-//        	
-//        	if(i < behavioral.size()){
-//        		d = behavioral.get(i);
-//        		classLabel = true;
-//        	}else{
-//        		d = non_behavioral.get(i-behavioral.size());
-//        		classLabel = false;
-//        	}
-//
-//            Scheme s = new Scheme();
-//
-//            for(int j=0;j<numFeature-1;j++){
-//                DrivingFeature f = drivingFeatures.get(j);
-//                int index = f.getIndex();
-//                String type = f.getType();
-//                String[] param_ = f.getParam();
-//                ArrayList<String> param = new ArrayList<>();
+
+    public int[][] getDataFeatureMat(){
+        
+        int numData = behavioral.size() + non_behavioral.size();
+        int numFeature = drivingFeatures.size() + 1; // add class label as a last feature
+        int[][] dataMat = new int[numData][numFeature];
+        
+        for(int i=0;i<numData;i++){
+        	
+        	int[][] d;
+        	boolean classLabel;
+        	
+        	if(i < behavioral.size()){
+        		d = behavioral.get(i);
+        		classLabel = true;
+        	}else{
+        		d = non_behavioral.get(i-behavioral.size());
+        		classLabel = false;
+        	}
+
+            Scheme s = new Scheme();
+
+            for(int j=0;j<numFeature-1;j++){
+                DrivingFeature f = drivingFeatures.get(j);
+                int id = f.getID();
+                String type = f.getType();
+                int[] param_ = f.getParam();
+                ArrayList<String> param = new ArrayList<>();
+                for(int par:param_){
+                	param.add(""+par);
+                }
 //                param.addAll(Arrays.asList(param_));
-//                if(s.presetFilter(type, d, param)){
-//                    dataMat[i][j]=1;
-//                } else{
-//                    dataMat[i][j]=0;
-//                }
-//            }
-//
-//            if(classLabel==true){
-//                dataMat[i][numFeature-1]=1;
-//            } else{
-//                dataMat[i][numFeature-1]=0;
-//            }
-//        }
-//
-//        return dataMat;
-//    }
+                if(s.presetFilter(type, d, param)){
+                    dataMat[i][j]=1;
+                } else{
+                    dataMat[i][j]=0;
+                }
+            }
+
+            if(classLabel){
+                dataMat[i][numFeature-1]=1;
+            } else{
+                dataMat[i][numFeature-1]=0;
+            }
+        }
+
+        return dataMat;
+    }
+    
+    
+    
     public boolean checkThreshold(double[] metrics) {
         if (metrics[0] >= supp_threshold
                 && metrics[1] >= lift_threshold

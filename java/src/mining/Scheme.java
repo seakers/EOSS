@@ -124,22 +124,17 @@ public class Scheme{
         }
         else if (name.equals("numInstruments")){
             int cnt = 0;
-            for (int i = 0; i < data.length; ++i) {
-				for (int j=0; j< data[i].length;j++){
-					
-					if (orbit!=-1 && orbit!=i){ // count for specific orbits
-						continue;
-					}  
+            for (int o = 0; o < data.length; ++o) {
+				for (int i=0; i< data[o].length;i++){
 					if (instrument==-1){ // Count all instruments
-						if(data[i][j]==1){
+						if(data[o][i]==1){
 							cnt++;
 						}
 					}else{ // Count specific instrument
-						if(j == instrument && data[i][j]==1){
+						if(i == instrument && data[o][i]==1){
 							cnt++;
 						}
 					}
-					   
 				}
             }
             if (count == cnt) return 1;
@@ -257,9 +252,8 @@ public class Scheme{
         	s.setCount(params[0]);
         }
         else if (name.equals("numInstruments")){
-        	s.setOrbit(params[0]);
-        	s.setInstrument(params[1]);
-        	s.setCount(params[2]);
+        	s.setInstrument(params[0]);
+        	s.setCount(params[1]);
         }
         
         return s.compare(data) == 1;

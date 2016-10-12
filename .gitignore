@@ -9,3 +9,5 @@ nbproject/**
 
 #ignore the dist folder containing the libararies and jar files
 dist/**
+
+manifest.mf
