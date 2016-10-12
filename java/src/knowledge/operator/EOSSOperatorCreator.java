@@ -30,16 +30,15 @@ import org.moeaframework.core.operator.binary.BitFlip;
  * @author nozomihitomi
  */
 public class EOSSOperatorCreator implements OperatorCreator {
-    
+
     private final String delimiter = ",";
-    
+
     /**
      * Each feature should be in the form of (0 0 1 2 3)(1 3 -1 -1)(2 2 * -1)
      */
-    private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*%s]*\\)).*",delimiter));
+    private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*%s]*\\)).*", delimiter));
 
     private final ArrayList<Variation> operatorSet;
-    
 
     /**
      * The mutation probability of the bit flip mutator
@@ -62,7 +61,8 @@ public class EOSSOperatorCreator implements OperatorCreator {
      * The new operators created will be combined with a bit flip mutator with a
      * desired probability for mutation
      *
-     * @param mutatioProbability The mutation probability of the bit flip mutator
+     * @param mutatioProbability The mutation probability of the bit flip
+     * mutator
      */
     public EOSSOperatorCreator(double mutatioProbability) {
         this.operatorSet = new ArrayList<>();
@@ -107,21 +107,26 @@ public class EOSSOperatorCreator implements OperatorCreator {
     private Variation featureToOperator(String featureString) {
         CompoundVariation operator = new CompoundVariation();
         Matcher m = compositeFeature.matcher(featureString);
+        String operatorName = "";
         if (m.find()) {
             //i=1 is the first matched group as explained in Matcher Javadoc
             for (int i = 1; i <= m.groupCount(); i++) {
                 String feature = m.group(i);
-                String[] params = feature.substring(1, feature.length()-1).split(delimiter);
+                String[] params = feature.substring(1, feature.length() - 1).split(delimiter);
                 //assumes that first 3 arguments are not the instruments and the rest are instruments
                 String[] insts = new String[params.length - 3];
                 System.arraycopy(params, 3, insts, 0, insts.length);
-                operator.appendOperator(new EOSSOperator(params[0], params[1], params[2], insts));
-                operator.appendOperator(new BitFlip(mutationProbability));
+                EOSSOperator op = new EOSSOperator(params[0], params[1], params[2], insts);
+                operator.appendOperator(op);
+                operatorName += op.toString() + " + ";
             }
+            Variation bitFlipOp = new BitFlip(mutationProbability);
+            operator.appendOperator(bitFlipOp);
+            operatorName += bitFlipOp.getClass().getSimpleName();
         } else {
             throw new IllegalArgumentException(String.format("%s does not fit feature pattern.", featureString));
         }
-
+        operator.setName(operatorName);
         return operator;
     }
 

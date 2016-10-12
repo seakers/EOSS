@@ -125,9 +125,12 @@ public class EOSSArchitecture extends Architecture {
      */
     private BitSet getUniqueInstruments() {
         BitSet bs = assignment.getBitSet();
-        BitSet inst = new BitSet(assignment.getNumberOfRHS());
-        for (int o = 0; o < assignment.getNumberOfRHS(); o++) {
-            inst.or(bs.get(o * assignment.getNumberOfLHS(), o * assignment.getNumberOfLHS() + assignment.getNumberOfRHS()));
+        BitSet inst = new BitSet(assignment.getNumberOfLHS());
+        for (int i = 0; i < assignment.getNumberOfLHS(); i++) {
+            BitSet inst_i = bs.get(i * assignment.getNumberOfRHS(), i * assignment.getNumberOfRHS() + assignment.getNumberOfRHS());
+            if(inst_i.cardinality() > 0){
+                inst.set(i);
+            }
         }
         return inst;
     }
@@ -186,9 +189,9 @@ public class EOSSArchitecture extends Architecture {
      */
     private BitSet getUniqueOrbits() {
         BitSet bs = assignment.getBitSet();
-        BitSet orbs = new BitSet(assignment.getNumberOfLHS());
+        BitSet orbs = new BitSet(assignment.getNumberOfRHS());
         for (int o = 0; o < assignment.getNumberOfLHS(); o++) {
-            orbs.or(bs.get(o * assignment.getNumberOfRHS(), o * assignment.getNumberOfLHS() + assignment.getNumberOfRHS()));
+            orbs.or(bs.get(o * assignment.getNumberOfRHS(), o * assignment.getNumberOfRHS() + assignment.getNumberOfRHS()));
         }
         return orbs;
     }

@@ -14,14 +14,12 @@ import architecture.ResultIO;
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSProblem;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 import knowledge.operator.EOSSOperatorCreator;
-import mining.DrivingFeature;
 import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
@@ -102,6 +100,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
     public Algorithm call() throws Exception {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
+        int nOpsToAdd = (int) properties.getInt("nOpsToAdd", 2);
 
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 
@@ -126,6 +125,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
         //The association rule mining engine
         DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
 
+        //count the number of times we reset operators
+        int opResetCount = 0;
+
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
@@ -146,24 +148,28 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 //remove inefficient operators
                 Collection<Variation> removedOperators = ops.removeOperators(alg);
                 for (Variation op : removedOperators) {
-                    System.out.println(String.format("Removed: %s", op.toString()));
+                    if (op instanceof CompoundVariation) {
+                        System.out.println(String.format("Removed: %s", ((CompoundVariation) op).getName()));
+                    } else {
+                        System.out.println(String.format("Removed: %s", op.toString()));
+                    }
                 }
 
                 //conduct learning
                 Population allSolnPop = new Population(allSolutions.values());
                 dataLabeler.label(allSolnPop);
-                String labledDataFile = savePath + File.separator + name + "_labels.csv";
+                String labledDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_labels.csv";
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
                 // Find driving features
                 dfg.getDrivingFeatures(labledDataFile);
                 // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
-                String featureDataFile = savePath + File.separator + name + "_features.txt";
-                dfg.exportDrivingFeatures(1, featureDataFile);
+                String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
+                dfg.exportDrivingFeatures(1, featureDataFile, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
 
                 //add new operators
-                Collection<Variation> newOperators = ops.addNewOperator(alg, 1);
+                Collection<Variation> newOperators = ops.addNewOperator(alg, nOpsToAdd);
                 for (Variation op : newOperators) {
                     if (op instanceof CompoundVariation) {
                         System.out.println(String.format("Added: %s", ((CompoundVariation) op).getName()));
@@ -171,6 +177,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                         System.out.println(String.format("Added: %s", op.toString()));
                     }
                 }
+                opResetCount++;
             }
 
             //print out the search stats every once in a while

@@ -358,19 +358,37 @@ public class DrivingFeaturesGenerator {
     }
 
     /**
-     * Saves the driving features in an ordered list based on (0: support, 1:
-     * lift, 2: confidence)
+     * Saves all of the driving features in an ordered list based on (0:
+     * support, 1: lift, 2: confidence)
      *
      * @param index the metric to sort features by
      * @param filename path and filename to save features
      */
-    public void exportDrivingFeatures(int index, String filename) {
+    public boolean exportDrivingFeatures(int index, String filename) {
+        return exportDrivingFeatures(index, filename, drivingFeatures.size());
+    }
+
+    /**
+     * Saves the topN driving features in an ordered list based on (0: support,
+     * 1: lift, 2: confidence)
+     *
+     * @param index the metric to sort features by
+     * @param filename path and filename to save features
+     * @param topN only save the top N features
+     */
+    public boolean exportDrivingFeatures(int index, String filename, int topN) {
         try {
 
             PrintWriter w = new PrintWriter(filename, "UTF-8");
             w.println("// (mode,arg,orb,inst)/support/lift");
 
+            int count = 0;
+
             for (DrivingFeature df : sortDrivingFeatures(index)) {
+                if (count >= topN) {
+                    break;
+                }
+
                 double[] metrics = df.getMetrics();
                 String type = df.getType();
                 int[] param = df.getParam();
@@ -419,6 +437,7 @@ public class DrivingFeaturesGenerator {
                         w.println("(2," + j + ",*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  // numInstruments");
                     }
                 }
+                count++;
             }
 
             w.flush();
@@ -426,7 +445,9 @@ public class DrivingFeaturesGenerator {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     public ArrayList<DrivingFeature> sortDrivingFeatures(int index) {

@@ -103,9 +103,8 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 5;
-        int maxEvals = 100;
-        int epochLength = 5; //for learning rate
+        int popSize = 100;
+        int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
@@ -121,11 +120,15 @@ public class RBSAEOSSSMAP {
         double[] epsilonDouble = new double[]{0.001, 0.001};
         final TournamentSelection selection = new TournamentSelection(2, comparator);
         
+        //setup for innovization
+        int epochLength = 1000; //for learning rate
+        properties.setInt("nOpsToAdd", 2);
+        properties.setInt("nOpsToRemove", 2);
+        
         //setup for saving results
         properties.setBoolean("saveQuality", true);
         properties.setBoolean("saveCredits", true);
         properties.setBoolean("saveSelection", true);
-        
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
 
@@ -251,7 +254,7 @@ public class RBSAEOSSSMAP {
                         EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator(mutationProbability);
                         ArrayList<Variation> permanentOps = new ArrayList();
                         permanentOps.add(SingleCross);
-                        RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, 2);
+                        RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, properties.getInt("nOpsToRemove", 2));
                         OperatorReplacementStrategy ops = new OperatorReplacementStrategy(epochTrigger, operatorRemover, eossOpCreator);
 
                         properties.setDouble("pmin", 0.03);
