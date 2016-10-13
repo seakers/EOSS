@@ -499,7 +499,6 @@ public class DrivingFeaturesGenerator {
 
             for(int j=0;j<numFeature-1;j++){
                 DrivingFeature f = drivingFeatures.get(j);
-                int id = f.getID();
                 String type = f.getType();
                 int[] param_ = f.getParam();
                 ArrayList<String> param = new ArrayList<>();
