@@ -197,7 +197,7 @@ public class RBSAEOSSSMAP {
                             ArrayList<Variation> heuristics = new ArrayList();
 
                             //add domain-independent heuristics
-                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability)));
+                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability,1), new BitFlip(mutationProbability)));
 
                             properties.setDouble("pmin", 0.03);
 
@@ -246,7 +246,7 @@ public class RBSAEOSSSMAP {
                         ArrayList<Variation> operators = new ArrayList();
 
                         //add domain-independent heuristics
-                        Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability));
+                        Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability,1), new BitFlip(mutationProbability));
                         operators.add(SingleCross);
 
                         //set up OperatorReplacementStrategy
