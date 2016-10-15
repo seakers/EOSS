@@ -36,7 +36,7 @@ public class EOSSOperatorCreator implements OperatorCreator {
     /**
      * Each feature should be in the form of (0 0 1 2 3)(1 3 -1 -1)(2 2 * -1)
      */
-    private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*%s]*\\)).*", delimiter));
+    private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*A%s]*\\)).*", delimiter));
 
     private final ArrayList<Variation> operatorSet;
 

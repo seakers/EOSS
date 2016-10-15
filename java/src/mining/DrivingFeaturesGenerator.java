@@ -407,7 +407,7 @@ public class DrivingFeaturesGenerator {
                 if (type.equalsIgnoreCase("present")) {
                     w.println("(0,1,*," + i + ")/" + metrics[0] + "/" + metrics[1] + " //" + name);
                 } else if (type.equalsIgnoreCase("absent")) {
-                    w.println("(0,0,*," + i + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
+                    w.println("(0,0,A," + i + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("inOrbit")) {
                     w.println("(0,1," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("notInOrbit")) {
@@ -417,15 +417,15 @@ public class DrivingFeaturesGenerator {
                 } else if (type.equalsIgnoreCase("togetherInOrbit2")) {
                     w.println("(0,1," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("separate2")) {
-                    w.println("(0,0,*," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
+                    w.println("(0,0,A," + i + "," + j + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("together3")) {
                     w.println("(0,1,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("togetherInOrbit3")) {
                     w.println("(0,1," + i + "," + j + "," + k + "," + l + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("separate3")) {
-                    w.println("(0,0,*," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
+                    w.println("(0,0,A," + i + "," + j + "," + k + ")/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("emptyOrbit")) {
-                    w.println("(0,0," + i + ",*)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
+                    w.println("(0,0," + i + ",A)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("numOrbitUsed")) {
                     w.println("(1," + i + ",*,*)/" + metrics[0] + "/" + metrics[1] + "  //" + name);
                 } else if (type.equalsIgnoreCase("numInstruments")) {

@@ -44,6 +44,11 @@ public class EOSSOperator extends AbstractEOSSOperator {
     private final ParallelPRNG pprng;
 
     /**
+     * array of all orbit indices
+     */
+    private final int[] allOrbits;
+
+    /**
      *
      * @param strMode Mode = {0,1,2}. 0 for orbit2instrument assignment, 1 for
      * counting number of orbits, 2 for counting number of instruments
@@ -59,12 +64,34 @@ public class EOSSOperator extends AbstractEOSSOperator {
         this.arg = Integer.parseInt(strArg);
         if (strOrbit.matches("\\*")) {
             this.orbit = -1;
+        } else if (strInstrument[0].matches("A")) {
+            this.orbit = -2;
         } else {
             this.orbit = Integer.parseInt(strOrbit);
         }
 
-        this.instrument = new int[strInstrument.length];
-        for (int i = 0; i < strInstrument.length; i++) {
+        allOrbits = new int[EOSSDatabase.getOrbits().size()];
+        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+            allOrbits[i] = i;
+        }
+
+        if (strInstrument[0].matches(
+                "A")) {
+            this.instrument = new int[EOSSDatabase.getInstruments().size()];
+            if (strInstrument.length > 1) {
+                throw new IllegalArgumentException("All instruments A cannot be used in addition to specifying other instruments");
+            } else {
+                for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+                    instrument[i] = i;
+                }
+            }
+        } else {
+            this.instrument = new int[strInstrument.length];
+        }
+
+        for (int i = 0;
+                i < strInstrument.length;
+                i++) {
             if (strInstrument[i].matches("\\*")) {
                 if (strInstrument.length > 1) {
                     throw new IllegalArgumentException("Wildcard * for instruments cannot be used in addition to specifying other instruments");
@@ -159,78 +186,105 @@ public class EOSSOperator extends AbstractEOSSOperator {
 
         try {
 
-            int orbitI = orbit;
-            if (orbitI == -1) {
-                orbitI = pprng.nextInt(EOSSDatabase.getOrbits().size());
+            int[] orbitArray;
+            if (orbit == -2) {
+                orbitArray = allOrbits;
+            } else {
+                if (orbit == -1) {
+                    orbitArray = new int[]{pprng.nextInt(EOSSDatabase.getOrbits().size())};
+                } else {
+                    orbitArray = new int[]{orbit};
+                }
             }
 
-            switch (mode) {
-                //mode when we want specific orbit to instrument patterns
-                case 0:
-                    int[] instID = new int[instrument.length];
-                    //case when instrument id is a wildcard
-                    if (instrument[0] == -1) {
-                        //select a random instrument for the orbit
-                        instID[0] = pprng.nextInt(EOSSDatabase.getInstruments().size());
-                    } else {
-                        instID = instrument;
-                    }
+            for (int orbitInd : orbitArray) {
 
-                    for (int index : instID) {
-                        //Case when we want to have instruments absent
+                switch (mode) {
+                    //mode when we want specific orbit to instrument patterns
+                    case 0:
+                        int[] instID = new int[instrument.length];
+                        //case when instrument id is a wildcard
+                        if (instrument[0] == -1) {
+                            //select a random instrument for the orbit
+                            instID[0] = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                        } else {
+                            instID = instrument;
+                        }
+
+                        //Case when we want to have instruments absent or separated
                         if (arg == 0) {
-                            arch.removeInstrumentFromOrbit(index, orbitI);
+                            int removedInstCount = 0;
+                            int maxRemovalAllowed;
+
+                            if (orbit == -2 && instID.length > 1) {
+                                //this would be case like separate2 or separate3
+                                maxRemovalAllowed = instID.length - 1;
+                            } else {
+                                maxRemovalAllowed = EOSSDatabase.getInstruments().size();
+                            }
+
+                            for (int index : instID) {
+                                arch.removeInstrumentFromOrbit(index, orbitInd);
+                                removedInstCount++;
+                                if (removedInstCount >= maxRemovalAllowed) {
+                                    break;
+                                }
+                            }
                         } else {
                             //case when we want to have instruments present
-                            arch.addInstrumentToOrbit(index, orbitI);
-                        }
-                    }
-                    break;
+                            //add all instruments from instID array
+                            for (int index : instID) {
+                                arch.addInstrumentToOrbit(index, orbitInd);
 
-                //mode when we want to match the number of orbits occupied
-                case 1:
-                    //case when there are more orbits occupied than the target value
-                    if (arch.getNorbits() > arg) {
-                        while (arch.getNorbits() > arg) {
-                            Orbit[] occupiedOrbits = arch.getOccupiedOrbits();
-                            Orbit orbitToRemove = occupiedOrbits[pprng.nextInt(occupiedOrbits.length)];
-                            int orbitIndexToRemove = EOSSDatabase.findOrbitIndex(orbitToRemove);
-                            ArrayList<Integer> instrumentsToRemove = arch.getInstrumentsInOrbit(orbitIndexToRemove);
-                            for (Integer inst : instrumentsToRemove) {
-                                arch.removeInstrumentFromOrbit(inst, orbitIndexToRemove);
                             }
                         }
-                    } else if (arch.getNorbits() < arg) {
-                        while (arch.getNorbits() < arg) {
-                            Orbit[] emptyOrbits = arch.getEmptyOrbits();
-                            Orbit orbitToAdd = emptyOrbits[pprng.nextInt(emptyOrbits.length)];
-                            int orbitIndexToAdd = EOSSDatabase.findOrbitIndex(orbitToAdd);
-                            int randInstToAdd = pprng.nextInt(EOSSDatabase.getInstruments().size());
-                            arch.addInstrumentToOrbit(randInstToAdd, orbitIndexToAdd);
-                        }
-                    }
-                    break;
-                //mode when we want to match the number of instruments used in a particular orbit
-                case 2:
-                    if (arch.getInstrumentsInOrbit(orbitI).size() > arg) {
-                        while (arch.getInstrumentsInOrbit(orbitI).size() > arg) {
-                            ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbitI);
-                            arch.removeInstrumentFromOrbit(insts.get(pprng.nextInt(insts.size())), orbitI);
-                        }
-                    } else if (arch.getInstrumentsInOrbit(orbitI).size() < arg) {
-                        while (arch.getInstrumentsInOrbit(orbitI).size() < arg) {
-                            ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbitI);
-                            ArrayList<Integer> unassignedInst = new ArrayList<>(insts.size());
-                            for (int i = 0; i < insts.size(); i++) {
-                                unassignedInst.add(i);
+                        break;
+
+                    //mode when we want to match the number of orbits occupied
+                    case 1:
+                        //case when there are more orbits occupied than the target value
+                        if (arch.getNorbits() > arg) {
+                            while (arch.getNorbits() > arg) {
+                                Orbit[] occupiedOrbits = arch.getOccupiedOrbits();
+                                Orbit orbitToRemove = occupiedOrbits[pprng.nextInt(occupiedOrbits.length)];
+                                int orbitIndexToRemove = EOSSDatabase.findOrbitIndex(orbitToRemove);
+                                ArrayList<Integer> instrumentsToRemove = arch.getInstrumentsInOrbit(orbitIndexToRemove);
+                                for (Integer inst : instrumentsToRemove) {
+                                    arch.removeInstrumentFromOrbit(inst, orbitIndexToRemove);
+                                }
                             }
-                            unassignedInst.removeAll(insts);
-                            arch.removeInstrumentFromOrbit(unassignedInst.get(pprng.nextInt(unassignedInst.size())), orbitI);
+                        } else if (arch.getNorbits() < arg) {
+                            while (arch.getNorbits() < arg) {
+                                Orbit[] emptyOrbits = arch.getEmptyOrbits();
+                                Orbit orbitToAdd = emptyOrbits[pprng.nextInt(emptyOrbits.length)];
+                                int orbitIndexToAdd = EOSSDatabase.findOrbitIndex(orbitToAdd);
+                                int randInstToAdd = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                                arch.addInstrumentToOrbit(randInstToAdd, orbitIndexToAdd);
+                            }
                         }
-                    }
-                    break;
-                default:
-                    throw new UnsupportedOperationException(String.format("Expected mode to be {0,1,2}. Found %d", mode));
+                        break;
+                    //mode when we want to match the number of instruments used in a particular orbit
+                    case 2:
+                        if (arch.getInstrumentsInOrbit(orbitInd).size() > arg) {
+                            while (arch.getInstrumentsInOrbit(orbitInd).size() > arg) {
+                                ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbitInd);
+                                arch.removeInstrumentFromOrbit(insts.get(pprng.nextInt(insts.size())), orbitInd);
+                            }
+                        } else if (arch.getInstrumentsInOrbit(orbitInd).size() < arg) {
+                            while (arch.getInstrumentsInOrbit(orbitInd).size() < arg) {
+                                ArrayList<Integer> insts = arch.getInstrumentsInOrbit(orbitInd);
+                                ArrayList<Integer> unassignedInst = new ArrayList<>(insts.size());
+                                for (int i = 0; i < insts.size(); i++) {
+                                    unassignedInst.add(i);
+                                }
+                                unassignedInst.removeAll(insts);
+                                arch.removeInstrumentFromOrbit(unassignedInst.get(pprng.nextInt(unassignedInst.size())), orbitInd);
+                            }
+                        }
+                        break;
+                    default:
+                        throw new UnsupportedOperationException(String.format("Expected mode to be {0,1,2}. Found %d", mode));
+                }
             }
         } catch (Exception e) {
             System.err.println("");
