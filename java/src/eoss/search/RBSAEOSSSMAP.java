@@ -185,7 +185,7 @@ public class RBSAEOSSSMAP {
                 break;
 
             case 3://Hyperheuristic search
-                String origname = "";
+                String origname = "AIAA_innovize_";
                 for (int i = 0; i < numRuns; i++) {
                     ICreditAssignment creditAssignment;
                     String[] creditDefs = new String[]{"SIDo"};
@@ -211,11 +211,10 @@ public class RBSAEOSSSMAP {
 
                             initialization = new ArchitectureGenerator(problem, popSize, "random");
 
-                            origname = "HeMOEA_AdaptivePursuit_SI-A_1ptC+BitM1464548365178";
                             AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                     initialization, selector, creditAssignment);
 
-                            InstrumentedSearch run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + "_ARC");
+                            InstrumentedSearch run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i);
                             futures.add(pool.submit(run));
                         } catch (IOException ex) {
                             Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
