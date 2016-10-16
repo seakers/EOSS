@@ -113,6 +113,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
         // run the executor using the listener to collect results
         System.out.println("Starting " + alg.getClass().getSimpleName() + " on " + alg.getProblem().getName() + " with pop size: " + populationSize);
+        alg.step();
         long startTime = System.currentTimeMillis();
 
         //keep track of each solution that is ever created, but only keep the unique ones
@@ -127,7 +128,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
         //count the number of times we reset operators
         int opResetCount = 0;
-
+        
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             //since new solutions are put at end of population, only check the last few to see if any new solutions entered population

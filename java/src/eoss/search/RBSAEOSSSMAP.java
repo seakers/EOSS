@@ -41,6 +41,8 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import knowledge.operator.EOSSOperatorCreator;
+import mining.label.AbstractPopulationLabeler;
+import mining.label.NondominatedSortingLabeler;
 import mining.label.ParetoFrontLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
@@ -270,7 +272,9 @@ public class RBSAEOSSSMAP {
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
 
-                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, new ParetoFrontLabeler(), ops, path + File.separator + "result", fileName + i);
+                        AbstractPopulationLabeler labeler =  new NondominatedSortingLabeler(.10);
+                        
+                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", fileName + i);
                         futures.add(pool.submit(run));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
