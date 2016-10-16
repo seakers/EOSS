@@ -185,7 +185,7 @@ public class RBSAEOSSSMAP {
                 break;
 
             case 3://Hyperheuristic search
-                String origname = "AIAA_innovize_";
+                String origname = "AIAA_innovize_" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     ICreditAssignment creditAssignment;
                     String[] creditDefs = new String[]{"SIDo"};
@@ -226,7 +226,7 @@ public class RBSAEOSSSMAP {
                     try {
                         AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
                         IOCreditHistory ioch = new IOCreditHistory();
-                        ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator + origname + "ARC.credit", ",");
+                        ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator + origname + ".credit", ",");
 //                        IOSelectionHistory iosh = new IOSelectionHistory();
 //                        iosh.saveHistory(hemoea.getSelectionHistory(), name + fileName + ".hist", ",");
                     } catch (InterruptedException | ExecutionException ex) {
@@ -237,7 +237,7 @@ public class RBSAEOSSSMAP {
                 pool.shutdown();
                 break;
             case 4://innovization search
-                String fileName = "AIAA_innovize_";
+                String fileName = "AIAA_innovize_" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     try {
                         problem = getEOSSProblem(false);
