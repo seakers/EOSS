@@ -84,8 +84,8 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
             args[1] = "4"; //Mode
-            args[2] = "1"; //numCPU
-            args[3] = "1"; //numRuns
+            args[2] = "3"; //numCPU
+            args[3] = "10"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);

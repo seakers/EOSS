@@ -46,6 +46,8 @@ public class InstrumentedSearch implements Callable<Algorithm>{
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
         
+        ((EOSSProblem)alg.getProblem()).renewJess();
+        
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(5)

@@ -62,8 +62,6 @@ public class EOSSProblem extends AbstractProblem {
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         this.r = new Rete();
         this.qb = new QueryBuilder( r );
-        JessInitializer ji = new JessInitializer();
-        ji.initializeJess( r, qb);
         this.explanation = explanation;
         this.withSynergy = withSynergy;
     }
