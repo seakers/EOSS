@@ -38,18 +38,29 @@ public class InstrumentedSearch implements Callable<Algorithm> {
     private final Algorithm alg;
     private final TypedProperties properties;
 
-    public InstrumentedSearch(Algorithm alg, TypedProperties properties, String savePath, String name) {
+    /**
+     * parameter to decide whether to start jess in constructor
+     */
+    private final boolean jessInit;
+
+    public InstrumentedSearch(Algorithm alg, TypedProperties properties, String savePath, String name, boolean init) {
         this.alg = alg;
         this.properties = properties;
         this.savePath = savePath;
         this.name = name;
-        
-        //initialize Jess
-        ((EOSSProblem) alg.getProblem()).renewJess();
+        this.jessInit = init;
+        if (init) {
+            //initialize Jess
+            ((EOSSProblem) alg.getProblem()).renewJess();
+        }
     }
 
     @Override
     public Algorithm call() throws Exception {
+        if (!jessInit) {
+            ((EOSSProblem) alg.getProblem()).renewJess();
+        }
+
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
 

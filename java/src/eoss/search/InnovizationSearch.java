@@ -80,8 +80,36 @@ public class InnovizationSearch implements Callable<Algorithm> {
      * the strategy for how to and when to remove and add operators
      */
     private final OperatorReplacementStrategy ops;
+    
+    /**
+     * parameter to decide whether to start jess in constructor
+     */
+    private final boolean jessInit;
 
+    /**
+     * Constructs new search and automatically initializes Jess
+     * @param alg
+     * @param properties
+     * @param dataLabeler
+     * @param ops
+     * @param savePath
+     * @param name 
+     */
     public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name) {
+        this(alg, properties, dataLabeler, ops, savePath, name, true);
+    }
+    
+    /**
+     * Constructs new search and can decide to initializes Jess in constructor or during call
+     * @param alg
+     * @param properties
+     * @param dataLabeler
+     * @param ops
+     * @param savePath
+     * @param name 
+     * @param init true if jess should initialize in constructor
+     */
+    public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name, boolean init) {
         this.alg = alg;
         this.properties = properties;
         this.savePath = savePath;
@@ -94,12 +122,17 @@ public class InnovizationSearch implements Callable<Algorithm> {
         } else {
             this.opCreator = (EOSSOperatorCreator) ops.getOperatorCreator();
         }
-        //initialize jess
-        ((EOSSProblem)alg.getProblem()).renewJess();
+        if(init){
+            //initialize jess
+            ((EOSSProblem)alg.getProblem()).renewJess();
+        }this.jessInit = init;
     }
 
     @Override
     public Algorithm call() throws Exception {
+        if(!jessInit){
+            ((EOSSProblem)alg.getProblem()).renewJess();
+        }
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
         int nOpsToAdd = (int) properties.getInt("nOpsToAdd", 2);

@@ -76,16 +76,14 @@ public class RBSAEOSSSMAP {
     public static void main(String[] args) {
 
         //PATH
-//        args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-//          args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
         if (args.length == 0) {
             args = new String[4];
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
-//            args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
+//            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
             args[1] = "3"; //Mode
             args[2] = "3"; //numCPU
-            args[3] = "10"; //numRuns
+            args[3] = "30"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -172,7 +170,12 @@ public class RBSAEOSSSMAP {
                     problem = getEOSSProblem(false);
                     initialization = new ArchitectureGenerator(problem, popSize, "random");
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
-                    InstrumentedSearch run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", String.valueOf(i));
+                    InstrumentedSearch run;
+                            if(i<numCPU){
+                                run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", String.valueOf(i), true);
+                            }else{
+                                run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result",  String.valueOf(i), false);
+                            }
                     futures.add(pool.submit(run));
                 }
                 for (Future<Algorithm> run : futures) {
@@ -213,8 +216,13 @@ public class RBSAEOSSSMAP {
 
                             AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                     initialization, selector, creditAssignment);
-
-                            InstrumentedSearch run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i);
+                            
+                            InstrumentedSearch run;
+                            if(i<numCPU){
+                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i, true);
+                            }else{
+                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i, false);
+                            }
                             futures.add(pool.submit(run));
                         } catch (IOException ex) {
                             Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
@@ -267,9 +275,13 @@ public class RBSAEOSSSMAP {
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
 
-                        AbstractPopulationLabeler labeler =  new NondominatedSortingLabeler(.10);
-                        
-                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", fileName + i);
+                        AbstractPopulationLabeler labeler =  new NondominatedSortingLabeler(.25);
+                        InnovizationSearch run;
+                        if(i<numCPU){
+                            run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", fileName + i,true);
+                        }else{
+                            run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", fileName + i, false);
+                        }
                         futures.add(pool.submit(run));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
