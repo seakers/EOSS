@@ -83,7 +83,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Dropbox\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[1] = "4"; //Mode
+            args[1] = "3"; //Mode
             args[2] = "3"; //numCPU
             args[3] = "10"; //numRuns
         }
@@ -225,10 +225,6 @@ public class RBSAEOSSSMAP {
                 for (Future<Algorithm> run : futures) {
                     try {
                         AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
-                        IOCreditHistory ioch = new IOCreditHistory();
-                        ioch.saveHistory(hemoea.getCreditHistory(), path + File.separator + origname + ".credit", ",");
-//                        IOSelectionHistory iosh = new IOSelectionHistory();
-//                        iosh.saveHistory(hemoea.getSelectionHistory(), name + fileName + ".hist", ",");
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }

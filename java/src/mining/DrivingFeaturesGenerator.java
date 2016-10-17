@@ -526,14 +526,15 @@ public class DrivingFeaturesGenerator {
     
     
     public boolean checkThreshold(double[] metrics) {
-        if (metrics[0] >= supp_threshold
-                && metrics[1] >= lift_threshold
-                && metrics[2] >= confidence_threshold
-                && metrics[3] >= confidence_threshold) {
-            return true;
-        } else {
-            return false;
-        }
+//        if (metrics[0] >= supp_threshold
+//                && metrics[1] >= lift_threshold
+//                && metrics[2] >= confidence_threshold
+//                && metrics[3] >= confidence_threshold) {
+//            return true;
+//        } else {
+//            return false;
+//        }
+        return true;
     }
 
     public void parseCSV(String path) {

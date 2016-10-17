@@ -158,7 +158,6 @@ public class JessInitializer {
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1); //program shuts down if Jess initializer catches any exception
-
         }
     }
 

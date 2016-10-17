@@ -167,7 +167,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 dfg.getDrivingFeatures(labledDataFile);
                 // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
-                dfg.exportDrivingFeatures(1, featureDataFile, nOpsToAdd);
+                dfg.exportDrivingFeatures(2, featureDataFile, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
 
