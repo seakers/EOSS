@@ -1,3 +1,0 @@
-// (mode,arg,orb,inst)/support/lift
-(1,5,*,*)/0.1/5.0  //numOrbitUsed[5]
-(0,1,4,11,10,9)/0.1/5.0  //togetherInOrbit3[SSO-800-SSO-PM, CNES_KaRIN, POSTEPS_IRS,HYSP_TIR]

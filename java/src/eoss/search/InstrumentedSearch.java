@@ -5,6 +5,10 @@
  */
 package eoss.search;
 
+import aos.IO.IOCreditHistory;
+import aos.IO.IOQualityHistory;
+import aos.IO.IOSelectionHistory;
+import aos.aos.IAOS;
 import architecture.ResultIO;
 import eoss.problem.EOSSArchitecture;
 import eoss.problem.EOSSProblem;
@@ -27,13 +31,13 @@ import org.moeaframework.util.TypedProperties;
  *
  * @author nozomihitomi
  */
-public class InstrumentedSearch implements Callable<Algorithm>{
-    
+public class InstrumentedSearch implements Callable<Algorithm> {
+
     private final String savePath;
     private final String name;
     private final Algorithm alg;
     private final TypedProperties properties;
-    
+
     public InstrumentedSearch(Algorithm alg, TypedProperties properties, String savePath, String name) {
         this.alg = alg;
         this.properties = properties;
@@ -45,9 +49,9 @@ public class InstrumentedSearch implements Callable<Algorithm>{
     public Algorithm call() throws Exception {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
-        
-        ((EOSSProblem)alg.getProblem()).renewJess();
-        
+
+        ((EOSSProblem) alg.getProblem()).renewJess();
+
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(5)
@@ -59,20 +63,16 @@ public class InstrumentedSearch implements Callable<Algorithm>{
 
         // run the executor using the listener to collect results
         System.out.println("Starting " + alg.getClass().getSimpleName() + " on " + alg.getProblem().getName() + " with pop size: " + populationSize);
+        alg.step();
         long startTime = System.currentTimeMillis();
-        
-        HashMap<BitSet,Solution> allSolutions = new HashMap();
+
+        HashMap<BitSet, Solution> allSolutions = new HashMap();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
-        for(int i=0; i<initPop.size(); i++){
-            allSolutions.put(((EOSSArchitecture)initPop.get(i)).getBitString(), initPop.get(i));
+        for (int i = 0; i < initPop.size(); i++) {
+            allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
         }
-        
+
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
-//            Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
-//            for (int i = pop.size()-3; i < initPop.size(); i++) {
-//                if(!allSolutions.containsKey(((EOSSArchitecture) initPop.get(i)).getBitString()))
-//                    allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
-//            }
             if (instAlgorithm.getNumberOfEvaluations() % 500 == 0) {
                 ((EOSSProblem) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
@@ -81,10 +81,10 @@ public class InstrumentedSearch implements Callable<Algorithm>{
             }
             instAlgorithm.step();
         }
-        
+
         Population allpop = new Population();
         Iterator<BitSet> iter = allSolutions.keySet().iterator();
-        while(iter.hasNext()){
+        while (iter.hasNext()) {
             allpop.add(allSolutions.get(iter.next()));
         }
 
@@ -96,9 +96,24 @@ public class InstrumentedSearch implements Callable<Algorithm>{
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
         resio.saveSearchMetrics(instAlgorithm, filename);
         resio.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
-//        resio.savePopulation(allpop, filename+"allpop");
         resio.saveObjectives(instAlgorithm.getResult(), filename);
+
+        if (alg instanceof IAOS) {
+            IAOS algAOS = (IAOS) alg;
+            if (properties.getBoolean("saveQuality", false)) {
+                IOQualityHistory ioqh = new IOQualityHistory();
+                ioqh.saveHistory(algAOS.getQualityHistory(), savePath + File.separator + name + ".credit", ",");
+            }
+            if (properties.getBoolean("saveCredits", false)) {
+                IOCreditHistory ioch = new IOCreditHistory();
+                ioch.saveHistory(algAOS.getCreditHistory(), savePath + File.separator + name + ".credit", ",");
+            }
+            if (properties.getBoolean("saveSelection", false)) {
+                IOSelectionHistory iosh = new IOSelectionHistory();
+                iosh.saveHistory(algAOS.getSelectionHistory(), savePath + File.separator + name + ".hist", ",");
+            }
+        }
         return alg;
     }
-    
+
 }
