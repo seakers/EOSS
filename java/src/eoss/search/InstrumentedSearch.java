@@ -43,14 +43,15 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         this.properties = properties;
         this.savePath = savePath;
         this.name = name;
+        
+        //initialize Jess
+        ((EOSSProblem) alg.getProblem()).renewJess();
     }
 
     @Override
     public Algorithm call() throws Exception {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
-
-        ((EOSSProblem) alg.getProblem()).renewJess();
 
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 

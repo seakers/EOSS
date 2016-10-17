@@ -94,6 +94,8 @@ public class InnovizationSearch implements Callable<Algorithm> {
         } else {
             this.opCreator = (EOSSOperatorCreator) ops.getOperatorCreator();
         }
+        //initialize jess
+        ((EOSSProblem)alg.getProblem()).renewJess();
     }
 
     @Override
@@ -101,8 +103,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
         int nOpsToAdd = (int) properties.getInt("nOpsToAdd", 2);
-        
-        ((EOSSProblem)alg.getProblem()).renewJess();
 
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
 
