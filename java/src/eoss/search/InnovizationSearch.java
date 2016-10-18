@@ -206,6 +206,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
                 //add new operators
                 Collection<Variation> newOperators = ops.addNewOperator(alg, nOpsToAdd);
+                alg.getNextHeuristicSupplier().reset();
                 for (Variation op : newOperators) {
                     if (op instanceof CompoundVariation) {
                         System.out.println(String.format("Added: %s", ((CompoundVariation) op).getName()));

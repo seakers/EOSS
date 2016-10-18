@@ -2,19 +2,21 @@
 %reads .res file and puts all results data into one mfile
 
 % selectors = {'AdaptivePursuit'};
-selectors = {'RandomSelect'};
+% selectors = {'RandomSelect'};
 % selectors = {'EpsilonMOEA'};
-creditDef = {'SI-A_moreCrossNoInter10'};
-% creditDef = {''};
+selectors = {''};
+% creditDef = {'SI-A_moreCrossNoInter10'};
+creditDef = {''};
 
-path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric';
+% path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric';
 nFiles = length(selectors)*length(creditDef);
 filesProcessed = 1;
 h = waitbar(filesProcessed/nFiles,'Processing files...');
 ind = 1;
 for j=1:length(selectors)
     for i=1:length(creditDef)
-            [fHV,ET] = getAllResults(strcat(path,filesep,'result\FirstRoundOfIDETCData'),selectors{j},creditDef{i});
+            [fHV,ET] = getAllResults(strcat(path,filesep,'result/AIAA SciTech/innov_4ops_resetCredits'),selectors{j},creditDef{i});
             if(isempty(fHV))
                 disp(strcat(selectors{j},creditDef{i}))
             end

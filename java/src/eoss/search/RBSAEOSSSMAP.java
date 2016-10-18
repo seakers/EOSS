@@ -4,7 +4,6 @@
  */
 package eoss.search;
 
-import aos.IO.IOCreditHistory;
 import aos.aos.AOSEpsilonMOEA;
 import aos.aos.AOSFactory;
 import aos.creditassigment.CreditDefFactory;
@@ -40,11 +39,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import knowledge.operator.EOSSOperator;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
-import mining.label.ParetoFrontLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
@@ -83,8 +80,8 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
             args[1] = "3"; //Mode
-            args[2] = "3"; //numCPU
-            args[3] = "30"; //numRuns
+            args[2] = "1"; //numCPU
+            args[3] = "1"; //numRuns
         }
         
         System.out.println("Path set to " + args[0]);
@@ -123,8 +120,8 @@ public class RBSAEOSSSMAP {
         
         //setup for innovization
         int epochLength = 1000; //for learning rate
-        properties.setInt("nOpsToAdd", 2);
-        properties.setInt("nOpsToRemove", 2);
+        properties.setInt("nOpsToAdd", 4);
+        properties.setInt("nOpsToRemove", 4);
         
         //setup for saving results
         properties.setBoolean("saveQuality", true);
@@ -132,7 +129,7 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveSelection", true);
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
-
+        
         switch (MODE) {
             case 1: //MOEA/D
 
