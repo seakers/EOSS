@@ -64,7 +64,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
         this.arg = Integer.parseInt(strArg);
         if (strOrbit.matches("\\*")) {
             this.orbit = -1;
-        } else if (strInstrument[0].matches("A")) {
+        } else if (strOrbit.matches("A")) {
             this.orbit = -2;
         } else {
             this.orbit = Integer.parseInt(strOrbit);
@@ -75,8 +75,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
             allOrbits[i] = i;
         }
 
-        if (strInstrument[0].matches(
-                "A")) {
+        if (strInstrument[0].matches("A")) {
             this.instrument = new int[EOSSDatabase.getInstruments().size()];
             if (strInstrument.length > 1) {
                 throw new IllegalArgumentException("All instruments A cannot be used in addition to specifying other instruments");
@@ -87,19 +86,18 @@ public class EOSSOperator extends AbstractEOSSOperator {
             }
         } else {
             this.instrument = new int[strInstrument.length];
-        }
-
-        for (int i = 0;
-                i < strInstrument.length;
-                i++) {
-            if (strInstrument[i].matches("\\*")) {
-                if (strInstrument.length > 1) {
-                    throw new IllegalArgumentException("Wildcard * for instruments cannot be used in addition to specifying other instruments");
+            for (int i = 0;
+                    i < strInstrument.length;
+                    i++) {
+                if (strInstrument[i].matches("\\*")) {
+                    if (strInstrument.length > 1) {
+                        throw new IllegalArgumentException("Wildcard * for instruments cannot be used in addition to specifying other instruments");
+                    } else {
+                        this.instrument[i] = -1;
+                    }
                 } else {
-                    this.instrument[i] = -1;
+                    this.instrument[i] = Integer.parseInt(strInstrument[i]);
                 }
-            } else {
-                this.instrument[i] = Integer.parseInt(strInstrument[i]);
             }
         }
 
@@ -142,28 +140,21 @@ public class EOSSOperator extends AbstractEOSSOperator {
         }
 
         //check that the instrument id is not greater than the number of available instruments in the database
-        if (this.orbit
-                != -1) {
-            if (this.orbit > nOrb) {
-                throw new IllegalArgumentException(String.format(
-                        "For mode = %d expected orbit id to be"
-                        + " less than number of orbits"
-                        + " (%d) available in the database."
-                        + " Found %d", this.mode, nOrb, this.orbit));
-
-            }
+        if (this.orbit > nOrb) {
+            throw new IllegalArgumentException(String.format(
+                    "For mode = %d expected orbit id to be less than number of "
+                    + "orbits (%d) available in the database."
+                    + " Found %d", this.mode, nOrb, this.orbit));
         }
 
         //check that the instrument id is not greater than the number of available instruments in the database
         for (int inst : instrument) {
-            if (inst != -1) {
-                if (inst > nInst) {
-                    throw new IllegalArgumentException(String.format(
-                            "For mode = %d expected instrument id to be"
-                            + " less than number of instruments"
-                            + " (%d) available in the database."
-                            + " Found %d", this.mode, nInst, inst));
-                }
+            if (inst > nInst) {
+                throw new IllegalArgumentException(String.format(
+                        "For mode = %d expected instrument id to be"
+                        + " less than number of instruments"
+                        + " (%d) available in the database."
+                        + " Found %d", this.mode, nInst, inst));
             }
         }
 
@@ -185,7 +176,6 @@ public class EOSSOperator extends AbstractEOSSOperator {
         EOSSArchitecture arch = (EOSSArchitecture) child.copy();
 
         try {
-
             int[] orbitArray;
             if (orbit == -2) {
                 orbitArray = allOrbits;

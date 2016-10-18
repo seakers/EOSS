@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.moeaframework.core.Variation;
 import org.moeaframework.core.operator.CompoundVariation;
+import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.binary.BitFlip;
 
 /**
@@ -39,6 +40,11 @@ public class EOSSOperatorCreator implements OperatorCreator {
     private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*A%s]*\\)).*", delimiter));
 
     private final ArrayList<Variation> operatorSet;
+    
+    /**
+     * the crossover probability of single point crossover
+     */
+    private final double crossoverProbability;
 
     /**
      * The mutation probability of the bit flip mutator
@@ -61,12 +67,14 @@ public class EOSSOperatorCreator implements OperatorCreator {
      * The new operators created will be combined with a bit flip mutator with a
      * desired probability for mutation
      *
-     * @param mutatioProbability The mutation probability of the bit flip
+     * @param crossoverProbability the crossover probability of single point crossover
+     * @param mutationProbability The mutation probability of the bit flip
      * mutator
      */
-    public EOSSOperatorCreator(double mutatioProbability) {
+    public EOSSOperatorCreator(double crossoverProbability, double mutationProbability) {
         this.operatorSet = new ArrayList<>();
-        this.mutationProbability = mutatioProbability;
+        this.crossoverProbability = crossoverProbability;
+        this.mutationProbability = mutationProbability;
     }
 
     /**
@@ -106,6 +114,7 @@ public class EOSSOperatorCreator implements OperatorCreator {
 
     private Variation featureToOperator(String featureString) {
         CompoundVariation operator = new CompoundVariation();
+        operator.appendOperator(new OnePointCrossover(crossoverProbability));
         Matcher m = compositeFeature.matcher(featureString);
         String operatorName = "";
         if (m.find()) {

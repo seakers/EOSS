@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import knowledge.operator.EOSSOperator;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
@@ -85,7 +86,7 @@ public class RBSAEOSSSMAP {
             args[2] = "3"; //numCPU
             args[3] = "30"; //numRuns
         }
-
+        
         System.out.println("Path set to " + args[0]);
         System.out.println("Running mode " + args[1]);
         System.out.println("Will get " + args[2] + " resources");
@@ -202,7 +203,7 @@ public class RBSAEOSSSMAP {
                             ArrayList<Variation> heuristics = new ArrayList();
 
                             //add domain-independent heuristics
-                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability,1), new BitFlip(mutationProbability)));
+                            heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability,2), new BitFlip(mutationProbability)));
 
                             properties.setDouble("pmin", 0.03);
 
@@ -251,12 +252,12 @@ public class RBSAEOSSSMAP {
                         ArrayList<Variation> operators = new ArrayList();
 
                         //add domain-independent heuristics
-                        Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability,1), new BitFlip(mutationProbability));
+                        Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability,2), new BitFlip(mutationProbability));
                         operators.add(SingleCross);
 
                         //set up OperatorReplacementStrategy
                         EpochTrigger epochTrigger = new EpochTrigger(epochLength);
-                        EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator(mutationProbability);
+                        EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator(crossoverProbability,mutationProbability);
                         ArrayList<Variation> permanentOps = new ArrayList();
                         permanentOps.add(SingleCross);
                         RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, properties.getInt("nOpsToRemove", 2));
