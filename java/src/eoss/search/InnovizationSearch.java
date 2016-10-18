@@ -196,11 +196,11 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 dataLabeler.label(allSolnPop);
                 String labledDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_labels.csv";
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
-                // Find driving features
-                dfg.getDrivingFeatures(labledDataFile);
-                // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
+                
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
-                dfg.exportDrivingFeatures(2, featureDataFile, nOpsToAdd);
+                // Find driving features
+                // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
+                dfg.getDrivingFeatures(labledDataFile, featureDataFile, 2, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
 

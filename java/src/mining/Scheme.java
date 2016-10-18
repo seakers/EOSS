@@ -5,7 +5,13 @@ package mining;
  * and open the template in the editor.
  */
 
+
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+
+
 
 /**
  *
@@ -125,7 +131,7 @@ public class Scheme{
         else if (name.equals("numInstruments")){
             int cnt = 0;
             for (int o = 0; o < data.length; ++o) {
-				for (int i=0; i< data[o].length;i++){
+				for (int i=0; i< data[0].length;i++){
 					if (instrument==-1){ // Count all instruments
 						if(data[o][i]==1){
 							cnt++;
@@ -212,8 +218,10 @@ public class Scheme{
         Scheme s = new Scheme();
         
         String name = filterName;
+//        System.out.println(name);
         int[] params = new int[4];
         for(int i=0;i<params_input.size();i++){
+//        	System.out.println(params_input.get(i));
         	params[i] = Integer.parseInt(params_input.get(i));
         }
         
@@ -227,23 +235,23 @@ public class Scheme{
         }
         else if (name.equals("together2")|| name.equals("separate2")) {
         	s.setInstrument (params[0]); 
-        	s.setInstrument (params[1]);                
+        	s.setInstrument2 (params[1]);                
         }
         else if (name.equals("togetherInOrbit2")) {
         	s.setOrbit(params[0]);  
         	s.setInstrument (params[1]); 
-        	s.setInstrument (params[2]);               
+        	s.setInstrument2 (params[2]);               
         }
         else if (name.equals("together3") || name.equals("separate3")) {
         	s.setInstrument (params[0]); 
-        	s.setInstrument (params[1]);    
-        	s.setInstrument (params[2]);
+        	s.setInstrument2 (params[1]);    
+        	s.setInstrument3 (params[2]);
         }
         else if (name.equals("togetherInOrbit3")) {
         	s.setOrbit (params[0]); 
         	s.setInstrument (params[1]);    
-        	s.setInstrument (params[2]);        
-        	s.setInstrument (params[3]);  
+        	s.setInstrument2 (params[2]);        
+        	s.setInstrument3 (params[3]);  
         }
         else if (name.equals("emptyOrbit")) {
         	s.setOrbit(params[0]);
