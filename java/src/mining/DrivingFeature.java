@@ -11,9 +11,9 @@ package mining;
  * @author Bang
  */
  
-public class DrivingFeature{
+public class DrivingFeature {
         
-		private int index;
+        private int index;
         private String name; // specific names
         private String type; // inOrbit, together, separate, present, absent, etc.
         private int[] param;
@@ -62,6 +62,7 @@ public class DrivingFeature{
         }
         
         public int getIndex(){return index;}
+        public void setIndex(int index){this.index=index;}
         public String getType(){return type;}
         public String getName(){return name;}
         public int[] getParam(){return param;}
