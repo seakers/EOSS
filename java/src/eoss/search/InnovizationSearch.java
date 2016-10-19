@@ -23,6 +23,7 @@ import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
+import mining.label.NondominatedSortingLabeler;
 import org.moeaframework.Instrumenter;
 import org.moeaframework.algorithm.AbstractEvolutionaryAlgorithm;
 import org.moeaframework.analysis.collector.InstrumentedAlgorithm;
@@ -174,7 +175,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
             }
 
             int nFuncEvals = instAlgorithm.getNumberOfEvaluations();
-dfg.getDrivingFeatures("AIAA_innovize_14767543531208280000_0_labels.csv", "AIAA_innovize_14767543531208280000_0_feat.txt", 2, nOpsToAdd);
             //Check if the operators need to be replaced
             if (ops.checkTrigger(alg)) {
                 System.out.println(String.format("Operator replacement event triggered at %d func eval", nFuncEvals));
