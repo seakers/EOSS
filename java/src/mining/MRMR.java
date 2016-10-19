@@ -23,13 +23,18 @@ public class MRMR {
         int[] selectedFeatures = new int[target_num_features];
         
         int label_index = ncols-1;
-        int numSelected = 0;
+        DoubleMatrix labelMat = dataFeatureMat.getColumn(label_index);
+        DoubleMatrix featuresIndexMat = DoubleMatrix.zeros(ncols,featureSet.size());
+        for(int i=0;i<featureSet.size();i++){
+        	featuresIndexMat.put(featureSet.get(i).getIndices(), i, 1.0);
+        }
+        DoubleMatrix features_sat = dataFeatureMat.mmul(featuresIndexMat);
         
+        int numSelected = 0;
         while(numSelected < target_num_features){
         	
-        	int bestFeatInd = 0;
+        	int bestFeatInd = -1;
             double phi = -10000;
-            
             
             // Implement incremental search
             for(int i=0;i<featureSet.size();i++){
@@ -44,16 +49,18 @@ public class MRMR {
             	if(contains){
             		continue;
             	}
-
             	
-                double D = getMutualInformation(dataFeatureMat,featureSet.get(i).getIndices(),label_index);
+            	int feature_length_1 = featureSet.get(i).getIndices().length;
+
+                double D = getMutualInformation(features_sat, labelMat, i, feature_length_1);
                 double R = 0;
 
                 for (int featInd: selectedFeatures) {
-                    R = R + getMutualInformation(dataFeatureMat,featureSet.get(i).getIndices(), featureSet.get(featInd).getIndices());
+                	int feature_length_2 = featureSet.get(featInd).getIndices().length;
+                    R = R + getMutualInformation(features_sat, labelMat, i, featInd, feature_length_1, feature_length_2);
                 }
                 if(numSelected!=0){
-                   R = (double) R/numSelected;
+                   R = (double) R / (double)numSelected;
                 }
   
                 if(D-R > phi){
@@ -71,101 +78,39 @@ public class MRMR {
         }
         return selectedFeaturesOutput;
     }  
-//    public ArrayList<int[]> minRedundancyMaxRelevance(double[][] dataMat, ArrayList<int[]> featureSet,int target_num_features){
-//       
-//    	this.ncols = dataMat[0].length;
-//        this.nrows = dataMat.length;
-//        this.dataFeatureMat = new DoubleMatrix(dataMat);
-//        this.target_num_features = target_num_features;
-//        this.featureSet=featureSet;
-//
-//        
-//        int[] selectedFeatures = new int[target_num_features];
-//        
-//        int label_index = ncols-1;
-//        int numSelected = 0;
-//        
-//        while(numSelected < target_num_features){
-//        	
-//        	int bestFeatInd = 0;
-//            double phi = -10000;
-//            
-//            
-//            // Implement incremental search
-//            for(int i=0;i<featureSet.size();i++){
-//            	
-//            	boolean contains=false;
-//            	for(int featInd:selectedFeatures){
-//            		if(featInd==i){
-//            			contains=true;
-//            			break;
-//            		}
-//            	}
-//            	if(contains){
-//            		continue;
-//            	}
-//
-//            	
-//                double D = getMutualInformation(dataFeatureMat,featureSet.get(i),label_index);
-//                double R = 0;
-//
-//                for (int featInd: selectedFeatures) {
-//                    R = R + getMutualInformation(dataFeatureMat,featureSet.get(i), featureSet.get(featInd));
-//                }
-//                if(numSelected!=0){
-//                   R = (double) R/numSelected;
-//                }
-//  
-//                if(D-R > phi){
-//                    phi = D-R;
-//                    bestFeatInd = i;
-//                }
-//            }
-//            selectedFeatures[numSelected] = bestFeatInd;
-//            numSelected++;
-//        }
-//        
-//        ArrayList<int[]> selectedFeaturesOutput = new ArrayList<>();
-//        for(int index:selectedFeatures){
-//        	selectedFeaturesOutput.add(featureSet.get(index));
-//        }
-//        return selectedFeaturesOutput;
-//    }  
+
     
+
     
-    
-    
-    public double getMutualInformation(DoubleMatrix dataFeatureMat, int[] f1, int f2){
-    	int[] temp = new int[1];
-    	temp[0] = f2;
-    	return getMutualInformation(dataFeatureMat,f1,temp);
+    public double getMutualInformation(DoubleMatrix features_sat,DoubleMatrix label, int f1, int l1){
+    	return getMutualInformation(features_sat,label,f1,l1,-1,-1);
     }
     
-    public double getMutualInformation(DoubleMatrix dataFeatureMat, int[] f1, int[] f2){
+    public double getMutualInformation(DoubleMatrix features_sat,DoubleMatrix label, int f1, int l1, int f2, int l2){
         
         double I;
+        double x1,x2,x1x2,nx1x2,x1nx2,nx1nx2;
         
-        DoubleMatrix features = DoubleMatrix.zeros(ncols,2);
-        features.put(f1,0, 1.0);
-        features.put(f2,1, 1.0);
-        
-        DoubleMatrix feature_sat = dataFeatureMat.mmul(features);
-        
-        int l1 = f1.length;
-        int l2 = f2.length;
-        
-        DoubleMatrix feat1_sat = feature_sat.getColumn(0);
-        DoubleMatrix feat2_sat = feature_sat.getColumn(0);
-        
-        double x1 = feat1_sat.eq(l1).norm1();
-        double x2 = feat2_sat.eq(l2).norm1();
-        double x1x2 = feat1_sat.eq(l1).dot(feat2_sat.eq(l2));
-        double nx1x2 = feat1_sat.ne(l1).dot(feat2_sat.eq(l2));
-        double x1nx2 = feat1_sat.eq(l1).dot(feat2_sat.ne(l2));
-        double nx1nx2 = feat1_sat.ne(l1).dot(feat2_sat.ne(l2));
+        DoubleMatrix feat1_sat = features_sat.getColumn(f1);
+        if(f2<0){
+            x1 = feat1_sat.eq(l1).norm1();
+            x2 = label.norm1();
+            x1x2 = feat1_sat.eq(l1).dot(label);
+            nx1x2 = feat1_sat.ne(l1).dot(label);
+            x1nx2 = feat1_sat.eq(l1).dot(label.rsub(1));
+            nx1nx2 = feat1_sat.ne(l1).dot(label.rsub(1));
+        }else{
+        	DoubleMatrix feat2_sat = features_sat.getColumn(f2);
+            x1 = feat1_sat.eq(l1).norm1();
+            x2 = feat2_sat.eq(l2).norm1();
+            x1x2 = feat1_sat.eq(l1).dot(feat2_sat.eq(l2));
+            nx1x2 = feat1_sat.ne(l1).dot(feat2_sat.eq(l2));
+            x1nx2 = feat1_sat.eq(l1).dot(feat2_sat.ne(l2));
+            nx1nx2 = feat1_sat.ne(l1).dot(feat2_sat.ne(l2));
+        }
 
-        double p_x1 = x1/nrows;
-        double p_nx1 = 1-p_x1;
+        double p_x1 = (double) x1/nrows;
+        double p_nx1 = (double) 1-p_x1;
         double p_x2 = (double) x2/nrows;
         double p_nx2 = (double) 1-p_x2;
         double p_x1x2 = (double) x1x2/nrows;
