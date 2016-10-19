@@ -104,6 +104,8 @@ public class Apriori {
             }
 
             if(run_mRMR){
+                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
+                S = dfg.sort(1, S);
                 ArrayList<SetOfFeatures> S_reduced = new ArrayList<>();
                 for(int i=0;i<DrivingFeaturesParams.max_number_of_features_before_mRMR;i++){
                     S_reduced.add(S.get(i));
