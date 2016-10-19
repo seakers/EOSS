@@ -174,7 +174,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
             }
 
             int nFuncEvals = instAlgorithm.getNumberOfEvaluations();
-
+dfg.getDrivingFeatures("AIAA_innovize_14767543531208280000_0_labels.csv", "AIAA_innovize_14767543531208280000_0_feat.txt", 2, nOpsToAdd);
             //Check if the operators need to be replaced
             if (ops.checkTrigger(alg)) {
                 System.out.println(String.format("Operator replacement event triggered at %d func eval", nFuncEvals));

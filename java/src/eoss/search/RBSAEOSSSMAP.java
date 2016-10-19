@@ -83,7 +83,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[1] = "3"; //Mode
+            args[1] = "4"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -105,7 +105,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 5;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);

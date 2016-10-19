@@ -44,8 +44,6 @@ public class DrivingFeaturesGenerator {
     private String[] orbit_list;
     private int ninstr;
     private int norb;
-    private String csv_path;
-    private String drivingFeatures_output_path;
     
     private ArrayList<DrivingFeature> presetDrivingFeatures;
     
@@ -53,7 +51,6 @@ public class DrivingFeaturesGenerator {
     private ArrayList<int[][]> non_behavioral;
     
     private int max_num_of_instruments;
-    private int [][] dataMat;
     
     public boolean tallMatrix;
     public int maxLength;
@@ -126,7 +123,7 @@ public class DrivingFeaturesGenerator {
     public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
         
         this.maxLength = topN;
-    	parseCSV(csv_path);
+    	parseCSV(labeledDataFile);
         
 //    	System.out.println("...Extracting level 1 driving features and sort by support values");
     	ArrayList<DrivingFeature> preset = sort_preset(0,getDrivingFeatures_preset());
@@ -654,12 +651,11 @@ public class DrivingFeaturesGenerator {
     }
 
     public void parseCSV(String path){
-        String csvFile = path;
         String line = "";
         String splitBy = ",";
 
 
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
         	//skip header
         	line = br.readLine();
         	
