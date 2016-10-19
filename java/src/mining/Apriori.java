@@ -35,7 +35,7 @@ public class Apriori {
     
     
 	
-	public ArrayList<SetOfFeatures> runApriori(int maxLength, boolean run_mRMR){
+	public ArrayList<SetOfFeatures> runApriori(int maxLength, boolean run_mRMR, int num_features_to_extract){
 		
 		// Define the initial set of features
 		ArrayList<SetOfFeatures> S = generateInitialSets(this.presetDrivingFeatures);
@@ -105,7 +105,7 @@ public class Apriori {
 		
 		if(run_mRMR){
 			MRMR mRMR = new MRMR();
-			S = mRMR.minRedundancyMaxRelevance(dataFeatureMat, S, 5);
+			S = mRMR.minRedundancyMaxRelevance(dataFeatureMat, S, num_features_to_extract);
 		}
 		return S;
 	}

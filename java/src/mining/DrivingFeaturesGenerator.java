@@ -75,7 +75,7 @@ public class DrivingFeaturesGenerator {
         this.max_num_of_instruments=DrivingFeaturesParams.max_number_of_instruments;
         
         this.tallMatrix=DrivingFeaturesParams.tallMatrix;
-//        this.maxLength = DrivingFeaturesParams.maxLength;
+        this.maxLength = DrivingFeaturesParams.maxLength;
         this.run_mRMR = DrivingFeaturesParams.run_mRMR;
     }
     
@@ -125,7 +125,6 @@ public class DrivingFeaturesGenerator {
 
     public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
         
-        this.maxLength = topN;
     	parseCSV(csv_path);
         
 //    	System.out.println("...Extracting level 1 driving features and sort by support values");
@@ -136,9 +135,9 @@ public class DrivingFeaturesGenerator {
     	double[] thresholds = {this.supp_threshold,this.lift_threshold,this.confidence_threshold};
 
     	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
-    	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR);
+    	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, topN);
 
-    	exportDrivingFeatures(sort(sort_index,features), saveDataFile);
+    	exportDrivingFeatures(sort(sort_index,features), saveDataFile, topN);
     	return features;
     }
     
@@ -496,7 +495,7 @@ public class DrivingFeaturesGenerator {
                 int count = 0;
 
                 for(SetOfFeatures branch:features){
-                        if (count >= topN) {
+                        if (count > topN) {
                             break;
                         }
                         

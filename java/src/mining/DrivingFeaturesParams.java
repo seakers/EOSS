@@ -15,7 +15,7 @@ public class DrivingFeaturesParams {
     public static int max_number_of_instruments = 17;
     public static boolean tallMatrix = true;
 
-//    public static int maxLength = 3;
+    public static int maxLength = 3;
     public static boolean run_mRMR = true;
 	
 }
