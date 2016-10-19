@@ -134,19 +134,6 @@ public class RBSAEOSSSMAP {
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
         
-        ResultIO res = new ResultIO();
-        try {
-            Population pop = res.readObjectives(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/EpsilonMOEA_1463196843323.obj"));
-            Population refpop = res.readObjectives(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ref.obj"));
-            NondominatedPopulation ndpop = new NondominatedPopulation(pop);
-            FastHypervolume fhv = new FastHypervolume(getEOSSProblem(false), new NondominatedPopulation(refpop), new Solution(new double[]{2.0, 2.0}));
-            double hv = fhv.evaluate(ndpop);
-            System.out.println(hv);
-        } catch (IOException ex) {
-            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        
         switch (MODE) {
             case 1: //MOEA/D
 
