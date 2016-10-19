@@ -29,6 +29,7 @@ public class NondominatedSortingLabeler extends AbstractPopulationLabeler {
 
     @Override
     protected void process(Population population) {
+        super.process(population);
         NondominatedSortingPopulation ndspop = new NondominatedSortingPopulation();
         ndspop.addAll(population);
         int numGood = (int)Math.floor(population.size()*fraction);

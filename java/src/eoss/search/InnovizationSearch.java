@@ -141,7 +141,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(5)
                 .withReferenceSet(new NondominatedPopulation(referencePopulation))
-                .attachHypervolumeJmetalCollector(new Solution(new double[]{1.0, 2.0}))
+                .attachHypervolumeJmetalCollector(new Solution(new double[]{2.0, 2.0}))
                 .attachElapsedTimeCollector();
 
         InstrumentedAlgorithm instAlgorithm = instrumenter.instrument(alg);

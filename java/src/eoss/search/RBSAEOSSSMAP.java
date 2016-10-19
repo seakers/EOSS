@@ -28,6 +28,7 @@ import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 import architecture.ArchitectureGenerator;
+import architecture.ResultIO;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.EOSSProblem;
 import eoss.problem.Params;
@@ -44,8 +45,11 @@ import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
+import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
+import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.DominanceComparator;
+import org.moeaframework.core.indicator.jmetal.FastHypervolume;
 import org.moeaframework.core.operator.CompoundVariation;
 
 /**
@@ -129,6 +133,19 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveSelection", true);
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
+        
+        ResultIO res = new ResultIO();
+        try {
+            Population pop = res.readObjectives(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/EpsilonMOEA_1463196843323.obj"));
+            Population refpop = res.readObjectives(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ref.obj"));
+            NondominatedPopulation ndpop = new NondominatedPopulation(pop);
+            FastHypervolume fhv = new FastHypervolume(getEOSSProblem(false), new NondominatedPopulation(refpop), new Solution(new double[]{2.0, 2.0}));
+            double hv = fhv.evaluate(ndpop);
+            System.out.println(hv);
+        } catch (IOException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         
         switch (MODE) {
             case 1: //MOEA/D
