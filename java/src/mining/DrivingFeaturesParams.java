@@ -16,6 +16,8 @@ public class DrivingFeaturesParams {
     public static boolean tallMatrix = true;
 
     public static int maxLength = 3;
+    public static int max_number_of_features_before_mRMR = 500;
     public static boolean run_mRMR = true;
+    
 	
 }

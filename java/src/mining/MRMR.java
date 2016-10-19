@@ -33,7 +33,7 @@ public class MRMR {
         int numSelected = 0;
         while(numSelected < target_num_features){
         	
-        	int bestFeatInd = -1;
+            int bestFeatInd = -1;
             double phi = -10000;
             
             // Implement incremental search
