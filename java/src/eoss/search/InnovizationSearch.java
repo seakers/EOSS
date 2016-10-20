@@ -139,6 +139,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
         int nOpsToAdd = (int) properties.getInt("nOpsToAdd", 2);
 
         Population referencePopulation = PopulationIO.readObjectives(new File(savePath + File.separator + "ref.obj"));
+        EOSSOperatorCreator eoc = new EOSSOperatorCreator(0.1, 0.1);
+        eoc.learnFeatures(null);
+        
 
         Instrumenter instrumenter = new Instrumenter().withFrequency(5)
                 .withReferenceSet(new NondominatedPopulation(referencePopulation))

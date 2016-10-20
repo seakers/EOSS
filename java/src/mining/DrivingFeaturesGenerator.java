@@ -416,7 +416,7 @@ public class DrivingFeaturesGenerator {
 	        case "present":
 	        	w.print("(0,1,*,"+i+")"); break;
 	        case "absent":
-	        	w.print("(0,0,*,"+i+")");break;
+	        	w.print("(0,0,A,"+i+")");break;
 	        case "inOrbit":
 	        	w.print("(0,1,"+i+","+j+")");break;
 	        case "notInOrbit":
@@ -426,15 +426,15 @@ public class DrivingFeaturesGenerator {
 	        case "togetherInOrbit2":
 	        	w.print("(0,1,"+i+","+j+","+k+")"); break;
 	        case "separate2":
-	        	w.print("(0,0,*,"+i+","+j+")");break;
+	        	w.print("(0,0,A,"+i+","+j+")");break;
 	        case "together3":
 	        	w.print("(0,1,*,"+i+","+j+","+k+")");break;
 	        case "togetherInOrbit3":
 	        	w.print("(0,1,"+i+","+j+","+k+","+l+")"); break;
 	        case "separate3":
-	        	w.print("(0,0,*,"+i+","+j+","+k+")");break;
+	        	w.print("(0,0,A,"+i+","+j+","+k+")");break;
 	        case "emptyOrbit":
-	        	w.print("(0,0,"+i+",*)");break;
+	        	w.print("(0,0,"+i+",A)");break;
 	        case "numOrbitUsed":
 	        	w.print("(1,"+i+",*,*)");break;
 	        case "numInstruments":
