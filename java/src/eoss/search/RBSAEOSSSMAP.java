@@ -129,8 +129,6 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveSelection", true);
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
-        EOSSOperatorCreator eoc = new EOSSOperatorCreator(0.1, 0.1);
-        eoc.learnFeatures(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/test.txt"));
         
         switch (MODE) {
             case 1: //MOEA/D

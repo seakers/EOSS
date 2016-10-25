@@ -16,7 +16,7 @@ h = waitbar(filesProcessed/nFiles,'Processing files...');
 ind = 1;
 for j=1:length(selectors)
     for i=1:length(creditDef)
-            [fHV,ET] = getAllResults(strcat(path,filesep,'result/AIAA SciTech/innov_4ops_resetCredits'),selectors{j},creditDef{i});
+            [fHV,ET] = getAllResults(strcat(path,filesep,'result/AIAA SciTech/5000eval_eMOEA_baseline'),selectors{j},creditDef{i});
             if(isempty(fHV))
                 disp(strcat(selectors{j},creditDef{i}))
             end

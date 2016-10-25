@@ -1,4 +1,4 @@
-function [fHV,ET] = getAllResults(path,selector,creditDef)
+function [NFE,fHV,ET] = getAllResults(path,selector,creditDef)
 %Given a path, the heuristic selector name, credit definition name, and
 %problem name this function will get all the results from the given path 
 %with files that include the selector name and the credit definition name. 
@@ -12,11 +12,13 @@ origin = cd(path);
 files = dir(strcat('*',selector,'*',creditDef,'*.res'));
 cd(origin)
 nfiles = length(files);
-npts = 200;
+npts = 817;
+NFE = zeros(npts,nfiles);
 fHV = zeros(npts,nfiles);
 ET = zeros(npts,nfiles);
 for i=1:nfiles
-    [tfHV,tET] = getMOEAIndicators(strcat(path,filesep,files(i).name));
+    [tnfe,tfHV,tET] = getMOEAIndicators(strcat(path,filesep,files(i).name));
+    NFE(:,i) = tnfe(1:npts);
     fHV(:,i) = tfHV(1:npts);
     ET(:,i) = tET(1:npts);
 end

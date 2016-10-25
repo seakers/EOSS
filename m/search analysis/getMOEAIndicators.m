@@ -1,4 +1,4 @@
-function [fHV,ET] = getMOEAIndicators(filename)
+function [nfe,fHV,ET] = getMOEAIndicators(filename)
 %reads the csv values starting from the 2nd column
 %filename must include path and extension
 %EI is the epsilon indicator
@@ -11,6 +11,8 @@ fid = fopen(filename,'r');
 while(~feof(fid))
     line = strsplit(fgetl(fid),',');
     switch line{1}
+        case{'NFE'}
+            nfe = readLine(line);
         case{'Elapsed Time'}
             ET = readLine(line);
         case{'FastHypervolume'}

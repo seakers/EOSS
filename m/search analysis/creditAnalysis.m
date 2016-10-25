@@ -1,52 +1,25 @@
 function creditAnalysis(mode)
 
-selectors = {'AdaptivePursuit'};
-% selectors = {'RandomSelect'};
-creditName = {'SI-A_moreCrossNoInter10'};
-% path = '/Users/nozomihitomi/Dropbox/MOHEA/';
-path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric\';
-respath = strcat(path,'result\');
-% respath = strcat(path,'resultsCreditsNew');
+selectors = {''};
+creditName = {''};
+% path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric\';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/';
+respath = strcat(path,'result/AIAA SciTech/5000eval_learning_withSinglecross');
 origin = cd(respath);
 
-% %onecross
-% ops = {'AddSynergy','RemoveRandomFromLoadedSatellite',...
-%     'RemoveSuperfluous','ImproveOrbit',...
-%     'AddRandomToSmallSatellite'...
-%     'OnePointCrossover+BitFlip'};
-% nops = length(ops);
-% labels = {'addSynergy','removeRand', 'removeSuper','improveOrbit','addSmall','X'};
-% 
-% %allcross
+% %morecrossNoInter
 % ops = {'OnePointCrossover+AddSynergy+BitFlip','OnePointCrossover+RemoveRandomFromLoadedSatellite+BitFlip',...
 %     'OnePointCrossover+RemoveSuperfluous+BitFlip','OnePointCrossover+ImproveOrbit+BitFlip',...
-%     'OnePointCrossover+AddRandomToSmallSatellite+BitFlip','OnePointCrossover+RemoveInterference+BitFlip'};
-% nops = length(ops);
-% labels = {'addSynergyX','removeRandX', 'removeSuperX','improveOrbitX','addSmallX','removeInterX'};
-% 
-% %morecross
-% ops = {'OnePointCrossover+AddSynergy+BitFlip','OnePointCrossover+RemoveRandomFromLoadedSatellite+BitFlip',...
-%     'OnePointCrossover+RemoveSuperfluous+BitFlip','OnePointCrossover+ImproveOrbit+BitFlip',...
-%     'OnePointCrossover+AddRandomToSmallSatellite+BitFlip','OnePointCrossover+RemoveInterference+BitFlip'...
+%     'OnePointCrossover+AddRandomToSmallSatellite+BitFlip'...
 %     'OnePointCrossover+BitFlip'};
 % nops = length(ops);
-% labels = {'addSynergyX','removeRandX', 'removeSuperX','improveOrbitX','addSmallX','removeInterX','X'};
+% labels = {'addSynergyX','removeRandX', 'removeSuperX','improveOrbitX','addSmallX','X'};
 
-%morecrossNoInter
-ops = {'OnePointCrossover+AddSynergy+BitFlip','OnePointCrossover+RemoveRandomFromLoadedSatellite+BitFlip',...
-    'OnePointCrossover+RemoveSuperfluous+BitFlip','OnePointCrossover+ImproveOrbit+BitFlip',...
-    'OnePointCrossover+AddRandomToSmallSatellite+BitFlip'...
-    'OnePointCrossover+BitFlip'};
+
+%morecrossNoInterNoSingle
+ops = {'OnePointCrossover+BitFlip'};
 nops = length(ops);
-labels = {'addSynergyX','removeRandX', 'removeSuperX','improveOrbitX','addSmallX','X'};
-
-
-% %morecrossNoInterNoSingle
-% ops = {'OnePointCrossover+AddSynergy+BitFlip','OnePointCrossover+RemoveRandomFromLoadedSatellite+BitFlip',...
-%     'OnePointCrossover+RemoveSuperfluous+BitFlip','OnePointCrossover+ImproveOrbit+BitFlip',...
-%     'OnePointCrossover+AddRandomToSmallSatellite+BitFlip'};
-% nops = length(ops);
-% labels = {'addSynergyX','removeRandX', 'removeSuperX','improveOrbitX','addSmallX'};
+labels = {'Single Point Crossover'};
 
 switch mode
     case 1 %read in the credit csv files
@@ -59,22 +32,22 @@ switch mode
             for c=1:length(creditName)
                 fileType =strcat(selectors{b},'*', creditName{c},'*.credit');
                 files = dir(fileType);
-%                 if(length(files)~=30)
-%                     error('Missing some files. Only found %f files. Looking for 30 files',length(files));
-%                 end
                 allcredits  = cell(length(files),1);
                 for i=1:length(files)
                     expData = java.util.HashMap;
                     fid = fopen(files(i).name,'r');
                     while(feof(fid)==0)
                         raw_iteration = strsplit(fgetl(fid),',');
-                        raw_credits = strsplit(fgetl(fid),',');
+                        %need to split out the operator name
+                        line = fgetl(fid);
+                        [startIndex, endIndex] = regexp(line,'EOSSOperator.*BitFlip,');
+                        raw_credits = strsplit(line(endIndex:end),',');
                         op_data = zeros(length(raw_iteration)-1,2);
                         for j=2:length(raw_credits)
                             op_data(j,1)=str2double(raw_iteration{j}); %iteration
                             op_data(j,2)=str2double(raw_credits{j}); %credit
                         end
-                        expData.put(raw_credits{1},op_data);
+                        expData.put(line(startIndex:endIndex),op_data);
                     end
                     fclose(fid);
                     allcredits{i} = expData;
@@ -101,21 +74,16 @@ switch mode
                 eraCreditsAllOp = java.util.HashMap;
                 eraCreditVel = java.util.HashMap;
                 eraSelectionFreq = java.util.HashMap;
-                maximumCreditValue = 0;
                 for i=1:length(allcredits)
                     iter = allcredits{i}.keySet.iterator;
                     totalEpochSelection = zeros(nepochs,1);
                     epochSelectionFreq = java.util.HashMap;
-                    maxCredit = -inf;
-                    minCredit = inf;
                     rawEraCredits = java.util.HashMap;
                     while iter.hasNext
                         operator = iter.next;
                         data = allcredits{i}.get(operator);
                         ind = isnan(data(:,2));
                         data(ind,2) = 0;
-                        maxCredit = max([maxCredit;data(:,2)]);
-                        minCredit = min([minCredit;data(:,2)]);
                         eraCreditOneOp = zeros(nepochs,1);
                         eraSelectionOneOp = zeros(nepochs,1);
                         for j=1:nepochs
@@ -138,7 +106,6 @@ switch mode
                         epochSelectionFreq.put(operator,eraSelectionOneOp);
                         
                     end
-                    maximumCreditValue = max([maxCredit,maximumCreditValue]);
                     iter = allcredits{i}.keySet.iterator;
                     while iter.hasNext
                         operator = iter.next;
@@ -161,7 +128,6 @@ switch mode
                         end
                     end
                 end
-                disp(maximumCreditValue)
                 %take the average over the number of trials
                 subtitle = 'Selection rate = \n';
                 cred = zeros(nepochs,allcredits{i}.keySet.size);
@@ -218,7 +184,7 @@ switch mode
         end
         close(h)
         
-        plotName = strcat(selectors{b},'_',creditName{c});
+        plotName = strcat(selectors{b},'learning_',creditName{c});
         saveas(h1,strcat(plotName,'_credit'),'fig');
         saveas(h1,strcat(plotName,'_credit'),'jpeg');
         saveas(h2,strcat(plotName,'_velocity'),'fig');
@@ -228,4 +194,6 @@ switch mode
         clf(h1)
         clf(h2)
         clf(h3)
+        
+        cd(origin)
 end
