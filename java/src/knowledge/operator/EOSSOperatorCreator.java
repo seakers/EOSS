@@ -38,9 +38,14 @@ public class EOSSOperatorCreator implements OperatorCreator {
      * Each feature should be in the form of (0 0 1 2 3)(1 3 -1 -1)(2 2 * -1)
      */
     private final Pattern compositeFeature = Pattern.compile(String.format("(\\([-\\d\\*A%s]*\\)).*", delimiter));
+    
+    /**
+     * Each feature should be in the form of (0 0 1 2 3)(1 3 -1 -1)(2 2 * -1)
+     */
+    private final Pattern atomicFeature = Pattern.compile(String.format("(\\([-\\d\\*A%s]*\\))", delimiter));
 
     private final ArrayList<Variation> operatorSet;
-    
+
     /**
      * the crossover probability of single point crossover
      */
@@ -67,7 +72,8 @@ public class EOSSOperatorCreator implements OperatorCreator {
      * The new operators created will be combined with a bit flip mutator with a
      * desired probability for mutation
      *
-     * @param crossoverProbability the crossover probability of single point crossover
+     * @param crossoverProbability the crossover probability of single point
+     * crossover
      * @param mutationProbability The mutation probability of the bit flip
      * mutator
      */
@@ -115,9 +121,9 @@ public class EOSSOperatorCreator implements OperatorCreator {
     private Variation featureToOperator(String featureString) {
         CompoundVariation operator = new CompoundVariation();
         operator.appendOperator(new OnePointCrossover(crossoverProbability));
-        Matcher m = compositeFeature.matcher(featureString);
+        Matcher m = atomicFeature.matcher(featureString);
         String operatorName = "";
-        if (m.find()) {
+        while (m.find()) {
             //i=1 is the first matched group as explained in Matcher Javadoc
             for (int i = 1; i <= m.groupCount(); i++) {
                 String feature = m.group(i);
@@ -129,12 +135,13 @@ public class EOSSOperatorCreator implements OperatorCreator {
                 operator.appendOperator(op);
                 operatorName += op.toString() + " + ";
             }
-            Variation bitFlipOp = new BitFlip(mutationProbability);
-            operator.appendOperator(bitFlipOp);
-            operatorName += bitFlipOp.getClass().getSimpleName();
-        } else {
+        }
+        if (operatorName.equalsIgnoreCase("")) {
             throw new IllegalArgumentException(String.format("%s does not fit feature pattern.", featureString));
         }
+        Variation bitFlipOp = new BitFlip(mutationProbability);
+        operator.appendOperator(bitFlipOp);
+        operatorName += bitFlipOp.getClass().getSimpleName();
         operator.setName(operatorName);
         return operator;
     }

@@ -28,7 +28,6 @@ import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 import architecture.ArchitectureGenerator;
-import architecture.ResultIO;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.EOSSProblem;
 import eoss.problem.Params;
@@ -45,11 +44,8 @@ import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
-import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Population;
-import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.DominanceComparator;
-import org.moeaframework.core.indicator.jmetal.FastHypervolume;
 import org.moeaframework.core.operator.CompoundVariation;
 
 /**
@@ -105,7 +101,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 5;
+        int popSize = 100;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -133,6 +129,8 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveSelection", true);
 
         initEOSSProblem(path, "FUZZY-ATTRIBUTES", "test", "normal");
+        EOSSOperatorCreator eoc = new EOSSOperatorCreator(0.1, 0.1);
+        eoc.learnFeatures(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/test.txt"));
         
         switch (MODE) {
             case 1: //MOEA/D
