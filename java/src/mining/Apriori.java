@@ -107,9 +107,20 @@ public class Apriori {
                 DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
                 S = dfg.sort(1, S);
                 ArrayList<SetOfFeatures> S_reduced = new ArrayList<>();
-                for(int i=0;i<DrivingFeaturesParams.max_number_of_features_before_mRMR;i++){
-                    S_reduced.add(S.get(i));
+                
+                if(num_features_to_extract==1){
+                    S_reduced.add(S.get(0));
+                    return S_reduced;
                 }
+                
+                if(S.size() < DrivingFeaturesParams.max_number_of_features_before_mRMR){
+                    S_reduced = S;
+                }else{
+                    for(int i=0;i<DrivingFeaturesParams.max_number_of_features_before_mRMR;i++){
+                        S_reduced.add(S.get(i));
+                    }
+                }
+
                 MRMR mRMR = new MRMR();
                 S = mRMR.minRedundancyMaxRelevance(dataFeatureMat, S_reduced, num_features_to_extract);
             }
@@ -146,17 +157,17 @@ public class Apriori {
     cnt_SF = label.dot(countMat);
     cnt_S = label.norm1();
     cnt_F = countMat.norm1();
-            double[] metrics = new double[4];
-            double support = cnt_SF/cnt_all;
-            double lift = (cnt_SF/cnt_S) / (cnt_F/cnt_all);
-            double conf_given_F = (cnt_SF)/(cnt_F);   // confidence (feature -> selection)
-            double conf_given_S = (cnt_SF)/(cnt_S);   // confidence (selection -> feature)
+    double[] metrics = new double[4];
+    double support = cnt_SF/cnt_all;
+    double lift = (cnt_SF/cnt_S) / (cnt_F/cnt_all);
+    double conf_given_F = (cnt_SF)/(cnt_F);   // confidence (feature -> selection)
+    double conf_given_S = (cnt_SF)/(cnt_S);   // confidence (selection -> feature)
 
-            metrics[0] = support;
-            metrics[1] = lift;
-            metrics[2] = conf_given_F;
-            metrics[3] = conf_given_S;
-            return metrics;
+    metrics[0] = support;
+    metrics[1] = lift;
+    metrics[2] = conf_given_F;
+    metrics[3] = conf_given_S;
+    return metrics;
     }
 
 

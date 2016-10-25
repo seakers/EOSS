@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.lang.Math;
 
+import mining.label.Clustering;
 
 
 import java.io.BufferedReader;
@@ -50,17 +51,16 @@ public class DrivingFeaturesGenerator {
     private ArrayList<int[][]> behavioral;
     private ArrayList<int[][]> non_behavioral;
     
-    private int max_num_of_instruments;
+    private ArrayList<Arch> architectures;
     
+    private int max_num_of_instruments;
     public boolean tallMatrix;
     public int maxLength;
     public boolean run_mRMR;
 
 
     public DrivingFeaturesGenerator(){
-    	
-        this.behavioral = new ArrayList<>();
-        this.non_behavioral = new ArrayList<>();
+        
     	this.orbit_list = DrivingFeaturesParams.orbit_list;
     	this.instrument_list = DrivingFeaturesParams.instrument_list;
     	this.norb = orbit_list.length;
@@ -74,9 +74,95 @@ public class DrivingFeaturesGenerator {
         this.tallMatrix=DrivingFeaturesParams.tallMatrix;
         this.maxLength = DrivingFeaturesParams.maxLength;
         this.run_mRMR = DrivingFeaturesParams.run_mRMR;
+        
+        this.behavioral = new ArrayList<>();
+        this.non_behavioral = new ArrayList<>();
+        
+        this.architectures = new ArrayList<>();
+
     }
     
 
+    public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
+        
+    	parseCSV(labeledDataFile);
+        
+//    	System.out.println("...Extracting level 1 driving features and sort by support values");
+    	ArrayList<DrivingFeature> preset = sort_preset(0,getDrivingFeatures_preset());
+
+//    	System.out.println("...Starting Apriori");
+    	double[][] dataFeatureMat = this.getDataFeatureMat_double();
+    	double[] thresholds = {this.supp_threshold,this.lift_threshold,this.confidence_threshold};
+
+    	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
+    	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, topN);
+
+    	exportDrivingFeatures(sort(sort_index,features), saveDataFile, topN);
+    	return features;
+    }
+    
+    public void getDrivingFeatures_clustering(String labeledDataFile, String saveDataFile, int sort_index, int numCluster){
+    	
+    	parseCSV_clustering(labeledDataFile);
+    	clusterData(numCluster);
+    	
+    	try{
+	        PrintWriter w = new PrintWriter(saveDataFile,"UTF-8");
+	        w.println("// (mode,arg,orb,inst)/support/lift");
+	    	
+	    	for(int c=0;c<numCluster;c++){
+	    		
+	    		behavioral = new ArrayList<>();
+	    		non_behavioral = new ArrayList<>();
+
+	    		for(Arch arch:architectures){
+	    			if(arch.getClassID()==c){
+	    				behavioral.add(arch.getBitString());
+	    			}else{
+	    				non_behavioral.add(arch.getBitString());
+	    			}
+	    		}	
+//	        	System.out.println("...Extracting level 1 driving features for cluster " + c);
+//	        	System.out.println("...behavioral: " + behavioral.size() +" non_behavioral: " + non_behavioral.size());
+
+	    		this.supp_threshold = (double) DrivingFeaturesParams.support_threshold_clustering * behavioral.size() / (behavioral.size()+non_behavioral.size());
+	    		this.confidence_threshold = DrivingFeaturesParams.confidence_threshold_clustering;
+
+	    		ArrayList<DrivingFeature> preset;
+                        int cnt=0;
+	    		while(true){
+	    			preset=getDrivingFeatures_preset();
+	    			if(preset.size() > 170){
+	    				this.confidence_threshold = this.confidence_threshold + 0.05;
+	    			}else if(preset.size() < 30){
+	    				this.confidence_threshold = this.confidence_threshold - 0.03;
+	    			}else{
+	    				break;
+	    			}
+                                if(cnt > 50){
+                                    break;
+                                }
+                                cnt++;
+	    		}
+                        
+                        // Sort by support in decreasing order
+	        	preset = sort_preset(0,preset);
+	        	double[][] dataFeatureMat = this.getDataFeatureMat_double();
+	        	double[] thresholds = {this.supp_threshold,this.lift_threshold,this.confidence_threshold};
+	
+	        	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
+	        	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, 1);
+	        	exportDrivingFeatures_clustering(w, sort(sort_index,features));
+	    	}
+	    	
+	        w.flush();
+	        w.close();
+        
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+
+    }
 
     private double[] computeMetrics(Scheme s){
     	
@@ -117,25 +203,6 @@ public class DrivingFeaturesGenerator {
     	metrics[3] = conf_given_S;
     	
     	return metrics;
-    }
-    
-
-    public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
-        
-    	parseCSV(labeledDataFile);
-        
-//    	System.out.println("...Extracting level 1 driving features and sort by support values");
-    	ArrayList<DrivingFeature> preset = sort_preset(0,getDrivingFeatures_preset());
-
-//    	System.out.println("...Starting Apriori");
-    	double[][] dataFeatureMat = this.getDataFeatureMat_double();
-    	double[] thresholds = {this.supp_threshold,this.lift_threshold,this.confidence_threshold};
-
-    	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
-    	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, topN);
-
-    	exportDrivingFeatures(sort(sort_index,features), saveDataFile, topN);
-    	return features;
     }
     
     
@@ -397,53 +464,52 @@ public class DrivingFeaturesGenerator {
 
     
     public void RecordSingleFeature(PrintWriter w, DrivingFeature df){
-		double[] metrics = df.getMetrics();
-		String type = df.getType();
-		int[] param = df.getParam();
-		int i = param[0];
-		int j = -1; int k=-1; int l=-1;
-		if(param.length>1){
-			j=param[1];
-		}
-		if(param.length>2){
-			k=param[2];
-		}
-		if(param.length>3){
-			l=param[3];
-		}
-		
-		switch(type) {
-	        case "present":
-	        	w.print("(0,1,*,"+i+")"); break;
-	        case "absent":
-	        	w.print("(0,0,A,"+i+")");break;
-	        case "inOrbit":
-	        	w.print("(0,1,"+i+","+j+")");break;
-	        case "notInOrbit":
-	        	w.print("(0,0,"+i+","+j+")");break;
-	        case "together2":
-	        	w.print("(0,1,*,"+i+","+j+")");break;
-	        case "togetherInOrbit2":
-	        	w.print("(0,1,"+i+","+j+","+k+")"); break;
-	        case "separate2":
-	        	w.print("(0,0,A,"+i+","+j+")");break;
-	        case "together3":
-	        	w.print("(0,1,*,"+i+","+j+","+k+")");break;
-	        case "togetherInOrbit3":
-	        	w.print("(0,1,"+i+","+j+","+k+","+l+")"); break;
-	        case "separate3":
-	        	w.print("(0,0,A,"+i+","+j+","+k+")");break;
-	        case "emptyOrbit":
-	        	w.print("(0,0,"+i+",A)");break;
-	        case "numOrbitUsed":
-	        	w.print("(1,"+i+",*,*)");break;
-	        case "numInstruments":
-				if(j==-1){
-					w.print("(2,"+i+",*,*)");break;
-				}else{
-					w.print("(2,"+j+",*,"+i+")");break;
-				}
-		}
+        String type = df.getType();
+        int[] param = df.getParam();
+        int i = param[0];
+        int j = -1; int k=-1; int l=-1;
+        if(param.length>1){
+                j=param[1];
+        }
+        if(param.length>2){
+                k=param[2];
+        }
+        if(param.length>3){
+                l=param[3];
+        }
+
+        switch(type) {
+        case "present":
+                w.print("(0,1,*,"+i+")"); break;
+        case "absent":
+                w.print("(0,0,A,"+i+")");break;
+        case "inOrbit":
+                w.print("(0,1,"+i+","+j+")");break;
+        case "notInOrbit":
+                w.print("(0,0,"+i+","+j+")");break;
+        case "together2":
+                w.print("(0,1,*,"+i+","+j+")");break;
+        case "togetherInOrbit2":
+                w.print("(0,1,"+i+","+j+","+k+")"); break;
+        case "separate2":
+                w.print("(0,0,A,"+i+","+j+")");break;
+        case "together3":
+                w.print("(0,1,*,"+i+","+j+","+k+")");break;
+        case "togetherInOrbit3":
+                w.print("(0,1,"+i+","+j+","+k+","+l+")"); break;
+        case "separate3":
+                w.print("(0,0,A,"+i+","+j+","+k+")");break;
+        case "emptyOrbit":
+                w.print("(0,0,"+i+",A)");break;
+        case "numOrbitUsed":
+                w.print("(1,"+i+",*,*)");break;
+        case "numInstruments":
+                if(j==-1){
+                        w.print("(2,"+i+",*,*)");break;
+                }else{
+                        w.print("(2,"+j+",*,"+i+")");break;
+                }
+        }
 
     }
     
@@ -452,7 +518,7 @@ public class DrivingFeaturesGenerator {
     	double[] metrics;
     	String name="";
 
-		metrics = branch.getMetrics();
+        metrics = branch.getMetrics();
    
     	for(int dfIndex:branch.getIndices()){
     		DrivingFeature df = presetDrivingFeatures.get(dfIndex);
@@ -486,26 +552,26 @@ public class DrivingFeaturesGenerator {
     public boolean exportDrivingFeatures(ArrayList<SetOfFeatures> features,String filename, int topN){
         try{
 
-                PrintWriter w = new PrintWriter(filename,"UTF-8");
-                w.println("// (mode,arg,orb,inst)/support/lift");
+            PrintWriter w = new PrintWriter(filename,"UTF-8");
+            w.println("// (mode,arg,orb,inst)/support/lift");
 
-                int count = 0;
+            int count = 0;
 
-                for(SetOfFeatures branch:features){
-                        if (count > topN) {
-                            break;
-                        }
-                        
-                        for(int dfIndex:branch.getIndices()){
-                                DrivingFeature df = presetDrivingFeatures.get(dfIndex);
-                                this.RecordSingleFeature(w, df);
-                        }
-                        this.recordMetaInfo(w, branch);
-                        count++;
-                }
+            for(SetOfFeatures branch:features){
+                    if (count > topN) {
+                        break;
+                    }
 
-                w.flush();
-                w.close();
+                    for(int dfIndex:branch.getIndices()){
+                            DrivingFeature df = presetDrivingFeatures.get(dfIndex);
+                            this.RecordSingleFeature(w, df);
+                    }
+                    this.recordMetaInfo(w, branch);
+                    count++;
+            }
+
+            w.flush();
+            w.close();
 
         }catch(Exception e){
                 e.printStackTrace();
@@ -513,65 +579,83 @@ public class DrivingFeaturesGenerator {
         }
         return true;
     }
+    
+    public boolean exportDrivingFeatures_clustering(PrintWriter w, ArrayList<SetOfFeatures> features){
+        try{
+            for(SetOfFeatures branch:features){
+                for(int dfIndex:branch.getIndices()){
+                    DrivingFeature df = this.presetDrivingFeatures.get(dfIndex);
+                    this.RecordSingleFeature(w, df);
+                }
+                this.recordMetaInfo(w, branch);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+    
 
     public ArrayList<DrivingFeature> sort_preset(int metric, ArrayList<DrivingFeature> inputList){
     	
     	ArrayList<DrivingFeature> sortedList = new ArrayList<>();
     	int length = inputList.size();
-		for(int i=0;i<length;i++){
-			DrivingFeature df = inputList.get(i);
-			double val = df.getMetrics()[metric];
-			if (sortedList.isEmpty()){
-				sortedList.add(df);
-			}else if (val >= sortedList.get(0).getMetrics()[metric]){
-				// If val is smaller than the first element, insert it at as the first element
-				sortedList.add(0, df);
-			}else if(val < sortedList.get(sortedList.size()-1).getMetrics()[metric]){
-				// If val is larger than the last element, add it to the last
-				sortedList.add(df);
-			}else{
-				// Insert df based on the metric value
-				for(int j=0;j<sortedList.size();j++){
-					if(val < sortedList.get(j).getMetrics()[metric] && 
-					val >= sortedList.get(j+1).getMetrics()[metric] ){
-						sortedList.add(j+1, df);
-					}
-				}
-			}
-		}
-		for(int i=0;i<length;i++){
-			sortedList.get(i).setIndex(i);
-		}
-		return sortedList;
+        for(int i=0;i<length;i++){
+                DrivingFeature df = inputList.get(i);
+                double val = df.getMetrics()[metric];
+                if (sortedList.isEmpty()){
+                        sortedList.add(df);
+                }else if (val >= sortedList.get(0).getMetrics()[metric]){
+                        // If val is smaller than the first element, insert it at as the first element
+                        sortedList.add(0, df);
+                }else if(val < sortedList.get(sortedList.size()-1).getMetrics()[metric]){
+                        // If val is larger than the last element, add it to the last
+                        sortedList.add(df);
+                }else{
+                        // Insert df based on the metric value
+                        for(int j=0;j<sortedList.size();j++){
+                                if(val < sortedList.get(j).getMetrics()[metric] && 
+                                val >= sortedList.get(j+1).getMetrics()[metric] ){
+                                        sortedList.add(j+1, df);
+                                }
+                        }
+                }
+        }
+        for(int i=0;i<length;i++){
+                sortedList.get(i).setIndex(i);
+        }
+        this.presetDrivingFeatures = sortedList;
+        return sortedList;
     }
     public ArrayList<SetOfFeatures> sort(int metric, ArrayList<SetOfFeatures> inputList){
     
     	ArrayList<SetOfFeatures> sortedList = new ArrayList<>();
     	int length = inputList.size();
     	
-		for(int i=0;i<length;i++){
+        for(int i=0;i<length;i++){
 
-			SetOfFeatures df = inputList.get(i);
-			double val = df.getMetrics()[metric];
-			if (sortedList.isEmpty()){
-				sortedList.add(df);
-			}else if (val >= sortedList.get(0).getMetrics()[metric]){
-				// If val is smaller than the first element, insert it at as the first element
-				sortedList.add(0, df);
-			}else if(val < sortedList.get(sortedList.size()-1).getMetrics()[metric]){
-				// If val is larger than the last element, add it to the last
-				sortedList.add(df);
-			}else{
-				// Insert df based on the metric value
-				for(int j=0;j<sortedList.size();j++){
-					if(val < sortedList.get(j).getMetrics()[metric] && 
-					val >= sortedList.get(j+1).getMetrics()[metric] ){
-						sortedList.add(j+1, df);
-					}
-				}
-			}
-		}
-		return sortedList;
+                SetOfFeatures df = inputList.get(i);
+                double val = df.getMetrics()[metric];
+                if (sortedList.isEmpty()){
+                        sortedList.add(df);
+                }else if (val >= sortedList.get(0).getMetrics()[metric]){
+                        // If val is smaller than the first element, insert it at as the first element
+                        sortedList.add(0, df);
+                }else if(val < sortedList.get(sortedList.size()-1).getMetrics()[metric]){
+                        // If val is larger than the last element, add it to the last
+                        sortedList.add(df);
+                }else{
+                        // Insert df based on the metric value
+                        for(int j=0;j<sortedList.size();j++){
+                                if(val < sortedList.get(j).getMetrics()[metric] && 
+                                val >= sortedList.get(j+1).getMetrics()[metric] ){
+                                        sortedList.add(j+1, df);
+                                }
+                        }
+                }
+        }
+        return sortedList;
     }
     
     
@@ -674,6 +758,33 @@ public class DrivingFeaturesGenerator {
         }
     }
     
+    
+    public void parseCSV_clustering(String path){
+        String csvFile = path;
+        String line = "";
+        String splitBy = ",";
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            //skip header
+            line = br.readLine();
+        	
+            int id=0;
+            while ((line = br.readLine()) != null) {
+                // use comma as separator
+                String[] tmp = line.split(splitBy);
+                int label = Integer.parseInt(tmp[0]);
+                String bitString = tmp[2];
+                double[] obj = new double[2];
+                obj[0] = Double.parseDouble(tmp[3]);
+                obj[1] = Double.parseDouble(tmp[4]);
+                
+                this.architectures.add(new Arch(id,label,bitString,obj));
+                id++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private int[][] bitString2intArr(String input){
     	int[][] output = new int[norb][ninstr];
@@ -718,5 +829,79 @@ public class DrivingFeaturesGenerator {
         return intVector;
     }
     
+    
+    public void clusterData(int numCluster){
+    	
+    	Clustering clustering = new Clustering(2);
+    	for(Arch a:this.architectures){
+    		// If the architecture is behavioral
+    		if(a.getLabel()){
+    			clustering.addInstance(a.getID(), a.getObjectives());
+    		}
+    	}
+    	// Perform K-means clustering with 200 iterations
+    	ArrayList<int[]> cl_result = clustering.parseClusterData(clustering.KMeansClustering(numCluster, 200));
+    	
+    	numCluster = cl_result.size();
+    	
+    	for(Arch ar:this.architectures){
+    		boolean contains = false;
+    		for(int i=0;i<numCluster;i++){
+    			
+    			int[] indices_thisCl = cl_result.get(i);
+    			
+    			for(int ind:indices_thisCl){
+    				if(ind==ar.getID()){
+    					contains=true;
+    					break;
+    				}
+    			}
+    			
+    			if(contains){
+    				ar.setClassID(i);
+    				break;
+    			}
+    		}
+    	}
+    	
+    }
 
+    
+    public class Arch{
+    	
+    	int id;
+    	int classID;
+    	double[] objectives;
+    	int[][] bitString;
+    	boolean label;
+    	
+    	public Arch(int id, int label, String bitString, double[] objectives){
+    		this.id=id;
+    		this.label = label==1;
+    		this.bitString = bitString2intArr(bitString);
+    		this.objectives = objectives;
+    		this.classID=-1;
+    	}
+
+    	public void setClassID(int classID){
+    		this.classID = classID;
+    	}
+    	public int getID(){
+    		return id;
+    	}
+    	public boolean getLabel(){
+    		return label;
+    	}
+    	public int[][] getBitString(){
+    		return bitString;
+    	}
+    	public double[] getObjectives(){
+    		return objectives;
+    	}
+    	public int getClassID(){
+    		return classID;
+    	}
+    	
+    }
+    
 }
