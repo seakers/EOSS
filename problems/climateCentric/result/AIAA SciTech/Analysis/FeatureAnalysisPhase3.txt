@@ -1,0 +1,260 @@
+>> featureAnalysis
+Occurences of combination features:
+                              separate3,separate3,separate3,:	 12
+                               absent,notInOrbit,notInOrbit,:	  2
+                                 absent,separate2,separate3,:	  6
+                           inOrbit,numInstruments,separate3,:	  1
+                                 absent,separate2,separate2,:	  1
+                         separate3,numInstruments,separate3,:	  1
+                              separate2,separate2,separate3,:	  4
+                             notInOrbit,separate3,separate3,:	 26
+                        notInOrbit,numInstruments,separate3,:	  1
+                            notInOrbit,notInOrbit,separate3,:	 14
+                             notInOrbit,separate2,separate3,:	 20
+                            absent,numInstruments,separate3,:	  1
+                                absent,notInOrbit,separate3,:	  8
+                              separate2,separate3,separate3,:	  7
+                                 absent,separate3,separate3,:	  7
+                         separate2,numInstruments,separate3,:	  6
+                                absent,notInOrbit,separate2,:	  2
+                                    absent,absent,separate3,:	  1
+
+Occurences of single features:
+             inOrbit:	  1
+           separate2:	 51
+           separate3:	180
+              absent:	 29
+      numInstruments:	 10
+          notInOrbit:	 89
+
+Occurences of arguments of single features:
+	Occurences of argumentss for inOrbit:
+	Argument sentences
+		  GACM_VIS SSO-800-SSO-PM:	  1
+	Single arguments
+		            GACM_VIS:	  1
+		      SSO-800-SSO-PM:	  1
+	Occurences of argumentss for separate2:
+	Argument sentences
+		         ACE_POL GACM_VIS:	  3
+		         ACE_LID CLAR_ERB:	  1
+		        CLAR_ERB DESD_SAR:	  1
+		         ACE_POL CLAR_ERB:	  1
+		         ACE_POL DESD_LID:	  1
+		         ACE_CPR GACM_VIS:	  1
+		     DESD_LID POSTEPS_IRS:	  1
+		          ACE_LID ACE_POL:	  1
+		         ACE_LID HYSP_TIR:	  2
+		       ACE_LID CNES_KaRIN:	  1
+		        ACE_CPR GACM_SWIR:	  1
+		      CNES_KaRIN DESD_SAR:	  2
+		        ACE_POL GACM_SWIR:	  3
+		       GACM_SWIR GACM_VIS:	  1
+		   CNES_KaRIN POSTEPS_IRS:	  3
+		        CLAR_ERB DESD_LID:	  2
+		         ACE_CPR CLAR_ERB:	  4
+		        DESD_SAR GACM_VIS:	  1
+		     DESD_SAR POSTEPS_IRS:	  4
+		        ACE_ORCA CLAR_ERB:	  1
+		       ACE_ORCA GACM_SWIR:	  1
+		        DESD_LID DESD_SAR:	  1
+		       ACE_CPR CNES_KaRIN:	  3
+		          ACE_CPR ACE_POL:	  2
+		        DESD_SAR HYSP_TIR:	  1
+		      ACE_CPR POSTEPS_IRS:	  1
+		         ACE_LID GACM_VIS:	  1
+		         ACE_LID ACE_ORCA:	  1
+		         ACE_POL DESD_SAR:	  1
+		         ACE_CPR DESD_SAR:	  1
+		         ACE_ORCA ACE_POL:	  2
+		         ACE_POL HYSP_TIR:	  1
+	Single arguments
+		            DESD_LID:	  5
+		            ACE_ORCA:	  5
+		            GACM_VIS:	  7
+		             ACE_POL:	 15
+		            CLAR_ERB:	 10
+		         POSTEPS_IRS:	  9
+		           GACM_SWIR:	  6
+		          CNES_KaRIN:	  9
+		            HYSP_TIR:	  4
+		             ACE_LID:	  7
+		             ACE_CPR:	 13
+		            DESD_SAR:	 12
+	Occurences of argumentss for separate3:
+	Argument sentences
+		ACE_POL CNES_KaRIN HYSP_TIR:	  2
+		ACE_LID CNES_KaRIN POSTEPS_IRS:	  1
+		ACE_CPR CLAR_ERB CNES_KaRIN:	  1
+		CNES_KaRIN DESD_SAR GACM_SWIR:	  1
+		ACE_LID ACE_ORCA GACM_SWIR:	  1
+		 ACE_CPR ACE_ORCA ACE_POL:	  3
+		ACE_LID CLAR_ERB GACM_SWIR:	  1
+		ACE_LID ACE_ORCA HYSP_TIR:	  1
+		CNES_KaRIN DESD_SAR POSTEPS_IRS:	  3
+		CLAR_ERB CNES_KaRIN DESD_LID:	  1
+		ACE_CPR CLAR_ERB DESD_LID:	  1
+		ACE_CPR DESD_LID HYSP_TIR:	  1
+		ACE_LID GACM_SWIR HYSP_TIR:	  1
+		ACE_POL DESD_SAR GACM_SWIR:	  2
+		 ACE_LID ACE_POL DESD_LID:	  1
+		CLAR_ERB DESD_LID GACM_SWIR:	  1
+		ACE_CPR ACE_LID GACM_SWIR:	  3
+		ACE_POL CLAR_ERB DESD_LID:	  1
+		CLAR_ERB GACM_SWIR GACM_VIS:	  1
+		ACE_ORCA ACE_POL GACM_SWIR:	  1
+		ACE_ORCA CLAR_ERB POSTEPS_IRS:	  1
+		ACE_LID CLAR_ERB GACM_VIS:	  1
+		CLAR_ERB HYSP_TIR POSTEPS_IRS:	  4
+		ACE_LID DESD_SAR GACM_VIS:	  1
+		ACE_LID DESD_LID GACM_SWIR:	  2
+		ACE_POL CNES_KaRIN GACM_SWIR:	  1
+		ACE_ORCA CLAR_ERB HYSP_TIR:	  2
+		ACE_CPR GACM_VIS HYSP_TIR:	  2
+		ACE_LID GACM_VIS HYSP_TIR:	  1
+		ACE_LID CLAR_ERB POSTEPS_IRS:	  3
+		ACE_LID DESD_SAR HYSP_TIR:	  2
+		CLAR_ERB DESD_SAR POSTEPS_IRS:	  1
+		DESD_LID GACM_SWIR GACM_VIS:	  1
+		ACE_LID GACM_SWIR GACM_VIS:	  2
+		ACE_ORCA DESD_SAR GACM_VIS:	  1
+		ACE_ORCA CLAR_ERB CNES_KaRIN:	  1
+		ACE_LID CNES_KaRIN GACM_VIS:	  4
+		ACE_CPR ACE_LID POSTEPS_IRS:	  1
+		ACE_LID ACE_POL GACM_SWIR:	  1
+		DESD_SAR GACM_SWIR HYSP_TIR:	  1
+		ACE_POL CLAR_ERB HYSP_TIR:	  3
+		ACE_POL GACM_SWIR POSTEPS_IRS:	  1
+		ACE_CPR ACE_POL GACM_SWIR:	  4
+		 ACE_LID ACE_ORCA ACE_POL:	  3
+		 ACE_CPR ACE_POL GACM_VIS:	  1
+		ACE_POL CLAR_ERB DESD_SAR:	  1
+		ACE_ORCA DESD_SAR POSTEPS_IRS:	  1
+		ACE_CPR DESD_SAR POSTEPS_IRS:	  4
+		ACE_LID CNES_KaRIN DESD_SAR:	  1
+		 ACE_CPR ACE_LID ACE_ORCA:	  2
+		DESD_LID GACM_SWIR POSTEPS_IRS:	  1
+		ACE_CPR CNES_KaRIN HYSP_TIR:	  2
+		CLAR_ERB GACM_SWIR POSTEPS_IRS:	  1
+		ACE_POL CLAR_ERB GACM_SWIR:	  1
+		ACE_CPR ACE_LID CNES_KaRIN:	  1
+		ACE_ORCA ACE_POL HYSP_TIR:	  2
+		ACE_CPR CNES_KaRIN GACM_SWIR:	  1
+		ACE_LID DESD_SAR GACM_SWIR:	  1
+		 ACE_CPR ACE_LID DESD_LID:	  4
+		 ACE_CPR ACE_LID HYSP_TIR:	  4
+		ACE_LID ACE_ORCA POSTEPS_IRS:	  6
+		ACE_LID ACE_POL POSTEPS_IRS:	  2
+		CLAR_ERB DESD_LID HYSP_TIR:	  3
+		CLAR_ERB GACM_VIS HYSP_TIR:	  1
+		CLAR_ERB DESD_SAR HYSP_TIR:	  1
+		ACE_LID CLAR_ERB DESD_LID:	  4
+		 ACE_CPR ACE_POL HYSP_TIR:	  3
+		ACE_CPR ACE_ORCA GACM_VIS:	  1
+		ACE_CPR ACE_ORCA GACM_SWIR:	  4
+		 ACE_CPR ACE_LID GACM_VIS:	  6
+		  ACE_CPR ACE_LID ACE_POL:	  2
+		ACE_CPR GACM_SWIR HYSP_TIR:	  1
+		ACE_LID GACM_SWIR POSTEPS_IRS:	  5
+		ACE_CPR CLAR_ERB GACM_VIS:	  1
+		ACE_CPR CLAR_ERB POSTEPS_IRS:	  5
+		ACE_POL GACM_VIS HYSP_TIR:	  1
+		 ACE_LID ACE_POL HYSP_TIR:	  2
+		DESD_SAR GACM_SWIR POSTEPS_IRS:	  1
+		ACE_LID ACE_ORCA CLAR_ERB:	  1
+		 ACE_CPR ACE_POL DESD_SAR:	  1
+		ACE_LID CLAR_ERB HYSP_TIR:	  2
+		ACE_LID DESD_LID POSTEPS_IRS:	  2
+		CLAR_ERB CNES_KaRIN HYSP_TIR:	  2
+		ACE_POL DESD_LID HYSP_TIR:	  1
+		ACE_ORCA GACM_SWIR HYSP_TIR:	  1
+		DESD_SAR GACM_SWIR GACM_VIS:	  1
+		ACE_POL DESD_SAR HYSP_TIR:	  4
+		CNES_KaRIN HYSP_TIR POSTEPS_IRS:	  2
+		ACE_POL GACM_SWIR GACM_VIS:	  2
+		ACE_POL CNES_KaRIN DESD_SAR:	  1
+		CNES_KaRIN DESD_SAR HYSP_TIR:	  4
+		DESD_LID GACM_SWIR HYSP_TIR:	  2
+		CNES_KaRIN DESD_LID DESD_SAR:	  1
+		ACE_LID DESD_SAR POSTEPS_IRS:	  3
+		ACE_CPR ACE_ORCA CNES_KaRIN:	  1
+	Single arguments
+		            DESD_LID:	 27
+		            ACE_ORCA:	 33
+		            GACM_VIS:	 28
+		             ACE_POL:	 47
+		            CLAR_ERB:	 46
+		           GACM_SWIR:	 47
+		         POSTEPS_IRS:	 48
+		          CNES_KaRIN:	 31
+		             ACE_LID:	 78
+		            HYSP_TIR:	 58
+		             ACE_CPR:	 60
+		            DESD_SAR:	 37
+	Occurences of argumentss for absent:
+	Argument sentences
+		                 CLAR_ERB:	  3
+		                GACM_SWIR:	  6
+		                  ACE_LID:	  4
+		                 HYSP_TIR:	  4
+		                  ACE_CPR:	  5
+		                 DESD_SAR:	  7
+	Single arguments
+		            CLAR_ERB:	  3
+		           GACM_SWIR:	  6
+		             ACE_LID:	  4
+		            HYSP_TIR:	  4
+		             ACE_CPR:	  5
+		            DESD_SAR:	  7
+	Occurences of argumentss for numInstruments:
+	Argument sentences
+		             CNES_KaRIN,1:	 10
+	Single arguments
+		        CNES_KaRIN,1:	 10
+	Occurences of argumentss for notInOrbit:
+	Argument sentences
+		  HYSP_TIR SSO-800-SSO-PM:	  1
+		  DESD_SAR SSO-600-SSO-DD:	  2
+		  GACM_VIS SSO-800-SSO-DD:	  2
+		  HYSP_TIR SSO-800-SSO-DD:	  1
+		POSTEPS_IRS SSO-800-SSO-DD:	  4
+		 ACE_LID LEO-600-polar-NA:	  5
+		  ACE_ORCA SSO-600-SSO-DD:	  4
+		   ACE_POL SSO-800-SSO-DD:	  4
+		  CLAR_ERB SSO-800-SSO-PM:	  3
+		   ACE_CPR SSO-800-SSO-PM:	  1
+		LEO-600-polar-NA POSTEPS_IRS:	  3
+		   ACE_CPR SSO-800-SSO-DD:	  1
+		ACE_ORCA LEO-600-polar-NA:	  2
+		  ACE_ORCA SSO-800-SSO-PM:	  1
+		CNES_KaRIN SSO-800-SSO-PM:	  1
+		 GACM_SWIR SSO-600-SSO-DD:	  2
+		GACM_SWIR LEO-600-polar-NA:	  2
+		  HYSP_TIR SSO-600-SSO-DD:	  1
+		   ACE_LID SSO-600-SSO-DD:	  5
+		CLAR_ERB LEO-600-polar-NA:	  4
+		   ACE_POL SSO-600-SSO-DD:	  4
+		DESD_SAR LEO-600-polar-NA:	  4
+		   ACE_POL SSO-800-SSO-PM:	  4
+		CNES_KaRIN SSO-600-SSO-DD:	  8
+		   ACE_LID SSO-800-SSO-PM:	  1
+		  GACM_VIS SSO-600-SSO-DD:	 11
+		 GACM_SWIR SSO-800-SSO-DD:	  2
+		   ACE_LID SSO-800-SSO-DD:	  6
+	Single arguments
+		            GACM_VIS:	 13
+		      SSO-800-SSO-DD:	 20
+		           GACM_SWIR:	  6
+		          CNES_KaRIN:	  9
+		             ACE_LID:	 17
+		             ACE_CPR:	  2
+		    LEO-600-polar-NA:	 20
+		            ACE_ORCA:	  7
+		            CLAR_ERB:	  7
+		             ACE_POL:	 12
+		      SSO-600-SSO-DD:	 37
+		         POSTEPS_IRS:	  7
+		      SSO-800-SSO-PM:	 12
+		            HYSP_TIR:	  3
+		            DESD_SAR:	  6
+>> 
