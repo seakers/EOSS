@@ -159,8 +159,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
             allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
         }
 
-        //The association rule mining engine
-        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
 
         //count the number of times we reset operators
         int opResetCount = 0;
@@ -201,6 +199,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 // Find driving features
                 // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
 //                dfg.getDrivingFeatures(labledDataFile, featureDataFile, 2, nOpsToAdd);
+                
+                //The association rule mining engine
+                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
 		dfg.getDrivingFeatures_clustering(labledDataFile,featureDataFile, 1, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));

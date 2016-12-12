@@ -1,7 +1,7 @@
 %Takes n random population histories and plots them out to show how the
 %population evolves with time
 
-n_representatives = 3;
+n_representatives = 2;
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA SciTech/';
 method = '5000eval_learning_withSinglecross/';
 

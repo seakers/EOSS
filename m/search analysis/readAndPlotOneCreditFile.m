@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/';
-respath = strcat(path,'result/AIAA SciTech/5000eval_learning_withoutCross');
+respath = strcat(path,'result/AIAA SciTech/5000eval_learning_withSinglecross');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -61,7 +61,7 @@ for i=1:length(files)
     end
     raw_data(~any(raw_data(:,1),2),:)=[];
     %add up all the credits from all the learned operators
-    sumCredits = [raw_data(:,1),sum(raw_data(:,2:end),2)];
+    sumCredits = [raw_data(:,1),sum(raw_data(:,2:end),2)./4];
     
     %find the credits earned just by single point crossover
     single_point = allcredits{i}.get('OnePointCrossover+BitFlip');
@@ -91,19 +91,70 @@ for i=1:length(files)
 end
 
 figure(1)
-plot(1:nepochs,mean(all_epoch_credit_singlePoint,2),1:nepochs,mean(all_epoch_credit_learned_ops,2));
+X = [1:nepochs,fliplr(1:nepochs)];
+stddev = std(all_epoch_credit_singlePoint,0,2);
+mean_cred = mean(all_epoch_credit_singlePoint,2);
+Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
+Y(Y<0) = 0; %correct for negative values
+fill(X,Y,'b','EdgeColor','none');
+alpha(0.15)
+hold on
+stddev = std(all_epoch_credit_learned_ops,0,2);
+mean_cred = mean(all_epoch_credit_learned_ops,2);
+Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
+Y(Y<0) = 0; %correct for negative values
+fill(X,Y,'r','EdgeColor','none');
+alpha(0.15)
+
+h = plot(1:nepochs,mean(all_epoch_credit_singlePoint,2),'b',1:nepochs,mean(all_epoch_credit_learned_ops,2),'r','LineWidth',2);
+%plot vertical lines for learning stages
+plot([1000,1000]/epochLength,[0,.4],':k')
+plot([2000,2000]/epochLength,[0,.4],':k')
+plot([3000,3000]/epochLength,[0,.4],':k')
+plot([4000,4000]/epochLength,[0,.4],':k')
+hold off
+set(gca,'FontSize',16);
 xlabel('Epoch')
 ylabel('Credit earned')
-legend('Single point crossover','Learned Operators');
+legend(h, 'Single point crossover','Represetative knowledge-dependent operator');
 
 figure(2)
 %normalize the selection to make it a probability
-summation = mean(all_epoch_select_singlePoint,2) + mean(all_epoch_select_learned_ops,2);
-plot(1:nepochs,mean(all_epoch_select_singlePoint,2)./summation,1:nepochs,mean(all_epoch_select_learned_ops,2)./summation);
+concat_select = [all_epoch_select_singlePoint, all_epoch_select_learned_ops];
+mins = repmat(min(concat_select(2:end,:),[],2),1,length(files));
+maxs = repmat(max(concat_select(2:end,:),[],2),1,length(files));
+all_epoch_select_singlePoint_norm = (all_epoch_select_singlePoint(2:end,:)-mins)./(maxs-mins);
+all_epoch_select_learned_ops_norm = (all_epoch_select_learned_ops(2:end,:)-mins)./(maxs-mins);
+% summation = mean(all_epoch_select_singlePoint,2) + mean(all_epoch_select_learned_ops,2);
+X = [2:nepochs,fliplr(2:nepochs)];
+stddev_sel = std(all_epoch_select_singlePoint_norm,0,2);
+mean_sel = mean(all_epoch_select_singlePoint_norm,2);
+Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
+Y(Y<0) = 0; %correct for negative values
+Y(Y>1) = 1; %correct for >1 values
+fill(X,Y,'b','EdgeColor','none');
+alpha(0.15)
+hold on
+stddev_sel = std(all_epoch_select_learned_ops_norm/4,0,2);
+mean_sel = mean(all_epoch_select_learned_ops_norm/4,2);
+Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
+Y(Y<0) = 0; %correct for negative values
+fill(X,Y,'r','EdgeColor','none');
+alpha(0.15)
+
+h = plot(2:nepochs,mean(all_epoch_select_singlePoint_norm,2),'b',...
+    2:nepochs,mean(all_epoch_select_learned_ops_norm/4,2),'r','LineWidth',2);
+
+%plot vertical lines for learning stages
+plot([1000,1000]/epochLength,[0,1.0],':k')
+plot([2000,2000]/epochLength,[0,1.0],':k')
+plot([3000,3000]/epochLength,[0,1.0],':k')
+plot([4000,4000]/epochLength,[0,1.0],':k')
 xlabel('Epoch')
 ylabel('Selection frequency')
-legend('Single point crossover','Learned Operators');
-
+legend(h, 'Single point crossover','Represetative knowledge-dependent operator');
+hold off
+set(gca,'FontSize',16);
 %save files
 save('credit.mat','allcredits');
 
