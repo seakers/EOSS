@@ -28,7 +28,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentParams;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.attributes.GlobalAttributes;
@@ -51,7 +51,7 @@ public class JessInitializer {
             r.eval("(set-node-index-hash 13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)
             
             // Create global variable path
-            String tmp = Params.path.replaceAll("\\\\", "\\\\\\\\");
+            String tmp = InstrumentAssignmentParams.path.replaceAll("\\\\", "\\\\\\\\");
             r.eval("(defglobal ?*app_path* = \"" + tmp + "\")");
             r.eval("(import eoss.*)");
             r.eval("(import rbsa.eoss.*)");
@@ -59,85 +59,85 @@ public class JessInitializer {
             r.eval("(import architecture.util.ValueMap)");
 
             // Load modules
-            r.batch(Params.module_definition_clp);
+            r.batch(InstrumentAssignmentParams.module_definition_clp);
 
             // Load templates
-            Workbook attribute_xls = Workbook.getWorkbook(new File(Params.attribute_set_xls));
+            Workbook attribute_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.attribute_set_xls));
             loadTemplates(r, attribute_xls);
 
             // Load functions
-            loadFunctions(r, Params.functions_clp);
+            loadFunctions(r, InstrumentAssignmentParams.functions_clp);
 
             //Load  launhc vehicles
-            Workbook mission_analysis_xls = Workbook.getWorkbook(new File(Params.mission_analysis_database_xls));
+            Workbook mission_analysis_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.mission_analysis_database_xls));
             loadOrderedDeffacts(r, mission_analysis_xls, "Launch Vehicles", "DATABASE::launch-vehicle-information-facts", "DATABASE::Launch-vehicle");
             r.reset();
 
             // Load instrument database
-            Workbook instrument_xls = Workbook.getWorkbook(new File(Params.capability_rules_xls));
+            Workbook instrument_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.capability_rules_xls));
             loadInstrumentsJess(r);
 
             //Load orbit rules;
-            r.batch(Params.orbit_rules_clp);
+            r.batch(InstrumentAssignmentParams.orbit_rules_clp);
 
             //Load attribute inheritance rules
-            loadAttributeInheritanceRules(r, attribute_xls, "Attribute Inheritance", Params.attribute_inheritance_clp);
+            loadAttributeInheritanceRules(r, attribute_xls, "Attribute Inheritance", InstrumentAssignmentParams.attribute_inheritance_clp);
 
             //Load cost estimation rules;
-            r.batch(Params.cost_estimation_rules_clp);
-            r.batch(Params.fuzzy_cost_estimation_rules_clp);
+            r.batch(InstrumentAssignmentParams.cost_estimation_rules_clp);
+            r.batch(InstrumentAssignmentParams.fuzzy_cost_estimation_rules_clp);
 
             //Load fuzzy attribute rules
             loadFuzzyAttributeRules(r, attribute_xls, "Fuzzy Capability Attributes", "CAPABILITIES::Manifested-instrument", "FUZZY-CAPABILITY-ATTRIBUTE");
             loadFuzzyAttributeRules(r, attribute_xls, "Fuzzy Requirement Attributes", "REQUIREMENTS::Measurement", "FUZZY-REQUIREMENT-ATTRIBUTE");
 
             //Load mass budget rules;
-            r.batch(Params.mass_budget_rules_clp);
-            r.batch(Params.subsystem_mass_budget_rules_clp);
-            r.batch(Params.deltaV_budget_rules_clp);
+            r.batch(InstrumentAssignmentParams.mass_budget_rules_clp);
+            r.batch(InstrumentAssignmentParams.subsystem_mass_budget_rules_clp);
+            r.batch(InstrumentAssignmentParams.deltaV_budget_rules_clp);
 
             //Load eps design rules;
-            r.batch(Params.eps_design_rules_clp);
-            r.batch(Params.adcs_design_rules_clp);
-            r.batch(Params.propulsion_design_rules_clp);
+            r.batch(InstrumentAssignmentParams.eps_design_rules_clp);
+            r.batch(InstrumentAssignmentParams.adcs_design_rules_clp);
+            r.batch(InstrumentAssignmentParams.propulsion_design_rules_clp);
 
             //Load cost estimation rules;
-            r.batch(Params.cost_estimation_rules_clp);
-            r.batch(Params.fuzzy_cost_estimation_rules_clp);
+            r.batch(InstrumentAssignmentParams.cost_estimation_rules_clp);
+            r.batch(InstrumentAssignmentParams.fuzzy_cost_estimation_rules_clp);
 
             //Load launch vehicle selection rules
-            r.batch(Params.launch_vehicle_selection_rules_clp);
+            r.batch(InstrumentAssignmentParams.launch_vehicle_selection_rules_clp);
 
             //Load requirement rules
-            Workbook requirements_xls = Workbook.getWorkbook(new File(Params.requirement_satisfaction_xls));
-            if (Params.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) {
+            Workbook requirements_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.requirement_satisfaction_xls));
+            if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) {
 //                loadRequirementRulesAttribsWithContinuousSatisfactionScore(r, requirements_xls, "Attributes");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
                 loadRequirementRulesAttribs(r, requirements_xls, "Attributes");
-            } else if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
+            } else if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
                 loadFuzzyRequirementRulesAttribs(r, requirements_xls, "Attributes");
             }
 
             //Load capability rules
-            loadCapabilityRules(r, instrument_xls, Params.capability_rules_clp);
+            loadCapabilityRules(r, instrument_xls, InstrumentAssignmentParams.capability_rules_clp);
 
             //Load synergy rules
-            loadSynergyRules(r, Params.synergy_rules_clp);
+            loadSynergyRules(r, InstrumentAssignmentParams.synergy_rules_clp);
 
             // Load assimilation rules
-            r.batch(Params.assimilation_rules_clp);
+            r.batch(InstrumentAssignmentParams.assimilation_rules_clp);
 
             //Ad-hoc rules
-            if (!Params.adhoc_rules_clp.isEmpty()) {
+            if (!InstrumentAssignmentParams.adhoc_rules_clp.isEmpty()) {
                 System.out.println("WARNING: Loading ad-hoc rules");
-                r.batch(Params.adhoc_rules_clp);
+                r.batch(InstrumentAssignmentParams.adhoc_rules_clp);
             }
 
             // Load explanation rules
-            loadExplanationRules(r, Params.explanation_rules_clp);
+            loadExplanationRules(r, InstrumentAssignmentParams.explanation_rules_clp);
 
             //Load aggregation rules
-            File aggregationFile = new File(Params.aggregation_xml);
-            loadAggregationRules(r, aggregationFile, new String[]{Params.aggregation_rules_clp, Params.fuzzy_aggregation_rules_clp});
+            File aggregationFile = new File(InstrumentAssignmentParams.aggregation_xml);
+            loadAggregationRules(r, aggregationFile, new String[]{InstrumentAssignmentParams.aggregation_rules_clp, InstrumentAssignmentParams.fuzzy_aggregation_rules_clp});
 
             r.reset();
 
@@ -184,7 +184,7 @@ public class JessInitializer {
         loadSimpleTemplate(r, xls, "Orbit", "DATABASE::Orbit");
         loadSimpleTemplate(r, xls, "Launch-vehicle", "DATABASE::Launch-vehicle");
         try {
-            r.batch(Params.template_definition_clp);
+            r.batch(InstrumentAssignmentParams.template_definition_clp);
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -475,7 +475,7 @@ public class JessInitializer {
      */
     private void loadInstrumentsJess(Rete r) {
         try {
-            Workbook xls = Workbook.getWorkbook(new File(Params.capability_rules_xls));
+            Workbook xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.capability_rules_xls));
             Sheet meas = xls.getSheet("CHARACTERISTICS");
             String call = "(deffacts instrument-database-facts ";
             int nfacts = meas.getRows();
@@ -863,7 +863,7 @@ public class JessInitializer {
                     String[] tokens2 = att_value_pair.split(" ", 2);
                     String att = tokens2[0];//Parameter
                     String meas = tokens2[1];//"x.x.x Soil moisture"
-                    Params.measurements.add(meas);
+                    InstrumentAssignmentParams.measurements.add(meas);
 
                     for (int j = 1; j < row.length; j++) {
                         String att_value_pair2 = row[j].getContents();
@@ -909,7 +909,7 @@ public class JessInitializer {
     private void loadSynergyRules(Rete r, String clp) {
         try {
             r.batch(clp);
-            Iterator<Map.Entry<String, ArrayList<String>>> it = Params.measurements_to_subobjectives.entrySet().iterator();
+            Iterator<Map.Entry<String, ArrayList<String>>> it = InstrumentAssignmentParams.measurements_to_subobjectives.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, ArrayList<String>> es = it.next();
                 String meas = (String) es.getKey();
@@ -939,17 +939,17 @@ public class JessInitializer {
         Document doc = dBuilder.parse(aggregationFile);
         doc.getDocumentElement().normalize();
         NodeList panelNode = doc.getElementsByTagName("stakeholder");
-        Params.npanels = panelNode.getLength();
+        InstrumentAssignmentParams.npanels = panelNode.getLength();
         String call = "(deffacts AGGREGATION::init-aggregation-facts ";
-        Params.panel_names = new ArrayList(Params.npanels);
-        Params.panel_weights = new ArrayList(Params.npanels);
+        InstrumentAssignmentParams.panel_names = new ArrayList(InstrumentAssignmentParams.npanels);
+        InstrumentAssignmentParams.panel_weights = new ArrayList(InstrumentAssignmentParams.npanels);
 
         for (int i = 0; i < panelNode.getLength(); i++) {
             Element panel = (Element) panelNode.item(i);
-            Params.panel_names.add(panel.getElementsByTagName("id").item(0).getTextContent());
-            Params.panel_weights.add(Weight.parseWeight(panel.getElementsByTagName("weight").item(0).getTextContent()));
+            InstrumentAssignmentParams.panel_names.add(panel.getElementsByTagName("id").item(0).getTextContent());
+            InstrumentAssignmentParams.panel_weights.add(Weight.parseWeight(panel.getElementsByTagName("weight").item(0).getTextContent()));
         }
-        call = call + " (AGGREGATION::VALUE (sh-scores (repeat$ -1.0 " + Params.npanels + ")) (sh-fuzzy-scores (repeat$ -1.0 " + Params.npanels + ")) (weights " + javaArrayList2JessList(Params.panel_weights) + "))";
+        call = call + " (AGGREGATION::VALUE (sh-scores (repeat$ -1.0 " + InstrumentAssignmentParams.npanels + ")) (sh-fuzzy-scores (repeat$ -1.0 " + InstrumentAssignmentParams.npanels + ")) (weights " + javaArrayList2JessList(InstrumentAssignmentParams.panel_weights) + "))";
 
         //load objectives and subobjective weights
         for (int i = 0; i < panelNode.getLength(); i++) {
@@ -968,9 +968,9 @@ public class JessInitializer {
                     Double weight = Weight.parseWeight(subobj.getElementsByTagName("weight").item(0).getTextContent());
                     subobj_weights_o.add(weight);
                 }
-                call = call + " (AGGREGATION::OBJECTIVE (id " + Params.panel_names.get(i) + (j + 1) + " ) (parent " + Params.panel_names.get(i) + ") (index " + (j + 1) + " ) (subobj-fuzzy-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (subobj-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (weights " + javaArrayList2JessList(subobj_weights_o) + ")) ";
+                call = call + " (AGGREGATION::OBJECTIVE (id " + InstrumentAssignmentParams.panel_names.get(i) + (j + 1) + " ) (parent " + InstrumentAssignmentParams.panel_names.get(i) + ") (index " + (j + 1) + " ) (subobj-fuzzy-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (subobj-scores (repeat$ -1.0 " + subobj_weights_o.size() + ")) (weights " + javaArrayList2JessList(subobj_weights_o) + ")) ";
             }
-            call = call + " (AGGREGATION::STAKEHOLDER (id " + Params.panel_names.get(i) + " ) (index " + (i + 1) + " ) (obj-fuzzy-scores (repeat$ -1.0 " + obj_weights.size() + ")) (obj-scores (repeat$ -1.0 " + obj_weights.size() + ")) (weights " + javaArrayList2JessList(obj_weights) + ")) ";
+            call = call + " (AGGREGATION::STAKEHOLDER (id " + InstrumentAssignmentParams.panel_names.get(i) + " ) (index " + (i + 1) + " ) (obj-fuzzy-scores (repeat$ -1.0 " + obj_weights.size() + ")) (obj-scores (repeat$ -1.0 " + obj_weights.size() + ")) (weights " + javaArrayList2JessList(obj_weights) + ")) ";
         }
 
         call = call + ")";//close deffacts

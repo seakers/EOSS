@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.operators;
+package eoss.problem.assignment.operators;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class RemoveRandomFromLoadedSatellite extends AbstractEOSSOperator {
     }
 
     @Override
-    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         //Find random orbit with more than maxSize mass of instruments
         ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
         for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {

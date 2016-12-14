@@ -9,7 +9,7 @@ package rbsa.eoss;
 import com.dropbox.core.*;
 import java.io.*;
 import java.util.Locale;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentParams;
 
 /**
  *Use to connect app to Dropbox account. I think you only need to do this once.

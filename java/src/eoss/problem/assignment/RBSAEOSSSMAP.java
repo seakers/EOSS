@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.search;
+package eoss.problem.assignment;
 
 import aos.aos.AOSEpsilonMOEA;
 import aos.aos.AOSFactory;
@@ -27,10 +27,10 @@ import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
-import architecture.ArchitectureGenerator;
 import eoss.problem.EOSSDatabase;
-import eoss.problem.EOSSProblem;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentProblem;
+import eoss.search.InnovizationSearch;
+import eoss.search.InstrumentedSearch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +47,7 @@ import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.operator.CompoundVariation;
+import org.moeaframework.core.operator.RandomInitialization;
 
 /**
  *
@@ -79,7 +80,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[1] = "4"; //Mode
+            args[1] = "3"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -151,7 +152,7 @@ public class RBSAEOSSSMAP {
 
                 problem = getEOSSProblem(false);
 
-                initialization = new ArchitectureGenerator(problem, popSize, "random");
+                initialization = new RandomInitialization(problem, popSize);
                 Algorithm nsga2 = new NSGAII(problem, ndsPopulation, null, tSelection, NSGAVariation,
                         initialization);
 
@@ -166,13 +167,13 @@ public class RBSAEOSSSMAP {
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
                     problem = getEOSSProblem(false);
-                    initialization = new ArchitectureGenerator(problem, popSize, "random");
+                    initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
                     InstrumentedSearch run;
                             if(i<numCPU){
                                 run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", String.valueOf(i), true);
                             }else{
-                                run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result",  String.valueOf(i), false);
+                                run = new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", String.valueOf(i), false);
                             }
                     futures.add(pool.submit(run));
                 }
@@ -185,8 +186,8 @@ public class RBSAEOSSSMAP {
                 }
                 break;
 
-            case 3://Hyperheuristic search
-                String origname = "AIAA_innovize_" + System.nanoTime();
+            case 3://AOS search
+                String origname = "AOS" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     ICreditAssignment creditAssignment;
                     String[] creditDefs = new String[]{"SIDo"};
@@ -210,16 +211,16 @@ public class RBSAEOSSSMAP {
                             Population population = new Population();
                             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                            initialization = new ArchitectureGenerator(problem, popSize, "random");
+                            initialization = new RandomInitialization(problem, popSize);
 
                             AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                     initialization, selector, creditAssignment);
                             
                             InstrumentedSearch run;
                             if(i<numCPU){
-                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i, true);
+                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + creditDefs + i, true);
                             }else{
-                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + i, false);
+                                run = new InstrumentedSearch(hemoea, properties, path + File.separator + "result", origname + creditDefs + i, false);
                             }
                             futures.add(pool.submit(run));
                         } catch (IOException ex) {
@@ -268,7 +269,7 @@ public class RBSAEOSSSMAP {
                         Population population = new Population();
                         EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                        initialization = new ArchitectureGenerator(problem, popSize, "random");
+                        initialization = new RandomInitialization(problem, popSize);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
@@ -306,11 +307,11 @@ public class RBSAEOSSSMAP {
 
     public static void initEOSSProblem(String path, String fuzzyMode, String testMode, String normalMode) {
         EOSSDatabase.getInstance(); //to initiate database
-        new Params(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
+        new InstrumentAssignmentParams(path, fuzzyMode, testMode, normalMode);//FUZZY or CRISP;
     }
 
     public static Problem getEOSSProblem(boolean explanation) {
-        return new EOSSProblem(Params.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, explanation, true);
+        return new InstrumentAssignmentProblem(InstrumentAssignmentParams.altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments(), EOSSDatabase.getOrbits(), null, explanation, true);
     }
 
 }

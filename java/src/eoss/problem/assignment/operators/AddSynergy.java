@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.operators;
+package eoss.problem.assignment.operators;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Orbit;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentParams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -50,7 +50,7 @@ public class AddSynergy extends AbstractEOSSOperator {
     }
 
     @Override
-    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         //Find a random non-empty orbit and its payload 
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
         if (randOrbitIndex == -1) {
@@ -87,7 +87,7 @@ public class AddSynergy extends AbstractEOSSOperator {
      * @return
      */
     private int checkNthOrderSynergy(ArrayList<String> thepayload, Orbit orbit, int order) {
-        NDSM dsm = (NDSM) Params.all_dsms.get("SDSM" + order + "@" + orbit.getName());
+        NDSM dsm = (NDSM) InstrumentAssignmentParams.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
         TreeSet<Interaction> stm = dsm.getAllInteractions("+");
 

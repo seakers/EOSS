@@ -5,10 +5,10 @@
  */
 package knowledge.operator;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Orbit;
-import eoss.problem.operators.AbstractEOSSOperator;
+import eoss.problem.assignment.operators.AbstractEOSSOperator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.moeaframework.core.ParallelPRNG;
@@ -172,8 +172,8 @@ public class EOSSOperator extends AbstractEOSSOperator {
     }
 
     @Override
-    protected EOSSArchitecture evolve(EOSSArchitecture child) {
-        EOSSArchitecture arch = (EOSSArchitecture) child.copy();
+    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
+        InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) child.copy();
 
         try {
             int[] orbitArray;

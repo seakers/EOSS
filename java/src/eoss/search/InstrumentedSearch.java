@@ -9,9 +9,9 @@ import aos.IO.IOCreditHistory;
 import aos.IO.IOQualityHistory;
 import aos.IO.IOSelectionHistory;
 import aos.aos.IAOS;
-import architecture.ResultIO;
-import eoss.problem.EOSSArchitecture;
-import eoss.problem.EOSSProblem;
+import architecture.io.ResultIO;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentProblem;
 import java.io.File;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -51,14 +51,14 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         this.jessInit = init;
         if (init) {
             //initialize Jess
-            ((EOSSProblem) alg.getProblem()).renewJess();
+            ((InstrumentAssignmentProblem) alg.getProblem()).renewJess();
         }
     }
 
     @Override
     public Algorithm call() throws Exception {
         if (!jessInit) {
-            ((EOSSProblem) alg.getProblem()).renewJess();
+            ((InstrumentAssignmentProblem) alg.getProblem()).renewJess();
         }
 
         int populationSize = (int) properties.getDouble("populationSize", 600);
@@ -81,12 +81,12 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         HashMap<BitSet, Solution> allSolutions = new HashMap();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
-            allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
+            allSolutions.put(((InstrumentAssignmentArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
         }
 
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             if (instAlgorithm.getNumberOfEvaluations() % 500 == 0) {
-                ((EOSSProblem) instAlgorithm.getProblem()).renewJess();
+                ((InstrumentAssignmentProblem) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
                 System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());
@@ -104,11 +104,10 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         long finishTime = System.currentTimeMillis();
         System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
 
-        ResultIO resio = new ResultIO();
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
-        resio.saveSearchMetrics(instAlgorithm, filename);
-        resio.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
-        resio.saveObjectives(instAlgorithm.getResult(), filename);
+        ResultIO.saveSearchMetrics(instAlgorithm, filename);
+        ResultIO.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
+        ResultIO.saveObjectives(instAlgorithm.getResult(), filename);
 
         if (alg instanceof IAOS) {
             IAOS algAOS = (IAOS) alg;

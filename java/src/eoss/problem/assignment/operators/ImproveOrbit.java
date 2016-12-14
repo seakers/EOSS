@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.operators;
+package eoss.problem.assignment.operators;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Orbit;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentParams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
     }
 
     @Override
-    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         //Find a random non-empty orbit and its payload 
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
         if (randOrbitIndex == -1) {
@@ -67,11 +67,11 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         //getallorbit scores
         ArrayList<Map.Entry<String, Double>> list2 = new ArrayList<>();
         try{
-            list2.addAll(Params.scores.get(instSubsetNames).entrySet());
+            list2.addAll(InstrumentAssignmentParams.scores.get(instSubsetNames).entrySet());
         }catch(NullPointerException ex){
             //There isn't all permutaions of a subset in the scores map so may need to reorder the arraylist of instrument names
             ArrayList<String> reorder = new ArrayList<>(Arrays.asList(new String[]{instSubsetNames.get(1),instSubsetNames.get(0)}));
-            list2.addAll(Params.scores.get(reorder).entrySet());
+            list2.addAll(InstrumentAssignmentParams.scores.get(reorder).entrySet());
             instSubsetNames = reorder;
         }
 
@@ -80,7 +80,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         String best_orbit = list2.get(0).getKey();
         int best_orbit_index = findOrbit(best_orbit);
         Double new_score = list2.get(0).getValue();
-        Double old_score = Params.scores.get(instSubsetNames).get(randOrbit.getName());
+        Double old_score = InstrumentAssignmentParams.scores.get(instSubsetNames).get(randOrbit.getName());
 
         if (new_score > old_score) {
             for (int index : instSubsetIndices) {

@@ -10,9 +10,9 @@ import aos.IO.IOQualityHistory;
 import aos.IO.IOSelectionHistory;
 import aos.aos.IAOS;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
-import architecture.ResultIO;
-import eoss.problem.EOSSArchitecture;
-import eoss.problem.EOSSProblem;
+import architecture.io.ResultIO;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentProblem;
 import java.io.File;
 import java.util.BitSet;
 import java.util.Collection;
@@ -23,7 +23,6 @@ import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
-import mining.label.NondominatedSortingLabeler;
 import org.moeaframework.Instrumenter;
 import org.moeaframework.algorithm.AbstractEvolutionaryAlgorithm;
 import org.moeaframework.analysis.collector.InstrumentedAlgorithm;
@@ -125,14 +124,14 @@ public class InnovizationSearch implements Callable<Algorithm> {
         }
         if(init){
             //initialize jess
-            ((EOSSProblem)alg.getProblem()).renewJess();
+            ((InstrumentAssignmentProblem)alg.getProblem()).renewJess();
         }this.jessInit = init;
     }
 
     @Override
     public Algorithm call() throws Exception {
         if(!jessInit){
-            ((EOSSProblem)alg.getProblem()).renewJess();
+            ((InstrumentAssignmentProblem)alg.getProblem()).renewJess();
         }
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
@@ -156,7 +155,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
         HashMap<BitSet, Solution> allSolutions = new HashMap();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
-            allSolutions.put(((EOSSArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
+            allSolutions.put(((InstrumentAssignmentArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
         }
 
 
@@ -167,8 +166,8 @@ public class InnovizationSearch implements Callable<Algorithm> {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
             for (int i = pop.size() - 3; i < pop.size(); i++) {
-                if (!allSolutions.containsKey(((EOSSArchitecture) pop.get(i)).getBitString())) {
-                    allSolutions.put(((EOSSArchitecture) pop.get(i)).getBitString(), pop.get(i));
+                if (!allSolutions.containsKey(((InstrumentAssignmentArchitecture) pop.get(i)).getBitString())) {
+                    allSolutions.put(((InstrumentAssignmentArchitecture) pop.get(i)).getBitString(), pop.get(i));
                 }
             }
 
@@ -221,7 +220,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
             //print out the search stats every once in a while
             if (nFuncEvals % 500 == 0) {
-                ((EOSSProblem) instAlgorithm.getProblem()).renewJess();
+                ((InstrumentAssignmentProblem) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
                 System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());
@@ -239,12 +238,11 @@ public class InnovizationSearch implements Callable<Algorithm> {
         long finishTime = System.currentTimeMillis();
         System.out.println("Done with optimization. Execution time: " + ((finishTime - startTime) / 1000) + "s");
 
-        ResultIO resio = new ResultIO();
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
-        resio.saveSearchMetrics(instAlgorithm, filename);
-        resio.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
-        resio.savePopulation(allpop, filename + "allpop");
-        resio.saveObjectives(instAlgorithm.getResult(), filename);
+        ResultIO.saveSearchMetrics(instAlgorithm, filename);
+        ResultIO.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
+        ResultIO.savePopulation(allpop, filename + "allpop");
+        ResultIO.saveObjectives(instAlgorithm.getResult(), filename);
 
         if (properties.getBoolean("saveQuality", false)) {
             IOQualityHistory ioqh = new IOQualityHistory();

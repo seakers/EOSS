@@ -2,13 +2,17 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem;
+package eoss.problem.assignment;
 
 /**
  *
  * @author dani
  */
 import eoss.jess.JessInitializer;
+import eoss.problem.Bus;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Instrument;
+import eoss.problem.Orbit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,7 +43,7 @@ import jxl.read.biff.BiffException;
 import org.moeaframework.util.TypedProperties;
 import rbsa.eoss.NDSM;
 
-public class Params {
+public class InstrumentAssignmentParams {
     //public static String master_xls;
     //public static boolean recompute_scores;
 
@@ -124,12 +128,12 @@ public class Params {
      * all explanation to each architecture. Debug bypasses this. Result file
      * from debug mode will require less storage space
      */
-    public Params(String p, String mode, String name, String run_mode) {
+    public InstrumentAssignmentParams(String p, String mode, String name, String run_mode) {
         //this.master_xls = master_xls;
         //this.recompute_scores = recompute_scores;
-        Params.path = p;
-        Params.req_mode = mode;
-        Params.run_mode = run_mode;
+        InstrumentAssignmentParams.path = p;
+        InstrumentAssignmentParams.req_mode = mode;
+        InstrumentAssignmentParams.run_mode = run_mode;
 
         //reads in config file that contains paths to all the clp, dat, and xls files
         File configFile = new File(path + File.separator + "config" + File.separator + "Params.properties");
@@ -137,7 +141,7 @@ public class Params {
         try (FileReader reader = new FileReader(configFile)) {
             props.load(reader);
         } catch (IOException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         //paths to look up tables
@@ -207,11 +211,11 @@ public class Params {
             time_horizon = Double.parseDouble(doc.getElementsByTagName("timeHorizon").item(0).getTextContent());
 
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         try {
@@ -223,7 +227,7 @@ public class Params {
                     revtimes = Collections.unmodifiableMap((HashMap<String,HashMap<String,Double>>) ois.readObject());
                     ois.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (!run_mode.equalsIgnoreCase("update_capabilities")) {
@@ -235,7 +239,7 @@ public class Params {
                     capabilities = Collections.unmodifiableMap((HashMap<String,ArrayList<Fact>>) ois2.readObject());
                     ois2.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (!run_mode.equalsIgnoreCase("update_dsms")) {
@@ -246,7 +250,7 @@ public class Params {
                     all_dsms = Collections.unmodifiableMap((HashMap<String,NDSM>) ois3.readObject());
                     ois3.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (!run_mode.equalsIgnoreCase("update_scores")) {
@@ -257,14 +261,14 @@ public class Params {
                     scores = Collections.unmodifiableMap((HashMap<ArrayList<String>,HashMap<String,Double>>) ois4.readObject());
                     ois4.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
 
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -277,7 +281,7 @@ public class Params {
      */
     private void loadInstruments() {
         try {
-            Workbook xls = Workbook.getWorkbook(new File(Params.capability_rules_xls));
+            Workbook xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.capability_rules_xls));
             Sheet meas = xls.getSheet("CHARACTERISTICS");
             int ninst = meas.getRows();
             int nattributes = meas.getColumns();
@@ -360,11 +364,11 @@ public class Params {
                 EOSSDatabase.addOrbit(new Orbit(orbName, type, semimajorAxis, inclination, RAAN,period, meanAnomaly, eccentricity, argPeri));
             }
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -386,11 +390,11 @@ public class Params {
             }
 
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(Params.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentParams.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

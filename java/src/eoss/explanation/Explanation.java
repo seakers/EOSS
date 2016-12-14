@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package architecture;
+package eoss.explanation;
 
 import java.util.ArrayList;
 import java.util.TreeMap;

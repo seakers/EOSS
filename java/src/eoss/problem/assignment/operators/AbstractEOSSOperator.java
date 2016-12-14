@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.operators;
+package eoss.problem.assignment.operators;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,14 +20,14 @@ public abstract class AbstractEOSSOperator implements Variation {
 
     @Override
     public Solution[] evolve(Solution[] sltns) {
-        if (!(sltns[0] instanceof EOSSArchitecture)) {
+        if (!(sltns[0] instanceof InstrumentAssignmentArchitecture)) {
             throw new IllegalArgumentException("Expected EOSSArchitecture instance. Found " + sltns[0].getClass());
         }
-        EOSSArchitecture child = (EOSSArchitecture) sltns[0].copy();
+        InstrumentAssignmentArchitecture child = (InstrumentAssignmentArchitecture) sltns[0].copy();
         return new Solution[]{evolve(child)};
     }
 
-    protected abstract EOSSArchitecture evolve(EOSSArchitecture child);
+    protected abstract InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child);
 
     /**
      * Finds a random orbit with at least n instruments (inclusive)
@@ -37,7 +37,7 @@ public abstract class AbstractEOSSOperator implements Variation {
      * have
      * @return the index of the random orbit as it is in the EOSSDatabase
      */
-    public int getRandomOrbitWithAtLeastNInstruments(EOSSArchitecture arch, int nInst) {
+    public int getRandomOrbitWithAtLeastNInstruments(InstrumentAssignmentArchitecture arch, int nInst) {
         //Find a random orbit and its payload 
         ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
         for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
@@ -62,7 +62,7 @@ public abstract class AbstractEOSSOperator implements Variation {
      * have
      * @return the index of the random orbit as it is in the EOSSDatabase
      */
-    public int getRandomOrbitWithAtMostNInstruments(EOSSArchitecture arch, int nInst) {
+    public int getRandomOrbitWithAtMostNInstruments(InstrumentAssignmentArchitecture arch, int nInst) {
         //Find a random orbit and its payload 
         ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
         for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {

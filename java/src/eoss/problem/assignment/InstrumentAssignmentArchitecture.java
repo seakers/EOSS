@@ -2,12 +2,15 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem;
+package eoss.problem.assignment;
 
+import architecture.Architecture;
 import architecture.pattern.Combining;
 import architecture.pattern.Assigning;
-import architecture.Architecture;
 import architecture.pattern.ArchitecturalDecision;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Instrument;
+import eoss.problem.Orbit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -23,11 +26,18 @@ import org.moeaframework.core.Solution;
  * @author nozomi
  */
 //import jess.*;
-public class EOSSArchitecture extends Architecture {
+public class InstrumentAssignmentArchitecture extends Architecture {
 
     private static final long serialVersionUID = 8776271523867355732L;
-    private Assigning assignment;
-    private Combining combine;
+
+    private final Assigning assignment;
+
+    private final Combining combine;
+
+    /**
+     * The available options of the number of satellites
+     */
+    private final int[] altnertivesForNumberOfSatellites;
 
     //Constructors
     /**
@@ -40,42 +50,30 @@ public class EOSSArchitecture extends Architecture {
      * @param altnertivesForNumberOfSatellites
      * @param numberOfObjectives
      */
-    public EOSSArchitecture(int[] altnertivesForNumberOfSatellites,
+    public InstrumentAssignmentArchitecture(int[] altnertivesForNumberOfSatellites,
             int numberOfInstruments, int numberOfOrbits, int numberOfObjectives) {
         super(Arrays.asList(new ArchitecturalDecision[]{
-            new Combining(altnertivesForNumberOfSatellites, altnertivesForNumberOfSatellites[0]),
+            new Combining(new int[]{altnertivesForNumberOfSatellites.length}),
             new Assigning(numberOfInstruments, numberOfOrbits)}), numberOfObjectives);
 
         this.combine = (Combining) this.getVariable(0);
         this.assignment = (Assigning) this.getVariable(1);
+        this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
     }
 
     /**
-     * Creates an empty architecture with a default number of satellites.
-     * Default value is the first value in the array given as
-     * alternativesForNumberOfSatellites
+     * makes a copy solution from the input solution
      *
-     * @param nSatellitesChoice the decisions for the combining pattern deciding
-     * the number of satellites per orbit
-     * @param inst2OrbAssingment the decisions for the assigning pattern
-     * deciding the allocation of instruments to orbit
-     * @param numberOfObjectives
+     * @param solution
      */
-    public EOSSArchitecture(Combining nSatellitesChoice, Assigning inst2OrbAssingment, int numberOfObjectives) {
-        super(Arrays.asList(new ArchitecturalDecision[]{nSatellitesChoice, inst2OrbAssingment}), numberOfObjectives);
-    }
-
-    /**
-     * makes a copy soltion from the input solution 
-     * @param solution 
-     */
-    public EOSSArchitecture(Solution solution) {
+    public InstrumentAssignmentArchitecture(Solution solution) {
         super(solution);
-        if (solution instanceof EOSSArchitecture) {
-            this.combine = (Combining)this.getVariable(0);
-            this.assignment = (Assigning)this.getVariable(1);
+        if (solution instanceof InstrumentAssignmentArchitecture) {
+            this.combine = (Combining) this.getVariable(0);
+            this.assignment = (Assigning) this.getVariable(1);
+            this.altnertivesForNumberOfSatellites = getAltnertivesForNumberOfSatellites();
         } else {
-            throw new IllegalArgumentException("Expected type EOSSArchitecture class. Found " + solution.getClass().getSimpleName());
+            throw new IllegalArgumentException("Expected type InstrumentAssignmentArchitecture class. Found " + solution.getClass().getSimpleName());
         }
     }
 
@@ -84,19 +82,23 @@ public class EOSSArchitecture extends Architecture {
      * Returns the total number of satellites in the architecture (number of
      * satellites x number of orbits with at least one instrument assigned).
      *
-     * @return
+     * @return the total number of satellites in the architecture
      */
     public int getTotalNumberOfSatellites() {
-        return combine.getValue() * getNorbits();
+        return altnertivesForNumberOfSatellites[combine.getValue(0)] * getNorbits();
     }
 
     /**
      * Returns the number of satellites per orbit.
      *
-     * @return
+     * @return the number of satellites per orbit.
      */
     public int getNumberOfSatellitesPerOrbit() {
-        return combine.getValue();
+        return altnertivesForNumberOfSatellites[combine.getValue(0)];
+    }
+
+    public int[] getAltnertivesForNumberOfSatellites() {
+        return altnertivesForNumberOfSatellites;
     }
 
     /**
@@ -128,7 +130,7 @@ public class EOSSArchitecture extends Architecture {
         BitSet inst = new BitSet(assignment.getNumberOfLHS());
         for (int i = 0; i < assignment.getNumberOfLHS(); i++) {
             BitSet inst_i = bs.get(i * assignment.getNumberOfRHS(), i * assignment.getNumberOfRHS() + assignment.getNumberOfRHS());
-            if(inst_i.cardinality() > 0){
+            if (inst_i.cardinality() > 0) {
                 inst.set(i);
             }
         }
@@ -161,10 +163,9 @@ public class EOSSArchitecture extends Architecture {
         }
         return out;
     }
-    
+
     /**
-     * Gets the names of the orbits that have no instruments assigned
-     * to it
+     * Gets the names of the orbits that have no instruments assigned to it
      *
      * @return
      */
@@ -185,7 +186,8 @@ public class EOSSArchitecture extends Architecture {
      * Gets the bitset that represents the orbits that have at least one
      * instrument assigned to it
      *
-     * @return
+     * @return the bitset that represents the orbits that have at least one
+     * instrument assigned to it
      */
     private BitSet getUniqueOrbits() {
         BitSet bs = assignment.getBitSet();
@@ -199,7 +201,7 @@ public class EOSSArchitecture extends Architecture {
     /**
      * Gets the number of unique orbits that are assigned
      *
-     * @return
+     * @return the number of unique orbits that are assigned
      */
     public int getNorbits() {
         return getUniqueOrbits().cardinality();
@@ -233,6 +235,10 @@ public class EOSSArchitecture extends Architecture {
         return false;
     }
 
+    /**
+     *
+     * @return
+     */
     public BitSet getBitString() {
         return assignment.getBitSet();
     }
@@ -253,10 +259,9 @@ public class EOSSArchitecture extends Architecture {
         }
 
         //loop over the instruments
-        for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
-            if (assignment.isConnected(i, orbIndex)) {
-                payloads.add(EOSSDatabase.getInstruments().get((i)));
-            }
+        ArrayList<Integer> paylaodIndex = getInstrumentsInOrbit(orbIndex);
+        for (Integer index : paylaodIndex) {
+            payloads.add(EOSSDatabase.getInstruments().get((index)));
         }
         return payloads;
     }
@@ -317,49 +322,9 @@ public class EOSSArchitecture extends Architecture {
         return str;
     }
 
-    //Utils
-    public Boolean isEmptyOrbit(Orbit orb) {
-        return (getInstrumentsInOrbit(orb).isEmpty());
-    }
-
-    /**
-     * TODO get rid of this and make more generic Checks problem specific
-     * constraints
-     *
-     * @return
-     */
-    public boolean checkConstraints() {
-        if (this == null) {
-            return false;
-        }
-
-//        //Constraint 1: No PATH_GEOSTAR in LEO orbit
-//        for (Orbit orb : EOSSDatabase.orbits) {
-//            ArrayList<Instrument> payload_in_orbit = this.getInstrumentsInOrbit(orb);
-//            if (orb.equals("GEO-35788-equat-NA")) {
-//                continue;
-//            }
-//            for (Instrument instr : payload_in_orbit) {
-//                if (instr.equals("PATH_GEOSTAR")) {
-//                    return false;
-//                }
-//            }
-//        }
-//
-//        //Constraint 2: No LEO instruments in GEO Orbit
-//        String[] GEO_payload = this.getInstrumentsInOrbit("GEO-35788-equat-NA");
-//        for (String GEO_payload1 : GEO_payload) {
-//            if (!GEO_payload1.equalsIgnoreCase("PATH_GEOSTAR")) {
-//                return false;
-//            }
-//        }
-        //If has not returned false yet, return feasible=true
-        return true;
-    }
-
     @Override
     public Solution copy() {
-        return new EOSSArchitecture(this);
+        return new InstrumentAssignmentArchitecture(this);
     }
 
 }

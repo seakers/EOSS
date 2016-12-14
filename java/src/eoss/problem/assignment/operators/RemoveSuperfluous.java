@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.operators;
+package eoss.problem.assignment.operators;
 
-import eoss.problem.EOSSArchitecture;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Orbit;
-import eoss.problem.Params;
+import eoss.problem.assignment.InstrumentAssignmentParams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -49,7 +49,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
     }
 
     @Override
-    protected EOSSArchitecture evolve(EOSSArchitecture child) {
+    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         //Find a random non-empty orbit and its payload 
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
         if (randOrbitIndex == -1) {
@@ -89,7 +89,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
      * superfluous interaction. Else -1;
      */
     private int checkNthOrderSuperfluous(ArrayList<String> thepayload, Orbit orbit, int order) {
-        NDSM rdsm = (NDSM) Params.all_dsms.get("RDSM" + order + "@" + orbit.getName());
+        NDSM rdsm = (NDSM) InstrumentAssignmentParams.all_dsms.get("RDSM" + order + "@" + orbit.getName());
         TreeSet<Interaction> rtm = rdsm.getAllInteractions("0");
         if (rtm.isEmpty()) {
             return -1;
@@ -111,7 +111,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
             return -1;
 
         //now search for the cost of these superfluous interactions
-        NDSM edsm = (NDSM) Params.all_dsms.get("EDSM" + order + "@" + orbit.getName());
+        NDSM edsm = (NDSM) InstrumentAssignmentParams.all_dsms.get("EDSM" + order + "@" + orbit.getName());
         TreeSet<Interaction> etm = edsm.getAllInteractions("+");
 
         //Get added cost of all superfluous interactions

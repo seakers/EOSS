@@ -3,9 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem;
+package eoss.problem.assignment;
 
-import architecture.Explanation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,8 +22,13 @@ import org.moeaframework.core.Solution;
 import org.moeaframework.problem.AbstractProblem;
 import architecture.util.FuzzyValue;
 import architecture.util.Interval;
+import eoss.explanation.Explanation;
 import eoss.jess.JessInitializer;
 import eoss.jess.QueryBuilder;
+import eoss.problem.Bus;
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Instrument;
+import eoss.problem.Orbit;
 
 /**
  * An assigning problem to optimize the allocation of n instruments to m orbits.
@@ -33,7 +37,7 @@ import eoss.jess.QueryBuilder;
  *
  * @author nozomihitomi
  */
-public class EOSSProblem extends AbstractProblem {
+public class InstrumentAssignmentProblem extends AbstractProblem {
 
     private final int[] altnertivesForNumberOfSatellites;
 
@@ -55,7 +59,7 @@ public class EOSSProblem extends AbstractProblem {
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public EOSSProblem(int[] altnertivesForNumberOfSatellites, ArrayList<Instrument> instruments,
+    public InstrumentAssignmentProblem(int[] altnertivesForNumberOfSatellites, ArrayList<Instrument> instruments,
             ArrayList<Orbit> orbits, ArrayList<Bus> buses, boolean explanation, boolean withSynergy) {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
@@ -93,7 +97,7 @@ public class EOSSProblem extends AbstractProblem {
 
     @Override
     public void evaluate(Solution sltn) {
-        EOSSArchitecture arch = (EOSSArchitecture) sltn;
+        InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
 
         try {
              long startTime = System.currentTimeMillis();
@@ -112,16 +116,16 @@ public class EOSSProblem extends AbstractProblem {
 
             System.out.println("Arch " + arch.toString() + ": Science = " + arch.getObjective(0) + "; Cost = " + arch.getObjective(1) + " :: " + arch.payloadToString());
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @Override
     public Solution newSolution() {
-        return new EOSSArchitecture(altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments().size(), EOSSDatabase.getOrbits().size(), 2);
+        return new InstrumentAssignmentArchitecture(altnertivesForNumberOfSatellites, EOSSDatabase.getInstruments().size(), EOSSDatabase.getOrbits().size(), 2);
     }
 
-    private void aggregate_performance_score_facts(EOSSArchitecture arch) {
+    private void aggregate_performance_score_facts(InstrumentAssignmentArchitecture arch) {
         ArrayList subobj_scores = new ArrayList();
         ArrayList obj_scores = new ArrayList();
         ArrayList panel_scores = new ArrayList();
@@ -133,7 +137,7 @@ public class EOSSProblem extends AbstractProblem {
             ArrayList<Fact> vals = qb.makeQuery("AGGREGATION::VALUE");
             Fact val = vals.get(0);
             science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
-            if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
+            if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
                 fuzzy_science = (FuzzyValue) val.getSlotValue("fuzzy-value").javaObjectValue(r.getGlobalContext());
             }
             panel_scores = jessList2ArrayList(val.getSlotValue("sh-scores").listValue(r.getGlobalContext()));
@@ -154,24 +158,24 @@ public class EOSSProblem extends AbstractProblem {
             }
             //TO DO: obj_score and subobj_scores.
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
-        if (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
-            arch.setFuzzyObjective(0, fuzzy_science);
+        if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
+            arch.setAttribute("fuzzyScience", fuzzy_science);
         }
         if (explanation) {
-            arch.setExplanation(0, explanations);
-            arch.setCapabilities(qb.makeQuery("REQUIREMENTS::Measurement"));
+            arch.setAttribute("scienceExplanation", explanations);
+            arch.setAttribute("measurement",qb.makeQuery("REQUIREMENTS::Measurement"));
         }
     }
 
-    private double evaluateCostEONRules(EOSSArchitecture arch) throws JessException {
+    private double evaluateCostEONRules(InstrumentAssignmentArchitecture arch) throws JessException {
         r.setFocus("MANIFEST");
         r.run();
 
         double cost = 0.0;
         Explanation costFacts = new Explanation();
-        if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+        if ((InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
             r.setFocus("FUZZY-CUBESAT-COST");
             r.run();
 
@@ -182,8 +186,8 @@ public class EOSSProblem extends AbstractProblem {
                 cost += mission.getSlotValue("mission-cost#").floatValue(r.getGlobalContext());
                 fzcost = fzcost.add((FuzzyValue) mission.getSlotValue("mission-cost").javaObjectValue(r.getGlobalContext()));
             }
-            arch.setFuzzyObjective(0, fzcost);
-            arch.setExplanation(0, costFacts);
+            arch.setAttribute("fuzzyCost", fzcost);
+            arch.setAttribute("costExplanation", costFacts);
         } else {
             r.setFocus("CUBESAT-COST");
             r.run();
@@ -192,13 +196,13 @@ public class EOSSProblem extends AbstractProblem {
             for (Fact mission : missions) {
                 cost += mission.getSlotValue("mission-cost#").floatValue(r.getGlobalContext());
             }
-            arch.setExplanation(0, costFacts);
+            arch.setAttribute("costExplanation", costFacts);
         }
         arch.setObjective(1, cost);
         return cost;
     }
 
-    private double evaluateCost(EOSSArchitecture arch) {
+    private double evaluateCost(InstrumentAssignmentArchitecture arch) {
         double cost = 0.0;
         try {
             //
@@ -218,7 +222,7 @@ public class EOSSProblem extends AbstractProblem {
             r.eval("(focus LV-SELECTION3)");
             r.run();
 
-            if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+            if ((InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
                 r.setFocus("FUZZY-COST-ESTIMATION0"); //applies NICM cost model to all instruments without computed costs
                 r.run();
                 r.setFocus("FUZZY-COST-ESTIMATION");
@@ -231,16 +235,9 @@ public class EOSSProblem extends AbstractProblem {
             for (Fact mission : missions) {
                 cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
             }
-
-            if (explanation) {
-                Explanation explanations = new Explanation();
-                explanations.put("cost", missions);
-                arch.setExplanation(1, explanations);
-            }
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //System.out.println("Arch " + arch.toBitString() + ": Science = " + res.getScience() + "; Cost = " + res.getCost());
         return cost;
     }
 
@@ -284,11 +281,11 @@ public class EOSSProblem extends AbstractProblem {
 
             }
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void assertMissions(EOSSArchitecture arch) {
+    private void assertMissions(InstrumentAssignmentArchitecture arch) {
         try {
             for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
                 Orbit orbit = EOSSDatabase.getOrbits().get(i);
@@ -345,11 +342,11 @@ public class EOSSProblem extends AbstractProblem {
                 }
             }
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private double evaluatePerformance(EOSSArchitecture arch) {
+    private double evaluatePerformance(InstrumentAssignmentArchitecture arch) {
         double science = 0;
         try {
             r.eval("(bind ?*science-multiplier* 1.0)");
@@ -390,7 +387,7 @@ public class EOSSProblem extends AbstractProblem {
             }
 
             //Revisit times
-            for (String measurement : Params.measurements) {
+            for (String measurement : InstrumentAssignmentParams.measurements) {
                 Value v = r.eval("(update-fovs " + measurement + " (create$ " + StringUtils.join(EOSSDatabase.getOrbits(), " ") + "))");
                 if (RU.getTypeName(v.type()).equalsIgnoreCase("LIST")) {
                     ValueVector thefovs = v.listValue(r.getGlobalContext());
@@ -404,12 +401,12 @@ public class EOSSProblem extends AbstractProblem {
                     //System.out.println(param);
                     //key = "5 x -1  -1  -1  -1  50";
                     //}
-                    HashMap<String, Double> therevtimes = Params.revtimes.get(key); //key: 'Global' or 'US', value Double
+                    HashMap<String, Double> therevtimes = InstrumentAssignmentParams.revtimes.get(key); //key: 'Global' or 'US', value Double
 
                     //there were two different maps at one point. one with spaces and the other without spaces and commas
                     if (therevtimes == null) {
                         key = arch.getNumberOfSatellitesPerOrbit() + " x " + StringUtils.join(fovs, "  ");
-                        therevtimes = Params.revtimes.get(key); //key: 'Global' or 'US', value Double
+                        therevtimes = InstrumentAssignmentParams.revtimes.get(key); //key: 'Global' or 'US', value Double
                     }
                     String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
                             + "(avg-revisit-time-US# " + therevtimes.get("US") + ")))";
@@ -430,14 +427,14 @@ public class EOSSProblem extends AbstractProblem {
                 r.run();
             }
 
-            if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+            if ((InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
                 r.setFocus("FUZZY-REQUIREMENTS");
             } else {
                 r.setFocus("REQUIREMENTS");
             }
             r.run();
 
-            if ((Params.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (Params.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
+            if ((InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-CASES")) || (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES"))) {
                 r.setFocus("FUZZY-AGGREGATION");
             } else {
                 r.setFocus("AGGREGATION");
@@ -448,53 +445,19 @@ public class EOSSProblem extends AbstractProblem {
             Fact val = vals.get(0);
             science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
 
-            aggregate_performance_score_facts(arch);
+//            aggregate_performance_score_facts(arch);
 
             if (explanation) {
                 explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
                 explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
-                arch.setExplanation(0, explanations);
+                arch.setAttribute("satisfactionExplantion", explanations);
             }
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
         }
         return science;
     }
-
-//    /**
-//     * TODO had to put the rules here instead of clp file because the rules were
-//     * firing when they shouldn't have been...
-//     */
-//    private ArrayList<String> addExtraRules(Rete r) {
-//        ArrayList<String> out = new ArrayList();
-//        try {
-//            String rule1name = "CHANNELS::compute-EON-vertical-spatial-resolution1";
-//            String call1 = "(defrule " + rule1name
-//                    + " ?s <- (SYNERGIES::cross-registered-instruments (platform ?plat) (total-num-channels 0)) "
-//                    + "?c <- (accumulate (bind ?countss 0) "
-//                    + "(bind ?countss (+ ?countss ?num)) "
-//                    + "?countss "
-//                    + "(CAPABILITIES::Manifested-instrument (orbit-string ?plat)(num-of-mmwave-band-channels ?num) )) "
-//                    + "=> "
-//                    + "(modify ?s (total-num-channels ?c)))";
-//
-//            String rule2name = "CHANNELS::compute-EON-vertical-spatial-resolution2";
-//            String call2 = "(defrule " + rule2name
-//                    + " ?EON <- (CAPABILITIES::Manifested-instrument  (Vertical-Spatial-Resolution# nil) (orbit-string ?orbs)) "
-//                    + "(SYNERGIES::cross-registered-instruments (total-num-channels ?c&~nil)(platform ?orbs)) "
-//                    + "=> "
-//                    + "(modify ?EON (Vertical-Spatial-Resolution# (compute-vertical-spatial-resolution-EON ?c))))";
-//            r.eval(call1);
-//            r.eval(call2);
-//
-//            out.add(rule1name);
-//            out.add(rule2name);
-//        } catch (JessException ex) {
-//            System.err.println("ExtraRules are wrong...");
-//            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        return out;
-//    }
+    
     private ArrayList jessList2ArrayList(ValueVector vv) {
         ArrayList al = new ArrayList();
         try {
@@ -502,49 +465,10 @@ public class EOSSProblem extends AbstractProblem {
                 al.add(vv.get(i).stringValue(r.getGlobalContext()));
             }
         } catch (JessException ex) {
-            Logger.getLogger(EOSSProblem.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignmentProblem.class.getName()).log(Level.SEVERE, null, ex);
             al = null;
         }
         return al;
-    }
-
-    /**
-     * Takes two vectors (as an arraylist) and multiplies the elements
-     *
-     * @param a
-     * @param b
-     * @return
-     * @throws Exception
-     */
-    private ArrayList<Double> elementMult(ArrayList<Double> a, ArrayList<Double> b) {
-        int n = a.size();
-        int n2 = b.size();
-        if (n != n2) {
-            throw new IllegalArgumentException("dotSum: Arrays of different sizes");
-        }
-        ArrayList c = new ArrayList(n);
-        for (int i = 0; i < n; i++) {
-            Double t = a.get(i) * b.get(i);
-            c.add(t);
-        }
-        return c;
-    }
-
-    /**
-     * Takes the inner product or dot product of two vectors
-     *
-     * @param a
-     * @param b
-     * @return a scalar value equal to the inner product of two vectors
-     */
-    private double innerProduct(ArrayList a, ArrayList b) {
-        ArrayList<Double> vector = elementMult(a, b);
-        int n = vector.size();
-        double res = 0.0;
-        for (Double val : vector) {
-            res += val;
-        }
-        return res;
     }
 
 }
