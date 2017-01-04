@@ -12,14 +12,10 @@ package eoss.problem.scheduling;
 public class MissionSchedulingParams {
     
     
+    
     private void init(){
         
     }
     
-    private void computePrecursorsDataContinuityMatrix(){
-        for(int i=0; i<147; i++){
-            
-        }
-    }
     
 }

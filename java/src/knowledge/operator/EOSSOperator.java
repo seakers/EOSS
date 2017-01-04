@@ -70,17 +70,17 @@ public class EOSSOperator extends AbstractEOSSOperator {
             this.orbit = Integer.parseInt(strOrbit);
         }
 
-        allOrbits = new int[EOSSDatabase.getOrbits().size()];
-        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+        allOrbits = new int[EOSSDatabase.getNumberOfOrbits()];
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); i++) {
             allOrbits[i] = i;
         }
 
         if (strInstrument[0].matches("A")) {
-            this.instrument = new int[EOSSDatabase.getInstruments().size()];
+            this.instrument = new int[EOSSDatabase.getNumberOfInstruments()];
             if (strInstrument.length > 1) {
                 throw new IllegalArgumentException("All instruments A cannot be used in addition to specifying other instruments");
             } else {
-                for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+                for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); i++) {
                     instrument[i] = i;
                 }
             }
@@ -114,8 +114,8 @@ public class EOSSOperator extends AbstractEOSSOperator {
      * @throws IllegalArgumentException
      */
     private boolean checkParameters() throws IllegalArgumentException {
-        int nInst = EOSSDatabase.getInstruments().size();
-        int nOrb = EOSSDatabase.getInstruments().size();
+        int nInst = EOSSDatabase.getNumberOfInstruments();
+        int nOrb = EOSSDatabase.getNumberOfOrbits();
 
         //check mode is = {0, 1, 2}
         switch (this.mode) {
@@ -181,7 +181,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
                 orbitArray = allOrbits;
             } else {
                 if (orbit == -1) {
-                    orbitArray = new int[]{pprng.nextInt(EOSSDatabase.getOrbits().size())};
+                    orbitArray = new int[]{pprng.nextInt(EOSSDatabase.getNumberOfOrbits())};
                 } else {
                     orbitArray = new int[]{orbit};
                 }
@@ -196,7 +196,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
                         //case when instrument id is a wildcard
                         if (instrument[0] == -1) {
                             //select a random instrument for the orbit
-                            instID[0] = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                            instID[0] = pprng.nextInt(EOSSDatabase.getNumberOfInstruments());
                         } else {
                             instID = instrument;
                         }
@@ -210,7 +210,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
                                 //this would be case like separate2 or separate3
                                 maxRemovalAllowed = instID.length - 1;
                             } else {
-                                maxRemovalAllowed = EOSSDatabase.getInstruments().size();
+                                maxRemovalAllowed = EOSSDatabase.getNumberOfInstruments();
                             }
 
                             for (int index : instID) {
@@ -248,7 +248,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
                                 Orbit[] emptyOrbits = arch.getEmptyOrbits();
                                 Orbit orbitToAdd = emptyOrbits[pprng.nextInt(emptyOrbits.length)];
                                 int orbitIndexToAdd = EOSSDatabase.findOrbitIndex(orbitToAdd);
-                                int randInstToAdd = pprng.nextInt(EOSSDatabase.getInstruments().size());
+                                int randInstToAdd = pprng.nextInt(EOSSDatabase.getNumberOfInstruments());
                                 arch.addInstrumentToOrbit(randInstToAdd, orbitIndexToAdd);
                             }
                         }

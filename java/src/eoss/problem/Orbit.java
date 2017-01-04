@@ -3,14 +3,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package eoss.problem;
+
+import java.io.Serializable;
+import org.hipparchus.util.FastMath;
+import org.orekit.utils.Constants;
 
 /**
  *
  * @author nozomihitomi
  */
-public class Orbit {
+public class Orbit implements Serializable{
+    private static final long serialVersionUID = 586121136979683837L;
+
     /**
      * semimajor axis in meters
      */
@@ -35,36 +40,35 @@ public class Orbit {
      * Mean anomaly in degrees
      */
     private final double meanAnomaly;
-    
+
     private final double eccentricity;
-    
+
     /**
      * Argument of perigee in degrees
      */
     private final double argPeri;
-    
+
     private final String name;
-    
+
     private final double period;
-    
+
     /**
      * Type of orbit (e.g. SSO, LEO)
      */
     private final OrbitType type;
 
     /**
-     * 
+     *
      * @param name
      * @param type
-     * @param semimajorAxis in km
+     * @param semimajorAxis in m
      * @param inclination in degrees
-     * @param RAAN in degrees 
-     * @param period 
+     * @param RAAN in degrees
      * @param meanAnomaly in degrees
      * @param eccentricity between [0,1]
      * @param argPeri argument of perigee in degrees
      */
-    public Orbit(String name, OrbitType type, double semimajorAxis, String inclination, String RAAN, double period, double meanAnomaly, double eccentricity, double argPeri) {
+    public Orbit(String name, OrbitType type, double semimajorAxis, String inclination, String RAAN, double meanAnomaly, double eccentricity, double argPeri) {
         this.name = name;
         this.type = type;
         this.semimajorAxis = semimajorAxis;
@@ -79,14 +83,15 @@ public class Orbit {
 //            this.inclinationStr = "SSO";
 //        else
 //            this.inclinationStr = "";
-        this.altitude = semimajorAxis-Earth.radius;
-        this.period = period;
+        this.altitude = semimajorAxis - Constants.WGS84_EARTH_EQUATORIAL_RADIUS;
+        this.period = 2*FastMath.PI*FastMath.sqrt(FastMath.pow(semimajorAxis, 3.)/Constants.WGS84_EARTH_MU);
     }
+    
 
     public String getName() {
         return name;
     }
-    
+
     public double getPeriod() {
         return period;
     }
@@ -116,14 +121,12 @@ public class Orbit {
     }
 
     public double getAltitude() {
-        return altitude/1000;
+        return altitude / 1000;
     }
 
     public OrbitType getType() {
         return type;
     }
-    
-    
 
     @Override
     public int hashCode() {
@@ -137,9 +140,10 @@ public class Orbit {
     }
 
     /**
-     * This checks if all parameters (except mean anomaly) are equal  
+     * This checks if all parameters (except mean anomaly) are equal
+     *
      * @param obj
-     * @return 
+     * @return
      */
     @Override
     public boolean equals(Object obj) {
@@ -150,8 +154,9 @@ public class Orbit {
             return false;
         }
         final Orbit other = (Orbit) obj;
-        if(!this.name.equalsIgnoreCase(other.getName()))
+        if (!this.name.equalsIgnoreCase(other.getName())) {
             return false;
+        }
         if (Double.doubleToLongBits(this.semimajorAxis) != Double.doubleToLongBits(other.semimajorAxis)) {
             return false;
         }
@@ -174,38 +179,40 @@ public class Orbit {
     public String toString() {
         return name;
     }
-    
+
     public String toJessSlots() {
-        return 
-            " (orbit-type " + type + ")"  + 
-            " (orbit-altitude# "  + altitude/1000 + ")"  + //change m to km
-            " (orbit-eccentricity "  + eccentricity + ")"  + 
-            " (orbit-RAAN " + RAAN + ")"  + 
-            " (orbit-inclination " + inclination + ")"  + 
-            " (orbit-string " + this.toString() + ")";
+        return " (orbit-type " + type + ")"
+                + " (orbit-altitude# " + altitude / 1000 + ")" + //change m to km
+                " (orbit-eccentricity " + eccentricity + ")"
+                + " (orbit-RAAN " + RAAN + ")"
+                + " (orbit-inclination " + inclination + ")"
+                + " (orbit-string " + this.toString() + ")";
 
     }
 
     public enum OrbitType {
+
         LEO, //low earth orbit
-        
+
         SSO, //sun synchronous orbit
-        
+
         MEO, //mid earth orbit
-        
+
         HEO, //high earth orbit
-        
+
         GEO; //geostationary orbit
     }
-    
+
     /**
-     * Computes the inclination in degrees of a satellite in a sunsynchronous orbit. Assumes circular orbit
+     * Computes the inclination in degrees of a satellite in a sunsynchronous
+     * orbit. Assumes circular orbit
+     *
      * @param semimajorAxis in m
-     * @return 
+     * @return
      */
-    private double getSSOInclination(double semimajorAxis){
+    private double getSSOInclination(double semimajorAxis) {
         double kh = 10.10949;
-        double cos_i = Math.pow(this.semimajorAxis/Earth.radius,3.5)/(-kh);
-        return 180.*Math.acos(cos_i)/Math.PI;
-}
+        double cos_i = Math.pow(this.semimajorAxis / Constants.WGS84_EARTH_EQUATORIAL_RADIUS, 3.5) / (-kh);
+        return 180. * Math.acos(cos_i) / Math.PI;
+    }
 }

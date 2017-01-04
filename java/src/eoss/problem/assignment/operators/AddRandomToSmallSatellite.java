@@ -41,8 +41,8 @@ public class AddRandomToSmallSatellite extends AbstractEOSSOperator {
     @Override
     protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         //Find random orbit with less than maxSize mass of instruments
-        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
-        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getNumberOfOrbits());
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); i++) {
             orbitIndex.add(i);
         }
         Collections.shuffle(orbitIndex);//this sorts orbits in random order
@@ -52,7 +52,7 @@ public class AddRandomToSmallSatellite extends AbstractEOSSOperator {
             ArrayList<Integer> payload = child.getInstrumentsInOrbit(j);
             double payloadMass = 0;
             for(Integer k : payload){
-                payloadMass += Double.parseDouble(EOSSDatabase.getInstruments().get(k).getProperty("mass#"));
+                payloadMass += Double.parseDouble(EOSSDatabase.getInstrument(k).getProperty("mass#"));
             }
             if(payloadMass >= maxSize){
                 randOrbIndex = j;
@@ -63,8 +63,8 @@ public class AddRandomToSmallSatellite extends AbstractEOSSOperator {
             return child;
         
         //Find a random instrument that has not yet been assigned to the random orbit found above 
-        ArrayList<Integer> instIndex = new ArrayList<>(EOSSDatabase.getInstruments().size());
-        for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+        ArrayList<Integer> instIndex = new ArrayList<>(EOSSDatabase.getNumberOfInstruments());
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); i++) {
             instIndex.add(i);
         }
         Collections.shuffle(instIndex);//this sorts orbits in random order

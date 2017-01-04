@@ -12,7 +12,7 @@ import aos.aos.IAOS;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import architecture.io.ResultIO;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
-import eoss.problem.assignment.InstrumentAssignmentProblem;
+import eoss.problem.assignment.InstrumentAssignment;
 import java.io.File;
 import java.util.BitSet;
 import java.util.Collection;
@@ -124,14 +124,14 @@ public class InnovizationSearch implements Callable<Algorithm> {
         }
         if(init){
             //initialize jess
-            ((InstrumentAssignmentProblem)alg.getProblem()).renewJess();
+            ((InstrumentAssignment)alg.getProblem()).renewJess();
         }this.jessInit = init;
     }
 
     @Override
     public Algorithm call() throws Exception {
         if(!jessInit){
-            ((InstrumentAssignmentProblem)alg.getProblem()).renewJess();
+            ((InstrumentAssignment)alg.getProblem()).renewJess();
         }
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
@@ -220,7 +220,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
             //print out the search stats every once in a while
             if (nFuncEvals % 500 == 0) {
-                ((InstrumentAssignmentProblem) instAlgorithm.getProblem()).renewJess();
+                ((InstrumentAssignment) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
                 System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());

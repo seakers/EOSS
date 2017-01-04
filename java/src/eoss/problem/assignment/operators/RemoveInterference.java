@@ -53,7 +53,7 @@ public class RemoveInterference extends AbstractEOSSOperator {
         int randOrbitIndex = getRandomOrbitWithAtLeastNInstruments(child, 1);
         if(randOrbitIndex == -1)
             return child;
-        Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
+        Orbit randOrbit = EOSSDatabase.getOrbit(randOrbitIndex);
 
         ArrayList<String> thepayload = new ArrayList<>();
         for (Instrument inst : child.getInstrumentsInOrbit(randOrbit)) {
@@ -72,7 +72,7 @@ public class RemoveInterference extends AbstractEOSSOperator {
             child.removeInstrumentFromOrbit(interferingInstrumentIndex, randOrbitIndex);
             int orbitToAdd = randOrbitIndex;
             while (orbitToAdd == randOrbitIndex) {
-                orbitToAdd = pprng.nextInt(EOSSDatabase.getOrbits().size());
+                orbitToAdd = pprng.nextInt(EOSSDatabase.getNumberOfOrbits());
             }
             child.addInstrumentToOrbit(interferingInstrumentIndex, orbitToAdd);
         }
@@ -118,7 +118,7 @@ public class RemoveInterference extends AbstractEOSSOperator {
                 subset = interferingInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of cost
             }
             String chosenInstrument = subset.get(pprng.nextInt(subset.size()));
-            return findInstrument(chosenInstrument);
+            return EOSSDatabase.findInstrumentIndex(EOSSDatabase.getInstrument(chosenInstrument));
         }
     }
 

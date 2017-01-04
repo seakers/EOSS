@@ -4,12 +4,12 @@
  */
 package eoss.problem.scheduling;
 
+import eoss.problem.Mission;
 import architecture.Architecture;
 import architecture.pattern.ArchitecturalDecision;
 import architecture.pattern.Permuting;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.hipparchus.linear.RealMatrix;
 import org.moeaframework.core.Solution;
 import org.orekit.time.AbsoluteDate;
 
@@ -28,12 +28,6 @@ public class MissionSchedulingArchitecture extends Architecture {
      * The permutation that defines the schedule
      */
     private final Permuting permuting;
-
-    /**
-     * Panel science score for each panel and mission. Rows are missions,
-     * columns are panels
-     */
-    private RealMatrix panelScores;
     
     /**
      * The launch dates of each mission
@@ -86,17 +80,7 @@ public class MissionSchedulingArchitecture extends Architecture {
     public int[] getSequence() {
         return permuting.getSequence();
     }
-
-    /**
-     * Gets the science scores for each panel and mission in a matrix. Rows are
-     * missions, columns are panels
-     *
-     * @return the science scores for each panel and mission in a matrix. 
-     */
-    public RealMatrix getPanelScores() {
-        return panelScores;
-    }
-
+    
     /**
      * Gets the launch dates for each mission
      * @return 

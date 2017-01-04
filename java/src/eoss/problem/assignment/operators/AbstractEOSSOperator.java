@@ -39,14 +39,14 @@ public abstract class AbstractEOSSOperator implements Variation {
      */
     public int getRandomOrbitWithAtLeastNInstruments(InstrumentAssignmentArchitecture arch, int nInst) {
         //Find a random orbit and its payload 
-        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
-        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getNumberOfOrbits());
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); i++) {
             orbitIndex.add(i);
         }
         Collections.shuffle(orbitIndex);//this sorts orbits in random order
 
         for (Integer ind : orbitIndex) {
-            if (arch.getInstrumentsInOrbit(EOSSDatabase.getOrbits().get(ind)).size() >= nInst) { // is there at most MAXSIZE instruments in this orbit?
+            if (arch.getInstrumentsInOrbit(EOSSDatabase.getOrbit(ind)).size() >= nInst) { // is there at most MAXSIZE instruments in this orbit?
                 return ind;
             }
         }
@@ -64,46 +64,18 @@ public abstract class AbstractEOSSOperator implements Variation {
      */
     public int getRandomOrbitWithAtMostNInstruments(InstrumentAssignmentArchitecture arch, int nInst) {
         //Find a random orbit and its payload 
-        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getOrbits().size());
-        for (int i = 0; i < EOSSDatabase.getOrbits().size(); i++) {
+        ArrayList<Integer> orbitIndex = new ArrayList<>(EOSSDatabase.getNumberOfOrbits());
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); i++) {
             orbitIndex.add(i);
         }
         Collections.shuffle(orbitIndex);//this sorts orbits in random order
 
         for (Integer ind : orbitIndex) {
-            if (arch.getInstrumentsInOrbit(EOSSDatabase.getOrbits().get(ind)).size() <= nInst) { // is there at most MAXSIZE instruments in this orbit?
+            if (arch.getInstrumentsInOrbit(EOSSDatabase.getOrbit(ind)).size() <= nInst) { // is there at most MAXSIZE instruments in this orbit?
                 return ind;
             }
         }
         //if not returned yet, then there is no orbit with at least n instruments
-        return -1;
-    }
-
-    /**
-     * Finds the index of the given instrument as it is found in the EOSSDatabase. If not found, then return -1.
-     * @param instName the name of the instrument
-     * @return the index of the given instrument as it is found in the EOSSDatabase. If the instrument is not in the database, then return -1.
-     */
-    protected int findInstrument(String instName) {
-        for (int j = 0; j < EOSSDatabase.getInstruments().size(); j++) {
-            if (instName.equalsIgnoreCase(EOSSDatabase.getInstruments().get(j).getName())) {
-                return j;
-            }
-        }
-        return -1;
-    }
-    /**
-     * 
-     * Finds the index of the given orbit as it is found in the EOSSDatabase. If not found, then return -1.
-     * @param orbName the name of the orbit
-     * @return the index of the given orbit as it is found in the EOSSDatabase. If the orbit is not in the database, then return -1.
-     */
-    protected int findOrbit(String orbName) {
-        for (int j = 0; j < EOSSDatabase.getOrbits().size(); j++) {
-            if (orbName.equalsIgnoreCase(EOSSDatabase.getOrbits().get(j).getName())) {
-                return j;
-            }
-        }
         return -1;
     }
 }

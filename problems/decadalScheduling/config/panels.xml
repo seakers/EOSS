@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<panels>
+	<panel> 
+		<id>WEA</id> <weight> 0.214 </weight> <description> Weather </description>
+		<objective> <id>WEA1</id> <weight> 0.1924 </weight> <description> Atmospheric winds </description>
+			<subobjective> <id>WEA1-1</id> <weight> 0.2 </weight> <description> Atmospheric wind speed </description> </subobjective>
+			<subobjective> <id>WEA1-2</id> <weight> 0.2 </weight> <description> Atmospheric wind direction </description> </subobjective>
+			<subobjective> <id>WEA1-3</id> <weight> 0.3 </weight> <description> Ocean surface wind speed </description> </subobjective>
+			<subobjective> <id>WEA1-4</id> <weight> 0.2 </weight> <description> Ocean surface wind direction </description> </subobjective>
+			<subobjective> <id>WEA1-1</id> <weight> 0.1 </weight> <description> Water vapor transport winds </description> </subobjective>
+		</objective>
+		<objective> <id>WEA2</id> <weight> 0.1538 </weight> <description> High temporal resolution air pollution </description>
+			<subobjective> <id>WEA2-1</id> <weight> 1/3 </weight> <description> Regional tropospheric ozone measurement </description> </subobjective>
+			<subobjective> <id>WEA2-2</id> <weight> 1/9 </weight> <description> Regional tropospheric ozone precursors - CO </description> </subobjective>
+			<subobjective> <id>WEA2-3</id> <weight> 1/9 </weight> <description> Regional troposphericozone precursors - NOx and other N compounds </description> </subobjective>
+			<subobjective> <id>WEA2-4</id> <weight> 1/9 </weight> <description> Regional tropospheric ozone precursors - Formaldehyde and non-CH4 VOC </description> </subobjective>
+			<subobjective> <id>WEA2-5</id> <weight> 1/6 </weight> <description> Regional tropospheric aerosols - SO2 </description> </subobjective>
+			<subobjective> <id>WEA2-6</id> <weight> 1/6 </weight> <description> Regional tropospheric aerosols - black carbon and other polluting aerosols </description> </subobjective>
+		</objective>
+		<objective> <id>WEA3</id> <weight> 0.1154 </weight> <description> All-weather temperature and humidity profiles </description>
+			<subobjective> <id>WEA3-1</id> <weight> 0.25 </weight> <description> Regional all-weather atmospheric temperature measurement </description> </subobjective>
+			<subobjective> <id>WEA3-2</id> <weight> 0.25 </weight> <description> Regional all-weather atmospheric humidity measurement </description> </subobjective>
+			<subobjective> <id>WEA3-3</id> <weight> 0.25 </weight> <description> Regional all-weather precipitation measurement </description> </subobjective>
+			<subobjective> <id>WEA3-4</id> <weight> 0.25 </weight> <description> Regional all-weather sea surface temperature measurement </description> </subobjective>
+		</objective>
+		<objective> <id>WEA4</id> <weight> 0.0769 </weight> <description> Comprehensive global tropospheric aerosol characterization </description>
+			<subobjective> <id>WEA4-1</id> <weight> 0.2 </weight> <description> Global aerosol height/optical depth </description> </subobjective>
+			<subobjective> <id>WEA4-2</id> <weight> 0.2 </weight> <description> Global aerosol shape and composition measurement </description> </subobjective>
+			<subobjective> <id>WEA4-3</id> <weight> 0.2 </weight> <description> Global aerosol scattering properties </description> </subobjective>
+			<subobjective> <id>WEA4-4</id> <weight> 0.2 </weight> <description> Global aerosol extinction profiles </description> </subobjective>
+			<subobjective> <id>WEA4-5</id> <weight> 0.2 </weight> <description> Global aerosol size distribution </description> </subobjective>
+		</objective>
+		<objective> <id>WEA5</id> <weight> 0.1923 </weight> <description> Radio Occultation </description>
+			<subobjective> <id>WEA5-1</id> <weight> 1.0 </weight> <description> Radio occultation </description> </subobjective>
+		</objective>
+		<objective> <id>WEA6</id> <weight> 0.1538 </weight> <description> Comprehensive global tropospheric O3 measurements </description>
+			<subobjective> <id>WEA6-1</id> <weight> 1/7 </weight> <description> Tropospheric ozone </description> </subobjective>
+			<subobjective> <id>WEA6-2</id> <weight> 1/7 </weight> <description> Global tropospheric O3 precursors: CH4 </description> </subobjective>
+			<subobjective> <id>WEA6-3</id> <weight> 1/7 </weight> <description> Global tropospheric O3 measurements:  non-CH4 VOC </description> </subobjective>
+			<subobjective> <id>WEA6-4</id> <weight> 1/7 </weight> <description> Global tropospheric O3 precursors: N2 compounds </description> </subobjective>
+			<subobjective> <id>WEA6-5</id> <weight> 1/7 </weight> <description> Global tropospheric O3 precursors: CO </description> </subobjective>
+			<subobjective> <id>WEA6-6</id> <weight> 1/7 </weight> <description> Global tropospheric aerosols: SO2 </description> </subobjective>
+			<subobjective> <id>WEA6-7</id> <weight> 1/7 </weight> <description> Global tropospheric aerosols: black carbon and other polluting aerosols </description> </subobjective>
+		</objective>
+		<objective> <id>WEA7</id> <weight> 0.1154 </weight> <description> Aerosol-cloud discovery </description>
+			<subobjective> <id>WEA7-1</id> <weight> 1/12 </weight> <description> Cloud type </description> </subobjective>
+			<subobjective> <id>WEA7-2</id> <weight> 1/12 </weight> <description> Cloud amount and distribution </description> </subobjective>
+			<subobjective> <id>WEA7-3</id> <weight> 1/12 </weight> <description> Cloud height </description> </subobjective>
+			<subobjective> <id>WEA7-4</id> <weight> 1/12 </weight> <description> Cloud ice particles - size distribution </description> </subobjective>
+			<subobjective> <id>WEA7-5</id> <weight> 1/12 </weight> <description> Cloud particles - phase </description> </subobjective>
+			<subobjective> <id>WEA7-6</id> <weight> 1/12 </weight> <description> Cloud liquid water - precipitation </description> </subobjective>
+			<subobjective> <id>WEA7-7</id> <weight> 1/12 </weight> <description> Cloud droplet size </description> </subobjective>
+			<subobjective> <id>WEA7-8</id> <weight> 1/12 </weight> <description> Aerosol height </description> </subobjective>
+			<subobjective> <id>WEA7-9</id> <weight> 1/12 </weight> <description> Aerosol shape and composition </description> </subobjective>
+			<subobjective> <id>WEA7-10</id> <weight> 1/12 </weight> <description> Aerosol scattering properties </description> </subobjective>
+			<subobjective> <id>WEA7-11</id> <weight> 1/12 </weight> <description> Aerosol extinction profiles </description> </subobjective>
+			<subobjective> <id>WEA7-12</id> <weight> 1/12 </weight> <description> Aerosol size distribution </description> </subobjective>
+		</objective>
+		<discountRate>0.1</discountRate>
+	</panel>
+	<panel> 
+		<id>CLI</id> <weight> 0.206 </weight> <description> Climate </description>
+		<objective> <id>CLI1</id> <weight> 0.2353 </weight> <description> Aerosol-cloud discovery </description>
+			<subobjective> <id>CLI1-1</id> <weight> 1/12 </weight> <description> Cloud type </description> </subobjective>
+			<subobjective> <id>CLI1-2</id> <weight> 1/12 </weight> <description> Cloud amount and distribution </description> </subobjective>
+			<subobjective> <id>CLI1-3</id> <weight> 1/12 </weight> <description> Cloud height </description> </subobjective>
+			<subobjective> <id>CLI1-4</id> <weight> 1/12 </weight> <description> Cloud ice particles - size distribution </description> </subobjective>
+			<subobjective> <id>CLI1-5</id> <weight> 1/12 </weight> <description> Cloud particles - phase </description> </subobjective>
+			<subobjective> <id>CLI1-6</id> <weight> 1/12 </weight> <description> Cloud liquid water - precipitation </description> </subobjective>
+			<subobjective> <id>CLI1-7</id> <weight> 1/12 </weight> <description> Cloud droplet size </description> </subobjective>
+			<subobjective> <id>CLI1-8</id> <weight> 1/12 </weight> <description> Aerosol height </description> </subobjective>
+			<subobjective> <id>CLI1-9</id> <weight> 1/12 </weight> <description> Aerosol shape and composition </description> </subobjective>
+			<subobjective> <id>CLI1-10</id> <weight> 1/12 </weight> <description> Aerosol scattering properties </description> </subobjective>
+			<subobjective> <id>CLI1-11</id> <weight> 1/12 </weight> <description> Aerosol extinction profiles </description> </subobjective>
+			<subobjective> <id>CLI1-12</id> <weight> 1/12 </weight> <description> Aerosol size distribution </description> </subobjective>
+		</objective>
+		<objective> <id>CLI2</id> <weight> 0.2353 </weight> <description> Ice Sheet, Sea Ice Volume and Ice Dynamics </description>
+			<subobjective> <id>CLI2-1</id> <weight> 0.1 </weight> <description> Ice sheet volume </description> </subobjective>
+			<subobjective> <id>CLI2-2</id> <weight> 0.1 </weight> <description> Glacier surface elevation </description> </subobjective>
+			<subobjective> <id>CLI2-3</id> <weight> 0.1 </weight> <description> Glacier mass balance </description> </subobjective>
+			<subobjective> <id>CLI2-4</id> <weight> 0.1 </weight> <description> Ice Sheet topography </description> </subobjective>
+			<subobjective> <id>CLI2-5</id> <weight> 0.1 </weight> <description> Sea ice thickness </description> </subobjective>
+			<subobjective> <id>CLI2-6</id> <weight> 0.1 </weight> <description> Sea ice cover </description> </subobjective>
+			<subobjective> <id>CLI2-7</id> <weight> 0.4 </weight> <description> Ice sheet velocity </description> </subobjective>
+		</objective>
+		<objective> <id>CLI3</id> <weight> 0.2353 </weight> <description> Carbon Sources and Sinks </description>
+			<subobjective> <id>CLI3-1</id> <weight> 1/6 </weight> <description> Land carbon: canopy density </description> </subobjective>
+			<subobjective> <id>CLI3-2</id> <weight> 1/6 </weight> <description> Land carbon: vegetation height </description> </subobjective>
+			<subobjective> <id>CLI3-3</id> <weight> 1/6 </weight> <description> Land carbon: vegetation type and structure </description> </subobjective>
+			<subobjective> <id>CLI3-4</id> <weight> 1/6 </weight> <description> Ocean carbon: VIS ocean color </description> </subobjective>
+			<subobjective> <id>CLI3-5</id> <weight> 1/6 </weight> <description> Ocean carbon: UV ocean color </description> </subobjective>
+			<subobjective> <id>CLI3-6</id> <weight> 1/6 </weight> <description> Ocean carbon: NIR ocean color </description> </subobjective>
+		</objective>
+		<objective> <id>CLI4</id> <weight> 0.1765 </weight> <description> Radiance Calibration and Time-Reference Observatory </description>
+			<subobjective> <id>CLI4-1</id> <weight> 1/6 </weight> <description> Earth radiation budget measurement: Spectrally resolved solar irradiance </description> </subobjective>
+			<subobjective> <id>CLI4-2</id> <weight> 1/6 </weight> <description> Earth radiation budget measurement: Spectrally resolved Earth IR (LW) radiance </description> </subobjective>
+			<subobjective> <id>CLI4-3</id> <weight> 1/6 </weight> <description> Earth radiation budget measurement: Spectrally resolved reflected solar radiance </description> </subobjective>
+			<subobjective> <id>CLI4-4</id> <weight> 1/6 </weight> <description> GNSS Radio occultation measurement </description> </subobjective>
+			<subobjective> <id>CLI4-5</id> <weight> 1/6 </weight> <description> Atmospheric temperature </description> </subobjective>
+			<subobjective> <id>CLI4-6</id> <weight> 1/6 </weight> <description> Water vapor profiles </description> </subobjective>
+		</objective>
+		<objective> <id>CLI5</id> <weight> 0.1176 </weight> <description> Ocean Circulation, Heat Storage, and Climate Forcing </description>
+			<subobjective> <id>CLI5-1</id> <weight> 0.25 </weight> <description> Altimetry measurement: Sea level height </description> </subobjective>
+			<subobjective> <id>CLI5-2</id> <weight> 0.25 </weight> <description> Geoid and gravity field variations </description> </subobjective>
+			<subobjective> <id>CLI5-3</id> <weight> 0.25 </weight> <description> Ocean surface wind speed measurement for ocean circulation  </description> </subobjective>
+			<subobjective> <id>CLI5-4</id> <weight> 0.25 </weight> <description> Ocean surface wind direction </description> </subobjective>
+		</objective>
+		<discountRate>0.15</discountRate>
+	</panel>
+	<panel> 
+		<id>ECO</id> <weight> 0.206 </weight> <description> Land and Ecosystems </description>
+		<objective> <id>ECO1</id> <weight> 0.28 </weight> <description> Ecosystem Function </description>
+			<subobjective> <id>ECO1-1</id> <weight> 0.25 </weight> <description> Vegetation state </description> </subobjective>
+			<subobjective> <id>ECO1-2</id> <weight> 0.125 </weight> <description> Disaster monitoring </description> </subobjective>
+			<subobjective> <id>ECO1-3</id> <weight> 0.25 </weight> <description> Landcover status </description> </subobjective>
+			<subobjective> <id>ECO1-4</id> <weight> 0.25 </weight> <description> Coral reef health extent </description> </subobjective>
+			<subobjective> <id>ECO1-5</id> <weight> 0.125 </weight> <description> Fire detection and monitoring </description> </subobjective>
+		</objective>
+		<objective> <id>ECO2</id> <weight> 0.24 </weight> <description> Ecosystem Structure and Biomass </description>
+			<subobjective> <id>ECO2-1</id> <weight> 0.4 </weight> <description> Vegetation type and structure </description> </subobjective>
+			<subobjective> <id>ECO2-2</id> <weight> 0.3 </weight> <description> Vegetation height </description> </subobjective>
+			<subobjective> <id>ECO2-3</id> <weight> 0.2 </weight> <description> Biomass through canopy density </description> </subobjective>
+			<subobjective> <id>ECO2-4</id> <weight> 0.1 </weight> <description> Fire detection and monitoring </description> </subobjective>
+		</objective>
+		<objective> <id>ECO3</id> <weight> 0.20 </weight> <description> Carbon Budget </description>
+			<subobjective> <id>ECO3-1</id> <weight> 0.5 </weight> <description> Atmospheric CO2 </description> </subobjective>
+			<subobjective> <id>ECO3-2</id> <weight> 0.25 </weight> <description> Atmospheric O2 for mixing ratios </description> </subobjective>
+			<subobjective> <id>ECO3-3</id> <weight> 0.25 </weight> <description> Atmospheric CO </description> </subobjective>
+		</objective>
+		<objective> <id>ECO4</id> <weight> 0.16 </weight> <description> Coastal Ecosystem Dynamics </description>
+			<subobjective> <id>ECO4-1</id> <weight> 0.25 </weight> <description> Standard Ocean color </description> </subobjective>
+			<subobjective> <id>ECO4-2</id> <weight> 0.25 </weight> <description> Extended ocean color - UV </description> </subobjective>
+			<subobjective> <id>ECO4-3</id> <weight> 0.25 </weight> <description> Extended ocean color - NIR </description> </subobjective>
+			<subobjective> <id>ECO4-4</id> <weight> 0.25 </weight> <description> River plumes - sediment fluxes </description> </subobjective>
+		</objective>
+		<objective> <id>ECO5</id> <weight> 0.12 </weight> <description> Global Ocean Productivity </description>
+			<subobjective> <id>ECO5-1</id> <weight> 0.5 </weight> <description> Global standard ocean color </description> </subobjective>
+			<subobjective> <id>ECO5-2</id> <weight> 0.25 </weight> <description> Global extended ocean color - UV </description> </subobjective>
+			<subobjective> <id>ECO5-3</id> <weight> 0.25 </weight> <description> Global extended ocean color - NIR </description> </subobjective>
+		</objective>
+		<discountRate>0.1</discountRate>
+	</panel>
+	<panel> 
+		<id>WAT</id> <weight> 0.15.6 </weight> <description> Water </description>
+		<objective> <id>WAT1</id> <weight> 0.287 </weight> <description> Soil moisture and freeze-thaw state </description>
+			<subobjective> <id>WAT1-1</id> <weight> 0.5 </weight> <description> Freeze/thaw state </description> </subobjective>
+			<subobjective> <id>WAT1-2</id> <weight> 0.5 </weight> <description> Soil Moisture </description> </subobjective>
+		</objective>
+		<objective> <id>WAT2</id> <weight> 0.238 </weight> <description>  </description>
+			<subobjective> <id>WAT2-1</id> <weight> 0.5 </weight> <description> River and lake elevation </description> </subobjective>
+			<subobjective> <id>WAT2-2</id> <weight> 0.25 </weight> <description> Sea level height </description> </subobjective>
+			<subobjective> <id>WAT2-3</id> <weight> 0.25 </weight> <description> Sea floor topography </description> </subobjective>
+		</objective>
+		<objective> <id>WAT3</id> <weight> 0.19 </weight> <description> Snow and cold land processes </description>
+			<subobjective> <id>WAT3-1</id> <weight> 0.25 </weight> <description> Snow water equivalent </description> </subobjective>
+			<subobjective> <id>WAT3-2</id> <weight> 0.25 </weight> <description> Snow depth </description> </subobjective>
+			<subobjective> <id>WAT3-3</id> <weight> 0.25 </weight> <description> Snow wetness </description> </subobjective>
+			<subobjective> <id>WAT3-4</id> <weight> 0.25 </weight> <description> Snow cover </description> </subobjective>
+		</objective>
+		<objective> <id>WAT4</id> <weight> 0.095 </weight> <description> Water vapor transport </description>
+			<subobjective> <id>WAT4-1</id> <weight> 0.5 </weight> <description> Water vapor imagery </description> </subobjective>
+			<subobjective> <id>WAT4-2</id> <weight> 1/6 </weight> <description> Water vapor transport </description> </subobjective>
+			<subobjective> <id>WAT4-3</id> <weight> 1/6 </weight> <description> Atmospheric wind speed </description> </subobjective>
+			<subobjective> <id>WAT4-4</id> <weight> 1/6 </weight> <description> Atmospheric wind direction </description> </subobjective>
+			</objective>
+		<objective> <id>WAT5</id> <weight> 0.079 </weight> <description> Sea Ice thickness, glacier surface elevation and glacier velocity </description>
+			<subobjective> <id>WAT5-1</id> <weight> 0.25 </weight> <description> Sea ice thickness </description> </subobjective>
+			<subobjective> <id>WAT5-2</id> <weight> 0.25 </weight> <description> Sea ice cover </description> </subobjective>
+			<subobjective> <id>WAT5-3</id> <weight> 0.25 </weight> <description> Glacier surface elevation </description> </subobjective>
+			<subobjective> <id>WAT5-4</id> <weight> 0.25 </weight> <description> Ice sheet velocity </description> </subobjective>
+		</objective>
+		<objective> <id>WAT6</id> <weight> 0.063 </weight> <description> Groundwater storage, ice sheet mass balance and ocean mass </description>
+			<subobjective> <id>WAT6-1</id> <weight> 1/3 </weight> <description> Groundwater storage </description> </subobjective>
+			<subobjective> <id>WAT6-2</id> <weight> 1/3 </weight> <description> Glacier mass balance </description> </subobjective>
+			<subobjective> <id>WAT6-3</id> <weight> 1/3 </weight> <description> Ocean mass distribution </description> </subobjective>
+		</objective>
+		<objective> <id>WAT7</id> <weight> 0.048 </weight> <description> Inland and coastal water quality </description>
+			<subobjective> <id>WAT7-1</id> <weight> 0.25 </weight> <description> Ocean color - VIS </description> </subobjective>
+			<subobjective> <id>WAT7-2</id> <weight> 0.25 </weight> <description> Ocean color - NIR </description> </subobjective>
+			<subobjective> <id>WAT7-3</id> <weight> 0.25 </weight> <description> Land use </description> </subobjective>
+			<subobjective> <id>WAT7-4</id> <weight> 0.25 </weight> <description> Land cover status </description> </subobjective>
+		</objective>
+		<discountRate>0.1</discountRate>
+	</panel>
+	<panel> 
+		<id>HEA</id> <weight> 0.111 </weight> <description> Huamn Health </description>
+		<objective> <id>HEA1</id> <weight> 1/6 </weight> <description> Ozone Processes: Ultraviolet Radiation and Cancer </description>
+			<subobjective> <id>HEA1-1</id> <weight> 0.25 </weight> <description> Global stratospheric ozone </description> </subobjective>
+			<subobjective> <id>HEA1-2</id> <weight> 1/32 </weight> <description> Global stratospheric water vapor </description> </subobjective>
+			<subobjective> <id>HEA1-3</id> <weight> 1/32 </weight> <description> Global stratospheric halogen compounds </description> </subobjective>
+			<subobjective> <id>HEA1-4</id> <weight> 1/32 </weight> <description> Global stratospheric HOX chemistry </description> </subobjective>
+			<subobjective> <id>HEA1-5</id> <weight> 1/32 </weight> <description> Global stratospheric CO2 </description> </subobjective>
+			<subobjective> <id>HEA1-6</id> <weight> 1/32 </weight> <description> Global stratospheric CH4 </description> </subobjective>
+			<subobjective> <id>HEA1-7</id> <weight> 1/32 </weight> <description> Global stratospheric CO </description> </subobjective>
+			<subobjective> <id>HEA1-8</id> <weight> 1/32 </weight> <description> Global stratospheric Nox chemistry </description> </subobjective>
+			<subobjective> <id>HEA1-9</id> <weight> 1/32 </weight> <description> Global stratospheric formaldehyde chemistry </description> </subobjective>
+			<subobjective> <id>HEA1-10</id> <weight> 0.25 </weight> <description> Spectrally resolved IR radiance </description> </subobjective>
+			<subobjective> <id>HEA1-11</id> <weight> 1/32 </weight> <description> Aerosols: aerosol optical depth </description> </subobjective>
+			<subobjective> <id>HEA1-12</id> <weight> 1/32 </weight> <description> Aerosols: aerosol shape and composition </description> </subobjective>
+			<subobjective> <id>HEA1-13</id> <weight> 1/32 </weight> <description> Aerosols: aerosol scattering properties </description> </subobjective>
+			<subobjective> <id>HEA1-14</id> <weight> 1/32 </weight> <description> Aerosols: aerosol extinction profiles </description> </subobjective>
+			<subobjective> <id>HEA1-15</id> <weight> 1/32 </weight> <description> Aerosols: aerosol size distribution </description> </subobjective>
+			<subobjective> <id>HEA1-16</id> <weight> 1/48 </weight> <description> Clouds: cloud top temperature </description> </subobjective>
+			<subobjective> <id>HEA1-17</id> <weight> 1/48 </weight> <description> Clouds: cloud type </description> </subobjective>
+			<subobjective> <id>HEA1-18</id> <weight> 1/48 </weight> <description> Clouds: cloud amount and distribution </description> </subobjective>
+			<subobjective> <id>HEA1-19</id> <weight> 1/48 </weight> <description> Clouds: cloud height and optical thickness </description> </subobjective>
+			<subobjective> <id>HEA1-20</id> <weight> 1/48 </weight> <description> Clouds: cloud ice particle size distribution </description> </subobjective>
+			<subobjective> <id>HEA1-21</id> <weight> 1/48 </weight> <description> Clouds: cloud particle phase - ice/water transition </description> </subobjective>
+		</objective>
+		<objective> <id>HEA2</id> <weight> 1/6 </weight> <description> Heat Stress and Drought </description>
+			<subobjective> <id>HEA2-1</id> <weight> 0.25 </weight> <description> Rainfall measurement </description> </subobjective>
+			<subobjective> <id>HEA2-2</id> <weight> 0.25 </weight> <description> Soil moisture </description> </subobjective>
+			<subobjective> <id>HEA2-3</id> <weight> 0.25 </weight> <description> Vegetation state </description> </subobjective>
+			<subobjective> <id>HEA2-4</id> <weight> 0.25 </weight> <description> Land surface temperature </description> </subobjective>
+		</objective>
+		<objective> <id>HEA3</id> <weight> 1/6 </weight> <description> Acute Toxic Pollution and Releases </description>
+			<subobjective> <id>HEA3-1</id> <weight> 0.25 </weight> <description> Visible atmospheric plumes </description> </subobjective>
+			<subobjective> <id>HEA3-2</id> <weight> 0.25 </weight> <description> Pollutant particle size </description> </subobjective>
+			<subobjective> <id>HEA3-3</id> <weight> 0.25 </weight> <description> Pollutant gross vertical structure </description> </subobjective>
+			<subobjective> <id>HEA3-4</id> <weight> 0.25 </weight> <description> Ocean color </description> </subobjective>
+		</objective>
+		<objective> <id>HEA4</id> <weight> 1/6 </weight> <description> Air Pollution and Respiratory and Cardiovascular Diseases </description>
+			<subobjective> <id>HEA4-1</id> <weight> 1/32 </weight> <description> Global tropospheric aerosols: aerosol shape and composition </description> </subobjective>
+			<subobjective> <id>HEA4-2</id> <weight> 1/32 </weight> <description> Global tropospheric aerosols: aerosol size distribution </description> </subobjective>
+			<subobjective> <id>HEA4-3</id> <weight> 1/16 </weight> <description> Global tropospheric ozone </description> </subobjective>
+			<subobjective> <id>HEA4-4</id> <weight> 1/80 </weight> <description> Global tropospheric ozone precursors - CO </description> </subobjective>
+			<subobjective> <id>HEA4-5</id> <weight> 1/80 </weight> <description> Global tropospheric ozone precursors - NOX compounds </description> </subobjective>
+			<subobjective> <id>HEA4-6</id> <weight> 1/80 </weight> <description> Global tropospheric ozone precursors - formaldehyde </description> </subobjective>
+			<subobjective> <id>HEA4-7</id> <weight> 1/80 </weight> <description> Global tropospheric ozone precursors - SO2 </description> </subobjective>
+			<subobjective> <id>HEA4-8</id> <weight> 1/80 </weight> <description> Global tropospheric ozone precursors - CH4 </description> </subobjective>
+			<subobjective> <id>HEA4-9</id> <weight> 1/16 </weight> <description> Global tropospheric black carbon and other aerosols </description> </subobjective>
+			<subobjective> <id>HEA4-10</id> <weight> 3/32 </weight> <description> Regional tropospheric aerosols: aerosol shape and composition </description> </subobjective>
+			<subobjective> <id>HEA4-11</id> <weight> 3/32 </weight> <description> Regional tropospheric aerosols: aerosol size distribution </description> </subobjective>
+			<subobjective> <id>HEA4-12</id> <weight> 3/16 </weight> <description> Regional tropospheric ozone </description> </subobjective>
+			<subobjective> <id>HEA4-13</id> <weight> 3/80 </weight> <description> Regional tropospheric ozone precursors - CO </description> </subobjective>
+			<subobjective> <id>HEA4-14</id> <weight> 3/80 </weight> <description> Regional tropospheric ozone precursors - NOX compounds </description> </subobjective>
+			<subobjective> <id>HEA4-15</id> <weight> 3/80 </weight> <description> Regional tropospheric ozone precursors - formaldehyde </description> </subobjective>
+			<subobjective> <id>HEA4-16</id> <weight> 3/80 </weight> <description> Regional tropospheric ozone precursors - SO2 </description> </subobjective>
+			<subobjective> <id>HEA4-17</id> <weight> 3/80 </weight> <description> Regional tropospheric ozone precursors - CH4 </description> </subobjective>
+			<subobjective> <id>HEA4-18</id> <weight> 3/16 </weight> <description> Regional tropospheric black carbon and other aerosols </description> </subobjective>
+		</objective>
+		<objective> <id>HEA5</id> <weight> 1/6 </weight> <description> Algal Blooms and Waterborne Infectious Diseases </description>
+			<subobjective> <id>HEA5-1</id> <weight> 0.25 </weight> <description> Algal blooms - VIS ocean color </description> </subobjective>
+			<subobjective> <id>HEA5-2</id> <weight> 0.25 </weight> <description> Algal blooms - NIR ocean color </description> </subobjective>
+			<subobjective> <id>HEA5-3</id> <weight> 1/3 </weight> <description> Ocean surface temperature </description> </subobjective>
+			<subobjective> <id>HEA5-4</id> <weight> 1/6 </weight> <description> River plumes/sediment fluxes </description> </subobjective>
+		</objective>
+		<objective> <id>HEA6</id> <weight> 1/6 </weight> <description> Vector-borne and Zoonotic Disease </description>
+			<subobjective> <id>HEA6-1</id> <weight> 2/9 </weight> <description> Meteorological conditions - Land surface temperature </description> </subobjective>
+			<subobjective> <id>HEA6-2</id> <weight> 2/9 </weight> <description> Meteorological conditions - Atmospheric wind speed </description> </subobjective>
+			<subobjective> <id>HEA6-3</id> <weight> 2/9 </weight> <description> Meteorological conditions - Land surface temperature </description> </subobjective>
+			<subobjective> <id>HEA6-4</id> <weight> 1/9 </weight> <description> Soil and vegetation - Soil moisture </description> </subobjective>
+			<subobjective> <id>HEA6-5</id> <weight> 1/9 </weight> <description> Soil and vegetation - Vegetation state </description> </subobjective>
+			<subobjective> <id>HEA6-6</id> <weight> 1/9 </weight> <description> Soil and vegetation - Landcover status </description> </subobjective>
+		</objective>
+		<discountRate>0.1</discountRate>
+	</panel>
+	<panel> 
+		<id>SOL</id> <weight> 0.107 </weight> <description> Solid Earth </description>
+		<objective> <id>SOL1</id> <weight> 0.286 </weight> <description> Surface deformation </description>
+			<subobjective> <id>SOL1-1</id> <weight> 0.6 </weight> <description> Surface deformation measurement </description> </subobjective>
+			<subobjective> <id>SOL1-2</id> <weight> 0.2 </weight> <description> Volcanos and landslides - SAR </description> </subobjective>
+			<subobjective> <id>SOL1-3</id> <weight> 0.2 </weight> <description> Hydrocarbon reservoir monitoring </description> </subobjective>
+		</objective>
+		<objective> <id>SOL2</id> <weight> 0.238 </weight> <description> Surface composition </description>
+			<subobjective> <id>SOL2-1</id> <weight> 0.6 </weight> <description> Surface composition measurement </description> </subobjective>
+			<subobjective> <id>SOL2-2</id> <weight> 0.2 </weight> <description> Volcanos and landslides - hyperspectral </description> </subobjective>
+			<subobjective> <id>SOL2-3</id> <weight> 0.2 </weight> <description> Hydrocarbon reservoir monitoring </description> </subobjective>
+		</objective>
+		<objective> <id>SOL3</id> <weight> 0.19 </weight> <description> High resolution topography </description>
+			<subobjective> <id>SOL3-3</id> <weight> 0.8 </weight> <description> High resolution topography </description> </subobjective>
+			<subobjective> <id>SOL3-3</id> <weight> 0.2 </weight> <description> Flood monitoring </description> </subobjective>
+		</objective>
+		<objective> <id>SOL4</id> <weight> 0.143 </weight> <description> Temporal variations in Earth gravity field </description>
+			<subobjective> <id>SOL4-1</id> <weight> 0.5 </weight> <description> Gravity field variations </description> </subobjective>
+			<subobjective> <id>SOL4-2</id> <weight> 1/6 </weight> <description> Changes in groundwater storage </description> </subobjective>
+			<subobjective> <id>SOL4-3</id> <weight> 1/6 </weight> <description> Changes in glacier mass balance </description> </subobjective>
+			<subobjective> <id>SOL4-4</id> <weight> 1/6 </weight> <description> Changes in ocean mass distribution </description> </subobjective>			
+		</objective>
+		<objective> <id>SOL5</id> <weight> 0.143 </weight> <description> Oceanic bathymetry </description>
+			<subobjective> <id>SOL5-1</id> <weight> 1.0 </weight> <description> Sea floor topography </description> </subobjective>
+		</objective>
+		<discountRate>0.05</discountRate>
+	</panel>
+</panels>	

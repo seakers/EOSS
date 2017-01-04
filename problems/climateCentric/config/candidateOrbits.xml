@@ -2,7 +2,7 @@
 <candidateOrbits>
 	<orbit>
 		<name>LEO-600-polar-NA</name>
-		<semimajoraxis>6978100.0</semimajoraxis><!-- in km-->
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
 		<type>LEO</type>
 		<inclination>polar</inclination><!-- in deg -->
 		<raan>NA</raan><!-- in deg -->
@@ -14,7 +14,7 @@
 	
 	<orbit>
 		<name>SSO-600-SSO-AM</name>
-		<semimajoraxis>6978100.0</semimajoraxis><!-- in km-->
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>AM</raan><!-- in deg -->
@@ -26,7 +26,7 @@
 	
 	<orbit>
 		<name>SSO-600-SSO-DD</name>
-		<semimajoraxis>6978100.0</semimajoraxis><!-- in km-->
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>DD</raan><!-- in deg -->
@@ -38,7 +38,7 @@
 	
 	<orbit>
 		<name>SSO-800-SSO-DD</name>
-		<semimajoraxis>7178100.0</semimajoraxis><!-- in km-->
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>DD</raan><!-- in deg -->
@@ -50,7 +50,7 @@
 	
 	<orbit>
 		<name>SSO-800-SSO-PM</name>
-		<semimajoraxis>7178100.0</semimajoraxis><!-- in km-->
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
 		<type>SSO</type>
 		<inclination>SSO</inclination><!-- in deg -->
 		<raan>PM</raan><!-- in deg -->

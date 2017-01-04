@@ -55,7 +55,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
         if (randOrbitIndex == -1) {
             return child;
         }
-        Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
+        Orbit randOrbit = EOSSDatabase.getOrbit(randOrbitIndex);
 
         ArrayList<String> thepayload = new ArrayList<>();
         for (Instrument inst : child.getInstrumentsInOrbit(randOrbit)) {
@@ -134,10 +134,10 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
                 subset = costRTM;
             }
             Interaction randCostInteraction = subset.get(pprng.nextInt(subset.size()));
-            return findInstrument(randCostInteraction.getNtpair().getAdded());
+            return EOSSDatabase.findInstrumentIndex(EOSSDatabase.getInstrument(randCostInteraction.getNtpair().getAdded()));
         } else {
             Nto1pair randpair= relevantInteractions.get(pprng.nextInt(relevantInteractions.size()));
-            return findInstrument(randpair.getAdded());
+            return EOSSDatabase.findInstrumentIndex(EOSSDatabase.getInstrument(randpair.getAdded()));
         }
     }
 

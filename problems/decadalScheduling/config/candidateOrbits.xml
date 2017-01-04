@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<candidateOrbits>
+	<orbit>
+		<name>ACE</name>
+		<semimajoraxis>6878100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>SSO</type>
+		<inclination>SSO</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>ASCENDS</name>
+		<semimajoraxis>6778100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>CLARREO</name>
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>DESDYNI</name>
+		<semimajoraxis>6878100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>GACM</name>
+		<semimajoraxis>6878100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>GEO-CAPE</name>
+		<semimajoraxis>42378100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>GEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>GPSRO</name>
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>GRACE-II</name>
+		<semimajoraxis>6578100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>HYSPIRI</name>
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>SSO</type>
+		<inclination>SSO</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>ICESAT-II</name>
+		<semimajoraxis>6778100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>LIST</name>
+		<semimajoraxis>6778100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>PATH</name>
+		<semimajoraxis>42378100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>GEO</type>
+		<inclination>0</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SCLP</name>
+		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SMAP</name>
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>SSO</type>
+		<inclination>SSO</inclination><!-- in deg -->
+		<raan>DD</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>SWOT</name>
+		<semimajoraxis>7378100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>66</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>XOVWM</name>
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+	<orbit>
+		<name>3DWINDS</name>
+		<semimajoraxis>6778100.0</semimajoraxis><!-- in m-->
+		<eccentricity>0</eccentricity>
+		<type>LEO</type>
+		<inclination>90</inclination><!-- in deg -->
+		<raan>0</raan><!-- in deg -->
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+	</orbit>
+	
+</candidateOrbits>

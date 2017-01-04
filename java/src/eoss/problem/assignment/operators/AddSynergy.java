@@ -56,7 +56,7 @@ public class AddSynergy extends AbstractEOSSOperator {
         if (randOrbitIndex == -1) {
             return child;
         }
-        Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
+        Orbit randOrbit = EOSSDatabase.getOrbit(randOrbitIndex);
 
         ArrayList<String> thepayload = new ArrayList<>();
         for (Instrument inst : child.getInstrumentsInOrbit(randOrbit)) {
@@ -115,7 +115,7 @@ public class AddSynergy extends AbstractEOSSOperator {
                 subset = missingSynergisticInstrument.subList(0, subsetSize); //take instruments that would add the largest amount of synergistic interaction
             }
             String chosenInstrument = subset.get(pprng.nextInt(subset.size()));
-            return findInstrument(chosenInstrument);
+            return EOSSDatabase.findInstrumentIndex(EOSSDatabase.getInstrument(chosenInstrument));
         }
     }
 

@@ -8,12 +8,17 @@ import architecture.Architecture;
 import architecture.pattern.Combining;
 import architecture.pattern.Assigning;
 import architecture.pattern.ArchitecturalDecision;
+import architecture.util.ValueTree;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
+import eoss.problem.Mission;
 import eoss.problem.Orbit;
+import eoss.problem.Spacecraft;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
+import java.util.HashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
 
@@ -38,6 +43,16 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * The available options of the number of satellites
      */
     private final int[] altnertivesForNumberOfSatellites;
+    
+    /**
+     * The missions represented by this architecture
+     */
+    private HashMap<String, Mission> missions;
+    
+    /**
+     * A tree containing the scores for each architecture
+     */
+    private ValueTree valueTree;
 
     //Constructors
     /**
@@ -59,22 +74,6 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         this.combine = (Combining) this.getVariable(0);
         this.assignment = (Assigning) this.getVariable(1);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
-    }
-
-    /**
-     * makes a copy solution from the input solution
-     *
-     * @param solution
-     */
-    public InstrumentAssignmentArchitecture(Solution solution) {
-        super(solution);
-        if (solution instanceof InstrumentAssignmentArchitecture) {
-            this.combine = (Combining) this.getVariable(0);
-            this.assignment = (Assigning) this.getVariable(1);
-            this.altnertivesForNumberOfSatellites = getAltnertivesForNumberOfSatellites();
-        } else {
-            throw new IllegalArgumentException("Expected type InstrumentAssignmentArchitecture class. Found " + solution.getClass().getSimpleName());
-        }
     }
 
     //Getters
@@ -113,7 +112,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         int strInd = 0;
         //loop over the indices that have been set true
         for (int i = inst.nextSetBit(0); i >= 0; i = inst.nextSetBit(i + 1)) {
-            out[strInd] = EOSSDatabase.getInstruments().get(i);
+            out[strInd] = EOSSDatabase.getInstrument(i);
             strInd++;
         }
         return out;
@@ -158,7 +157,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         int strInd = 0;
         //loop over the indices that have been set true
         for (int i = orbs.nextSetBit(0); i >= 0; i = orbs.nextSetBit(i + 1)) {
-            out[strInd] = EOSSDatabase.getOrbits().get(i);
+            out[strInd] = EOSSDatabase.getOrbit(i);
             strInd++;
         }
         return out;
@@ -176,7 +175,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         int strInd = 0;
         //loop over the indices that have been set true
         for (int i = orbs.nextSetBit(0); i >= 0; i = orbs.nextSetBit(i + 1)) {
-            out[strInd] = EOSSDatabase.getOrbits().get(i);
+            out[strInd] = EOSSDatabase.getOrbit(i);
             strInd++;
         }
         return out;
@@ -222,7 +221,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
             return false;
         }
         for (int o = 0; o < assignment.getNumberOfRHS(); o++) {
-            Orbit orb = EOSSDatabase.getOrbits().get(o);
+            Orbit orb = EOSSDatabase.getOrbit(o);
             ArrayList<Instrument> payls = this.getInstrumentsInOrbit(orb);
             if (payls != null) {
                 ArrayList<Instrument> paylds = new ArrayList();
@@ -252,8 +251,8 @@ public class InstrumentAssignmentArchitecture extends Architecture {
     public ArrayList<Instrument> getInstrumentsInOrbit(Orbit orb) {
         ArrayList<Instrument> payloads = new ArrayList<>();
         int orbIndex;
-        for (orbIndex = 0; orbIndex < EOSSDatabase.getOrbits().size(); orbIndex++) {
-            if (orb.equals(EOSSDatabase.getOrbits().get(orbIndex))) {
+        for (orbIndex = 0; orbIndex < EOSSDatabase.getNumberOfOrbits(); orbIndex++) {
+            if (orb.equals(EOSSDatabase.getOrbit(orbIndex))) {
                 break;
             }
         }
@@ -261,7 +260,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         //loop over the instruments
         ArrayList<Integer> paylaodIndex = getInstrumentsInOrbit(orbIndex);
         for (Integer index : paylaodIndex) {
-            payloads.add(EOSSDatabase.getInstruments().get((index)));
+            payloads.add(EOSSDatabase.getInstrument(index));
         }
         return payloads;
     }
@@ -275,7 +274,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
     public ArrayList<Integer> getInstrumentsInOrbit(int orbIndex) {
         ArrayList<Integer> payloads = new ArrayList<>();
         //loop over the instruments
-        for (int i = 0; i < EOSSDatabase.getInstruments().size(); i++) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); i++) {
             if (assignment.isConnected(i, orbIndex)) {
                 payloads.add(i);
             }
@@ -296,6 +295,20 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         boolean out = !assignment.isConnected(instrumentIndex, orbIndex);
         assignment.connect(instrumentIndex, orbIndex);
         return out;
+    }
+    
+    /**
+     * adds the instrument to the orbit
+     *
+     * @param instrument the instrument to add
+     * @param orbit the orbit to add the instrument to
+     * @return true if adding the instrument to orbit changes the architecture
+     * decision
+     */
+    public boolean addInstrumentToOrbit(Instrument instrument, Orbit orbit) {
+        int instrumentIndex = EOSSDatabase.findInstrumentIndex(instrument);
+        int orbIndex = EOSSDatabase.findOrbitIndex(orbit);
+        return addInstrumentToOrbit(instrumentIndex, orbIndex);
     }
 
     /**
@@ -321,10 +334,55 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         }
         return str;
     }
+    
+    /**
+     * Gets all the mission names
+     * @return all the mission names
+     */
+    public Collection<String> getMissionNames(){
+        return missions.keySet();
+    }
+    
+    /**
+     * Gets the mission by the mission name
+     * @param name
+     * @return 
+     */
+    public Mission getMission(String name){
+        return missions.get(name);
+    }
+    
+    /**
+     * Sets the mission field represented by this architecture. Resets any missions fields that are computed (e.g. mass, power).
+     */
+    public void setMissions(){
+        missions = new HashMap<>();
+        for(Orbit orb : getOccupiedOrbits()){
+            HashMap<Spacecraft, Orbit> map = new HashMap<>(1);
+            map.put(new Spacecraft(getInstrumentsInOrbit(orb)), orb);
+            Mission miss = new Mission.Builder(orb.getName(), map).build();
+            missions.put(miss.getName(), miss);
+        }
+    }
+
+    public void setValueTree(ValueTree valueTree) {
+        this.valueTree = valueTree;
+    }
+
+    public ValueTree getValueTree() {
+        return valueTree;
+    }
 
     @Override
     public Solution copy() {
-        return new InstrumentAssignmentArchitecture(this);
+        InstrumentAssignmentArchitecture copy = 
+                new InstrumentAssignmentArchitecture(altnertivesForNumberOfSatellites, 
+                        EOSSDatabase.getNumberOfInstruments(), 
+                        EOSSDatabase.getNumberOfOrbits(), this.getNumberOfObjectives());
+        for(int i=0; i<this.getNumberOfVariables(); i++){
+            copy.setVariable(i, this.getVariable(i).copy());
+        }
+        return copy;
     }
 
 }

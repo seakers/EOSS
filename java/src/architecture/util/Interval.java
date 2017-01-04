@@ -5,13 +5,8 @@ import java.util.Arrays;
 
 
 public class Interval implements Serializable {
-	/**
-	 * 
-	 */
-	//private static final long serialVersionUID = 7088030013297057287L;
-	/**
-	 * 
-	 */
+    private static final long serialVersionUID = 2117048384838378727L;
+	
 	
 	private double min;
 	private double max;

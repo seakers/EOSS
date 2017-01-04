@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<panels>
+	<panel> <id>ATM</id> <weight> 1/3 </weight>	<description> Weather </description>
+		<objective> <id>ATM1</id> <weight> 1/16 </weight> <description> Air surface temperature </description>
+			<subobjective> <id>ATM1-1</id> <weight> 1.0 </weight>	<description> Air surface temperature </description> </subobjective>
+		</objective>
+		<objective> <id>ATM2</id> <weight> 1/16 </weight> <description> Air surface wind </description>
+			<subobjective> <id>ATM2-1</id> <weight> 0.5 </weight>	<description> Air surface wind speed </description> </subobjective>
+			<subobjective> <id>ATM2-2</id> <weight> 0.5 </weight>	<description> Air surface wind direction </description> </subobjective>
+		</objective>
+		<objective> <id>ATM3</id> <weight> 1/16 </weight> <description> Air surface water vapor </description>
+			<subobjective> <id>ATM3-1</id> <weight> 1.0 </weight>	<description> Air humidity at surface </description> </subobjective>
+		</objective>
+		<objective> <id>ATM4</id> <weight> 1/16 </weight> <description> Air surface pressure </description>
+			<subobjective> <id>ATM4-1</id> <weight> 1.0 </weight>	<description> Air surface pressure </description> </subobjective>
+		</objective>
+		<objective> <id>ATM5</id> <weight> 1/16 </weight> <description> Surface precipitation </description>
+			<subobjective> <id>ATM5-1</id> <weight> 1.0 </weight>	<description> Surface precipitation </description> </subobjective>
+		</objective>
+		<objective> <id>ATM6</id> <weight> 1/16 </weight> <description> Surface radiation budget </description>
+			<subobjective> <id>ATM6-1</id> <weight> 0.5 </weight>	<description> SW surface radiation budget </description> </subobjective>
+			<subobjective> <id>ATM6-2</id> <weight> 0.5 </weight>	<description> LW surface radiation budget </description> </subobjective>
+		</objective>
+		<objective> <id>ATM7</id> <weight> 1/16 </weight> <description> Atmospheric temperature </description>
+			<subobjective> <id>ATM7-1</id> <weight> 1/3 </weight>	<description> Temperature in lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM7-2</id> <weight> 1/3 </weight>	<description> Temperature in upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM7-3</id> <weight> 1/3 </weight>	<description> Temperature in lower stratosphere </description> </subobjective>
+		</objective>
+		<objective> <id>ATM8</id> <weight> 1/16 </weight> <description> Atmospheric wind </description>
+			<subobjective> <id>ATM8-1</id> <weight> 0.125 </weight>	<description> Wind speed in lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM8-2</id> <weight> 0.125 </weight>	<description> Wind direction in lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM8-3</id> <weight> 0.125 </weight>	<description> Wind speed in upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM8-4</id> <weight> 0.125 </weight>	<description> Wind direction in lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM8-5</id> <weight> 0.125 </weight>	<description> Wind speed in lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM8-6</id> <weight> 0.125 </weight>	<description> Wind direction in upper stratosphere </description> </subobjective>
+			<subobjective> <id>ATM8-7</id> <weight> 0.125 </weight>	<description> Wind speed in lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM8-8</id> <weight> 0.125 </weight>	<description> Wind direction in upper stratosphere </description> </subobjective>
+		</objective>
+		<objective> <id>ATM9</id> <weight> 1/16 </weight> <description> Atmospheric water vapor </description>
+			<subobjective> <id>ATM9-1</id> <weight> 0.25 </weight>	<description> Atmospheric humidity in lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM9-2</id> <weight> 0.25 </weight>	<description> Atmospheric humidity in upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM9-3</id> <weight> 0.25 </weight>	<description> Atmospheric humidity in lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM9-4</id> <weight> 0.25 </weight>	<description> Atmospheric humidity in upper stratosphere </description> </subobjective>
+		</objective>
+		<objective> <id>ATM10</id> <weight> 1/16 </weight> <description> Cloud properties </description>
+			<subobjective> <id>ATM10-1</id> <weight> 1/7 </weight>	<description> Cloud cover </description> </subobjective>
+			<subobjective> <id>ATM10-2</id> <weight> 1/7 </weight>	<description> Cloud liquid water </description> </subobjective>
+			<subobjective> <id>ATM10-3</id> <weight> 1/7 </weight>	<description> Cloud ice </description> </subobjective>
+			<subobjective> <id>ATM10-4</id> <weight> 1/7 </weight>	<description> Cloud top height </description> </subobjective>
+			<subobjective> <id>ATM10-5</id> <weight> 1/7 </weight>	<description> Cloud top temperature </description> </subobjective>
+			<subobjective> <id>ATM10-6</id> <weight> 1/7 </weight>	<description> Clouds and radiation </description> </subobjective>
+			<subobjective> <id>ATM10-7</id> <weight> 1/7 </weight>	<description> Clouds and aerosols </description> </subobjective>
+		</objective>
+		<objective> <id>ATM11</id> <weight> 1/16 </weight> <description> Earth radiation budget </description>
+			<subobjective> <id>ATM11-1</id> <weight> 1/3 </weight>	<description> Downward short-wave irradiance at TOA </description> </subobjective>
+			<subobjective> <id>ATM11-2</id> <weight> 1/3 </weight>	<description> Upward short-wave irradiance at TOA </description> </subobjective>
+			<subobjective> <id>ATM11-3</id> <weight> 1/3 </weight>	<description> Upward long-wave irradiance at TOA </description> </subobjective>
+		</objective>
+		<objective> <id>ATM12</id> <weight> 1/16 </weight> <description> Carbon dioxide </description>
+			<subobjective> <id>ATM12-1</id> <weight> 0.2 </weight>	<description> CO2 - lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM12-2</id> <weight> 0.2 </weight>	<description> CO2 - upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM12-3</id> <weight> 0.2 </weight>	<description> CO2 - lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM12-4</id> <weight> 0.2 </weight>	<description> CO2 - upper stratosphere </description> </subobjective>
+			<subobjective> <id>ATM12-5</id> <weight> 0.2 </weight>	<description> CO2 - total column </description> </subobjective>
+		</objective>
+		<objective> <id>ATM13</id> <weight> 1/16 </weight> <description> Methane </description>
+			<subobjective> <id>ATM13-1</id> <weight> 0.2 </weight>	<description> CH4 - lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM13-2</id> <weight> 0.2 </weight>	<description> CH4 - upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM13-3</id> <weight> 0.2 </weight>	<description> CH4 - lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM13-4</id> <weight> 0.2 </weight>	<description> CH4 - upper stratosphere </description> </subobjective>
+			<subobjective> <id>ATM13-5</id> <weight> 0.2 </weight>	<description> CH4 - total column </description> </subobjective>
+		</objective>
+		<objective> <id>ATM14</id> <weight> 1/16 </weight> <description> Other long-lived GHG </description>
+			<subobjective> <id>ATM14-1</id> <weight> 0.5 </weight>	<description> N20 </description> </subobjective>
+			<subobjective> <id>ATM14-2</id> <weight> 0.5 </weight>	<description> CFC/HFC </description> </subobjective>
+		</objective>
+		<objective> <id>ATM15</id> <weight> 1/16 </weight> <description> Ozone and aerosols </description>
+			<subobjective> <id>ATM15-1</id> <weight> 1/9 </weight>	<description> O3 in the lower troposphere </description> </subobjective>
+			<subobjective> <id>ATM15-2</id> <weight> 1/9 </weight>	<description> O3 in the upper troposphere </description> </subobjective>
+			<subobjective> <id>ATM15-3</id> <weight> 1/9 </weight>	<description> O3 in the lower stratosphere </description> </subobjective>
+			<subobjective> <id>ATM15-4</id> <weight> 1/9 </weight>	<description> O3 in the upper stratosphere </description> </subobjective>
+			<subobjective> <id>ATM15-5</id> <weight> 1/9 </weight>	<description> O3 - total column </description> </subobjective>
+			<subobjective> <id>ATM15-6</id> <weight> 1/9 </weight>	<description> Aerosol optical depth </description> </subobjective>
+			<subobjective> <id>ATM15-7</id> <weight> 1/9 </weight>	<description> Aerosol absorption optical depth </description> </subobjective>
+			<subobjective> <id>ATM15-8</id> <weight> 1/9 </weight>	<description> Aerosol extinction coefficient profiles </description> </subobjective>
+			<subobjective> <id>ATM15-9</id> <weight> 1/9 </weight>	<description> Tropospheric pollution: GHG and aerosols </description> </subobjective>
+		</objective>
+		<objective> <id>ATM16</id> <weight> 1/16 </weight> <description> Ozone precursors </description>
+			<subobjective> <id>ATM16-1</id> <weight> 0.5 </weight>	<description> CO </description> </subobjective>
+			<subobjective> <id>ATM16-2</id> <weight> 0.5 </weight>	<description> NO, NO2, N2O5 </description> </subobjective>
+		</objective>
+		
+	</panel>
+	<panel> <id>OCE</id> <weight> 1/3 </weight>	<description> Climate </description>
+		<objective> <id>OCE1</id> <weight> 1/18 </weight> <description> Sea-surface temperature </description>
+			<subobjective> <id>OCE1-1</id> <weight> 1.0 </weight>	<description> Sea-surface temperature </description> </subobjective>
+		</objective>
+		<objective> <id>OCE2</id> <weight> 1/18 </weight> <description> Sea-surface salinity </description>
+			<subobjective> <id>OCE2-1</id> <weight> 1.0 </weight>	<description> Sea-surface salinity </description> </subobjective>
+		</objective>
+		<objective> <id>OCE3</id> <weight> 1/18 </weight> <description> Sea level </description>
+			<subobjective> <id>OCE3-1</id> <weight> 1.0 </weight>	<description> Sea level </description> </subobjective>
+		</objective>
+		<objective> <id>OCE4</id> <weight> 1/18 </weight> <description> Sea state </description>
+			<subobjective> <id>OCE4-1</id> <weight> 0.5 </weight>	<description> Ocean wave height </description> </subobjective>
+			<subobjective> <id>OCE4-2</id> <weight> 0.5 </weight>	<description> Ocean wave spectrum </description> </subobjective>
+		</objective>
+		<objective> <id>OCE5</id> <weight> 1/18 </weight> <description> Sea ice </description>
+			<subobjective> <id>OCE5-1</id> <weight> 1.0 </weight>	<description> Sea ice cover </description> </subobjective>
+		</objective>
+		<objective> <id>OCE6</id> <weight> 1/18 </weight> <description> Sea surface currents </description>
+			<subobjective> <id>OCE6-1</id> <weight> 1.0 </weight>	<description> Sea surface currents </description> </subobjective>
+		</objective>
+		<objective> <id>OCE7</id> <weight> 1/18 </weight> <description> Ocean color </description>
+			<subobjective> <id>OCE7-1</id> <weight> 1/3 </weight>	<description> Ocean color - Chlorophyll </description> </subobjective>
+			<subobjective> <id>OCE7-2</id> <weight> 1/3 </weight>	<description> Ocean color - Colour Dissolved Organic Matter </description> </subobjective>
+			<subobjective> <id>OCE7-3</id> <weight> 1/3 </weight>	<description> Ocean color - Suspended Sediments </description> </subobjective>
+		</objective>
+		<objective> <id>OCE8</id> <weight> 1/18 </weight> <description> Sea surface pCO2 </description>
+			<subobjective> <id>OCE8-1</id> <weight> 1.0 </weight>	<description> Sea surface pCO2 </description> </subobjective>
+		</objective>
+		<objective> <id>OCE9</id> <weight> 1/18 </weight> <description> Sea surface acidity </description>
+			<subobjective> <id>OCE9-1</id> <weight> 1.0 </weight>	<description> Sea surface acidity </description> </subobjective>
+		</objective>
+		<objective> <id>OCE10</id> <weight> 1/18 </weight> <description> Sea surface phytoplankton </description>
+			<subobjective> <id>OCE10-1</id> <weight> 1.0 </weight>	<description> Sea surface phytoplankton </description> </subobjective>
+		</objective>
+		<objective> <id>OCE11</id> <weight> 1/18 </weight> <description> Sea sub-surface temperature </description>
+			<subobjective> <id>OCE11-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface temperature </description> </subobjective>
+		</objective>
+		<objective> <id>OCE12</id> <weight> 1/18 </weight> <description> Sea sub-surface salinity </description>
+			<subobjective> <id>OCE12-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface salinity </description> </subobjective>
+		</objective>
+		<objective> <id>OCE13</id> <weight> 1/18 </weight> <description> Sea sub-surface currents </description>
+			<subobjective> <id>OCE13-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface currents </description> </subobjective>
+		</objective>
+		<objective> <id>OCE14</id> <weight> 1/18 </weight> <description> Sea sub-surface nutrients </description>
+			<subobjective> <id>OCE14-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface nutrients </description> </subobjective>
+		</objective>
+		<objective> <id>OCE15</id> <weight> 1/18 </weight> <description> Sea sub-surface pCO2 </description>
+			<subobjective> <id>OCE15-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface pCO2 </description> </subobjective>
+		</objective>
+		<objective> <id>OCE16</id> <weight> 1/18 </weight> <description> Sea sub-surface acidity </description>
+			<subobjective> <id>OCE16-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface acidity </description> </subobjective>
+		</objective>
+		<objective> <id>OCE17</id> <weight> 1/18 </weight> <description> Sea sub-surface O2 </description>
+			<subobjective> <id>OCE17-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface CO2 </description> </subobjective>
+		</objective>
+		<objective> <id>OCE18</id> <weight> 1/18 </weight> <description> Sea sub-surface tracers </description>
+			<subobjective> <id>OCE18-1</id> <weight> 1.0 </weight>	<description> Sea sub-surface tracers </description> </subobjective>
+		</objective>
+	</panel>
+	<panel> <id>TER</id> <weight> 1/3 </weight>	<description> Land and Ecosystems </description>
+		<objective> <id>TER1</id> <weight> 1/16 </weight> <description> River discharge </description>
+			<subobjective> <id>TER1-1</id> <weight> 1.0 </weight>	<description> River discharge </description> </subobjective>
+		</objective>
+		<objective> <id>TER2</id> <weight> 1/16 </weight> <description> Water use </description>
+			<subobjective> <id>TER2-1</id> <weight> 0.5 </weight>	<description> Evapotranspiration </description> </subobjective>
+			<subobjective> <id>TER2-2</id> <weight> 0.5 </weight>	<description> Land use </description> </subobjective>
+		</objective>
+		<objective> <id>TER3</id> <weight> 1/16 </weight> <description> Groundwater </description>
+			<subobjective> <id>TER3-1</id> <weight> 1.0 </weight>	<description> Ground water stograge </description> </subobjective>
+		</objective>
+		<objective> <id>TER4</id> <weight> 1/16 </weight> <description> Lakes </description>
+			<subobjective> <id>TER4-1</id> <weight> 1.0 </weight>	<description> Lake elevation </description> </subobjective>
+		</objective>
+		<objective> <id>TER5</id> <weight> 1/16 </weight> <description> Snow cover </description>
+			<subobjective> <id>TER5-1</id> <weight> 1.0 </weight>	<description> Snow cover </description> </subobjective>
+		</objective>
+		<objective> <id>TER6</id> <weight> 1/16 </weight> <description> Glaciers and ice caps </description>
+			<subobjective> <id>TER6-1</id> <weight> 0.5 </weight>	<description> Glacier topography </description> </subobjective>
+			<subobjective> <id>TER6-2</id> <weight> 0.5 </weight>	<description> Glacier cover </description> </subobjective>
+		</objective>
+		<objective> <id>TER7</id> <weight> 1/16 </weight> <description> Ice sheets </description>
+			<subobjective> <id>TER7-1</id> <weight> 1.0 </weight>	<description> Ice sheet topography </description> </subobjective>
+		</objective>
+		<objective> <id>TER8</id> <weight> 1/16 </weight> <description> Permafrost </description>
+			<subobjective> <id>TER8-1</id> <weight> 1.0 </weight>	<description> Permafrost </description> </subobjective>
+		</objective>
+		<objective> <id>TER9</id> <weight> 1/16 </weight> <description> Albedo </description>
+			<subobjective> <id>TER9-1</id> <weight> 1.0 </weight>	<description> Albedo </description> </subobjective>
+		</objective>
+		<objective> <id>TER10</id> <weight> 1/16 </weight> <description> Land cover </description>
+			<subobjective> <id>TER10-1</id> <weight> 1.0 </weight>	<description> Land cover </description> </subobjective>
+		</objective>
+		<objective> <id>TER11</id> <weight> 1/16 </weight> <description> FAPAR </description>
+			<subobjective> <id>TER11-1</id> <weight> 1.0 </weight>	<description> FaPAR </description> </subobjective>
+		</objective>
+		<objective> <id>TER12</id> <weight> 1/16 </weight> <description> Leaf Area index </description>
+			<subobjective> <id>TER12-1</id> <weight> 1.0 </weight>	<description> Leaf Area Index </description> </subobjective>
+		</objective>
+		<objective> <id>TER13</id> <weight> 1/16 </weight> <description> Above ground biomass </description>
+			<subobjective> <id>TER13-1</id> <weight> 1.0 </weight>	<description> Biomass </description> </subobjective>
+		</objective>
+		<objective> <id>TER14</id> <weight> 1/16 </weight> <description> Soil carbon </description>
+			<subobjective> <id>TER14-1</id> <weight> 1.0 </weight>	<description> Soil carbon </description> </subobjective>
+		</objective>
+		<objective> <id>TER15</id> <weight> 1/16 </weight> <description> Fire disturbance </description>
+			<subobjective> <id>TER15-1</id> <weight> 1/3 </weight>	<description> Fire Burned Area </description> </subobjective>
+			<subobjective> <id>TER15-2</id> <weight> 1/3 </weight>	<description> Active Fire </description> </subobjective>
+			<subobjective> <id>TER15-3</id> <weight> 1/3 </weight>	<description> Fire Radiated Power </description> </subobjective>
+		</objective>
+		<objective> <id>TER16</id> <weight> 1/16 </weight> <description> Soil moisture </description>
+			<subobjective> <id>TER16-1</id> <weight> 1.0 </weight>	<description> Soil Moisture </description> </subobjective>
+		</objective>
+	</panel>
+</panels>

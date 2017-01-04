@@ -39,7 +39,6 @@ import rbsa.eoss.Weight;
 public class JessInitializer {
 
 //    private static JessInitializer instance = null;
-
     private HashMap<String, SlotType> capabilitiesToRequirementAttribInheritance;
 
     public JessInitializer() {
@@ -49,7 +48,7 @@ public class JessInitializer {
         System.out.println("Initializing Jess...");
         try {
             r.eval("(set-node-index-hash 13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)
-            
+
             // Create global variable path
             String tmp = InstrumentAssignmentParams.path.replaceAll("\\\\", "\\\\\\\\");
             r.eval("(defglobal ?*app_path* = \"" + tmp + "\")");
@@ -112,9 +111,9 @@ public class JessInitializer {
             Workbook requirements_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.requirement_satisfaction_xls));
             if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("CRISP-ATTRIBUTES")) {
 //                loadRequirementRulesAttribsWithContinuousSatisfactionScore(r, requirements_xls, "Attributes");//last parameter is mode: CASES, FUZZY, ATTRIBUTES
-                loadRequirementRulesAttribs(r, requirements_xls, "Attributes");
+                loadRequirementRulesAttribs(r, requirements_xls, "Requirements");
             } else if (InstrumentAssignmentParams.req_mode.equalsIgnoreCase("FUZZY-ATTRIBUTES")) {
-                loadFuzzyRequirementRulesAttribs(r, requirements_xls, "Attributes");
+                loadFuzzyRequirementRulesAttribs(r, requirements_xls, "Requirements");
             }
 
             //Load capability rules
@@ -136,10 +135,15 @@ public class JessInitializer {
             loadExplanationRules(r, InstrumentAssignmentParams.explanation_rules_clp);
 
             //Load aggregation rules
-            File aggregationFile = new File(InstrumentAssignmentParams.aggregation_xml);
+            File aggregationFile = new File(InstrumentAssignmentParams.panel_xml);
             loadAggregationRules(r, aggregationFile, new String[]{InstrumentAssignmentParams.aggregation_rules_clp, InstrumentAssignmentParams.fuzzy_aggregation_rules_clp});
 
             r.reset();
+
+            attribute_xls.close();
+            requirements_xls.close();
+            instrument_xls.close();
+            mission_analysis_xls.close();
 
             //Create precomputed queries;
             load_precompute_queries(qb);
@@ -480,37 +484,26 @@ public class JessInitializer {
             String call = "(deffacts instrument-database-facts ";
             int nfacts = meas.getRows();
             int nslots = meas.getColumns();
+            Cell[] header = meas.getRow(0);
 
             for (int i = 1; i < nfacts; i++) {
                 Cell[] row = meas.getRow(i);
                 call = call.concat(" (DATABASE::Instrument ");
                 for (int j = 0; j < nslots; j++) {
-                    String cell_value = row[j].getContents();
-                    String[] splitted = cell_value.split(" ");
-
-                    int len = splitted.length;
-                    String slot_name = "";
-                    String slot_value = "";
-                    if (len < 2) {
-                        System.out.println("EXC in loadInstruments, expected format is slot_name slot_value. Space not found.");
+                    String[] slotNameDefault = header[j].getContents().trim().split(" ");
+                    String slotName = slotNameDefault[0];
+                    String slotValue = row[j].getContents().trim();
+                    if (slotValue.isEmpty() && slotNameDefault.length == 2) {
+                        //if the slot is empty and there is a default value, assign default value
+                        slotValue = slotNameDefault[1];
                     }
-                    if (len == 2) {
-                        slot_name = splitted[0];
-                        slot_value = splitted[1];
-                    } else {
-                        slot_name = splitted[0];
-                        slot_value = splitted[1];
-                        for (int kk = 2; kk < len; kk++) {
-                            slot_value = slot_value + " " + splitted[kk];
-                        }
-                    }
-
-                    call = call.concat(" (" + slot_name + " " + slot_value + ") ");
+                    call = call.concat(" (" + slotName + " " + slotValue + ") ");
                 }
                 call = call.concat(") ");
             }
             call = call.concat(")");
             r.eval(call);
+            xls.close();
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -938,7 +931,7 @@ public class JessInitializer {
         dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document doc = dBuilder.parse(aggregationFile);
         doc.getDocumentElement().normalize();
-        NodeList panelNode = doc.getElementsByTagName("stakeholder");
+        NodeList panelNode = doc.getElementsByTagName("panel");
         InstrumentAssignmentParams.npanels = panelNode.getLength();
         String call = "(deffacts AGGREGATION::init-aggregation-facts ";
         InstrumentAssignmentParams.panel_names = new ArrayList(InstrumentAssignmentParams.npanels);

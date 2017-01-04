@@ -11,7 +11,6 @@ import aos.IO.IOSelectionHistory;
 import aos.aos.IAOS;
 import architecture.io.ResultIO;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
-import eoss.problem.assignment.InstrumentAssignmentProblem;
 import java.io.File;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -38,28 +37,15 @@ public class InstrumentedSearch implements Callable<Algorithm> {
     private final Algorithm alg;
     private final TypedProperties properties;
 
-    /**
-     * parameter to decide whether to start jess in constructor
-     */
-    private final boolean jessInit;
-
-    public InstrumentedSearch(Algorithm alg, TypedProperties properties, String savePath, String name, boolean init) {
+    public InstrumentedSearch(Algorithm alg, TypedProperties properties, String savePath, String name) {
         this.alg = alg;
         this.properties = properties;
         this.savePath = savePath;
         this.name = name;
-        this.jessInit = init;
-        if (init) {
-            //initialize Jess
-            ((InstrumentAssignmentProblem) alg.getProblem()).renewJess();
-        }
     }
 
     @Override
     public Algorithm call() throws Exception {
-        if (!jessInit) {
-            ((InstrumentAssignmentProblem) alg.getProblem()).renewJess();
-        }
 
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
@@ -86,7 +72,6 @@ public class InstrumentedSearch implements Callable<Algorithm> {
 
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             if (instAlgorithm.getNumberOfEvaluations() % 500 == 0) {
-                ((InstrumentAssignmentProblem) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
                 System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());

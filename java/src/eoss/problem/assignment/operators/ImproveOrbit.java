@@ -49,7 +49,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         if (randOrbitIndex == -1) {
             return child;
         }
-        Orbit randOrbit = EOSSDatabase.getOrbits().get(randOrbitIndex);
+        Orbit randOrbit = EOSSDatabase.getOrbit(randOrbitIndex);
 
         ArrayList<Integer> instIndices = new ArrayList<>(child.getInstrumentsInOrbit(randOrbitIndex));
         Collections.shuffle(instIndices);//this sorts orbits in random order
@@ -61,7 +61,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         ArrayList<Integer> instSubsetIndices = new ArrayList<>();
         for(int i=0; i<instIndices.size() && i<chosensize; i++) {
             int instrInd = instIndices.get(i);
-            instSubsetNames.add(EOSSDatabase.getInstruments().get(instrInd).getName());
+            instSubsetNames.add(EOSSDatabase.getInstrument(instrInd).getName());
             instSubsetIndices.add(instrInd);
         }
         //getallorbit scores
@@ -78,7 +78,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         //sort orbits and get best_orbit
         Collections.sort(list2, Collections.reverseOrder(ByValueComparator));
         String best_orbit = list2.get(0).getKey();
-        int best_orbit_index = findOrbit(best_orbit);
+        int best_orbit_index = EOSSDatabase.findOrbitIndex(EOSSDatabase.getOrbit(best_orbit));
         Double new_score = list2.get(0).getValue();
         Double old_score = InstrumentAssignmentParams.scores.get(instSubsetNames).get(randOrbit.getName());
 

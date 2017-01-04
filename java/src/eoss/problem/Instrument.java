@@ -6,27 +6,29 @@
 
 package eoss.problem;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
-import org.moeaframework.util.TypedProperties;
 
 /**
  * Describes the instrument
  * @author nozomihitomi
  */
-public class Instrument {
+public class Instrument implements Serializable{
+    private static final long serialVersionUID = -5305724470339403997L;
     
     private final String name;
-    private final TypedProperties properties;
+    private final HashMap<String, String> properties;
 
-    
     /**
      * 
+     * @param name the name of the instrument
      * @param prop properties of the instrument
      */
-    public Instrument(TypedProperties prop) {
+    public Instrument(String name, HashMap<String, String> prop) {
+        this.name = name;
         this.properties = prop;
-        this.name = properties.getString("Name", "noname");
     }
 
     public String getName() {
@@ -34,7 +36,7 @@ public class Instrument {
     }
     
     public String getProperty(String propertyName){
-        return properties.getString(propertyName, "nil");
+        return properties.get(propertyName);
     }
     
     /**
@@ -42,15 +44,13 @@ public class Instrument {
      * @return 
      */
     public Set getProperties(){
-        return properties.getProperties().keySet();
+        return properties.keySet();
     }
-    
-    
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 17 * hash + Objects.hashCode(this.properties);
+        hash = 97 * hash + Objects.hashCode(this.name);
         return hash;
     }
 
@@ -77,6 +77,44 @@ public class Instrument {
     @Override
     public String toString() {
         return name;
+    }
+    
+    /**
+     * A builder pattern to set parameters for the instrument
+     */
+    public static class Builder implements Serializable {
+        
+        private static final long serialVersionUID = -1856328904365860768L;
+
+        
+        /**
+         * The name of the instrument
+         */
+        private final String name;
+
+        
+        /**
+         * Properties of the instrument
+         */
+        private HashMap<String, String> prop =  new HashMap();
+        
+        public Builder(String name){
+            this.name = name;
+        }
+        
+        public Builder properties(HashMap<String, String> prop){
+            this.prop = prop;
+            return this;
+        }
+        
+        /**
+         * Builds an instance of a mission with all the specified parameters.
+         *
+         * @return
+         */
+        public Instrument build() {
+            return new Instrument(name, prop);
+        }
     }
     
 }
