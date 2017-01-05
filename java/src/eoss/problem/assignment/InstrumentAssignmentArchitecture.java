@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
 
@@ -35,9 +36,9 @@ public class InstrumentAssignmentArchitecture extends Architecture {
 
     private static final long serialVersionUID = 8776271523867355732L;
 
-    private final Assigning assignment;
+    private Assigning assignment;
 
-    private final Combining combine;
+    private Combining combine;
 
     /**
      * The available options of the number of satellites
@@ -383,7 +384,38 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         for(int i=0; i<this.getNumberOfVariables(); i++){
             copy.setVariable(i, this.getVariable(i).copy());
         }
+
+        copy.combine = (Combining)copy.getVariable(0);
+        copy.assignment = (Assigning)copy.getVariable(1);
         return copy;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.assignment);
+        hash = 37 * hash + Objects.hashCode(this.combine);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final InstrumentAssignmentArchitecture other = (InstrumentAssignmentArchitecture) obj;
+        if (!Objects.equals(this.assignment, other.assignment)) {
+            return false;
+        }
+        if (!Objects.equals(this.combine, other.combine)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 
 }

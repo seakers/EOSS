@@ -285,6 +285,6 @@ public class RBSAEOSSSMAP {
     }
 
     public static InstrumentAssignment getAssignmentProblem(String path, String fuzzyMode, String normalMode, boolean explanation) {
-        return new InstrumentAssignment(path, fuzzyMode, normalMode, InstrumentAssignmentParams.altnertivesForNumberOfSatellites, explanation, true);
+        return new InstrumentAssignment(path, fuzzyMode, normalMode, InstrumentAssignmentParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
 }
