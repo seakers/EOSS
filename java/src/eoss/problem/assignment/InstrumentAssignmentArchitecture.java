@@ -47,7 +47,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
     /**
      * The missions represented by this architecture
      */
-    private HashMap<String, Mission> missions;
+    private final HashMap<String, Mission> missions;
     
     /**
      * A tree containing the scores for each architecture
@@ -74,6 +74,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         this.combine = (Combining) this.getVariable(0);
         this.assignment = (Assigning) this.getVariable(1);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
+        this.missions = new HashMap<>();
     }
 
     //Getters
@@ -356,7 +357,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * Sets the mission field represented by this architecture. Resets any missions fields that are computed (e.g. mass, power).
      */
     public void setMissions(){
-        missions = new HashMap<>();
+        missions.clear();
         for(Orbit orb : getOccupiedOrbits()){
             HashMap<Spacecraft, Orbit> map = new HashMap<>(1);
             map.put(new Spacecraft(getInstrumentsInOrbit(orb)), orb);

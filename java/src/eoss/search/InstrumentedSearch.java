@@ -12,6 +12,7 @@ import aos.aos.IAOS;
 import architecture.io.ResultIO;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import java.io.File;
+import java.io.IOException;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,7 +46,7 @@ public class InstrumentedSearch implements Callable<Algorithm> {
     }
 
     @Override
-    public Algorithm call() throws Exception {
+    public Algorithm call() throws IOException  {
 
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);

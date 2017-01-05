@@ -200,10 +200,14 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             for (String missionName : solution.getMissionNames()) {
                 missions.add(solution.getMission(missionName));
             }
-            assertMissions(missions);
-            designSpacecraft(solution);
-            getAuxFacts(solution);
-            return true;
+            if (missions.isEmpty()) {
+                return true;
+            } else {
+                assertMissions(missions);
+                designSpacecraft(solution);
+                getAuxFacts(solution);
+                return true;
+            }
         } else {
             return false;
         }
@@ -236,7 +240,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     }
 
     /**
-     * record auxilarys information
+     * record auxiliary information
      *
      * @param arch
      * @throws JessException

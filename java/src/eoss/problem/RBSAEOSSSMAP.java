@@ -124,7 +124,7 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveQuality", true);
         properties.setBoolean("saveCredits", true);
         properties.setBoolean("saveSelection", true);
-        
+
         //initialize EOSS database
         EOSSDatabase.getInstance();
         EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
@@ -143,16 +143,22 @@ public class RBSAEOSSSMAP {
                     problem = getAssignmentProblem(path, "FUZZY-ATTRIBUTES", "normal", false);
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
-                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
-                }
-                for (Future<Algorithm> run : futures) {
                     try {
-                        run.get();
-                        ((InstrumentAssignment)problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
-                    } catch (InterruptedException | ExecutionException ex) {
+                        //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
+                        new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
+                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                    } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
+//                for (Future<Algorithm> run : futures) {
+//                    try {
+//                        run.get();
+//                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+//                    } catch (InterruptedException | ExecutionException ex) {
+//                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
                 break;
 
             case 2://AOS search Assignment
