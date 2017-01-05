@@ -78,7 +78,7 @@ public class RBSAEOSSSMAP {
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "1"; //numRuns
+            args[3] = "30"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -98,8 +98,8 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 50;
-        int maxEvals = 5;
+        int popSize = 100;
+        int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
