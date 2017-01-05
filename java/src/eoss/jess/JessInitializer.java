@@ -47,7 +47,7 @@ public class JessInitializer {
     public void initializeJess(Rete r, QueryBuilder qb) {
         System.out.println("Initializing Jess...");
         try {
-            r.eval("(set-node-index-hash 13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)
+//            r.eval("(set-node-index-hash  13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)
 
             // Create global variable path
             String tmp = InstrumentAssignmentParams.path.replaceAll("\\\\", "\\\\\\\\");
@@ -70,7 +70,7 @@ public class JessInitializer {
             //Load  launhc vehicles
             Workbook mission_analysis_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.mission_analysis_database_xls));
             loadOrderedDeffacts(r, mission_analysis_xls, "Launch Vehicles", "DATABASE::launch-vehicle-information-facts", "DATABASE::Launch-vehicle");
-            r.reset();
+            r.eval("reset");
 
             // Load instrument database
             Workbook instrument_xls = Workbook.getWorkbook(new File(InstrumentAssignmentParams.capability_rules_xls));
@@ -138,15 +138,13 @@ public class JessInitializer {
             File aggregationFile = new File(InstrumentAssignmentParams.panel_xml);
             loadAggregationRules(r, aggregationFile, new String[]{InstrumentAssignmentParams.aggregation_rules_clp, InstrumentAssignmentParams.fuzzy_aggregation_rules_clp});
 
-            r.reset();
+            r.eval("reset");
 
             attribute_xls.close();
             requirements_xls.close();
             instrument_xls.close();
             mission_analysis_xls.close();
-
-            //Create precomputed queries;
-            load_precompute_queries(qb);
+            
         } catch (JessException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1); //program shuts down if Jess initializer catches any exception
@@ -163,16 +161,6 @@ public class JessInitializer {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1); //program shuts down if Jess initializer catches any exception
         }
-    }
-
-    private void load_precompute_queries(QueryBuilder qb) {
-        HashMap<String, Fact> db_instruments = new HashMap();
-        for (Instrument instrument : EOSSDatabase.getInstruments()) {
-            String instr = instrument.getName();
-            ArrayList<Fact> facts = qb.makeQuery("DATABASE::Instrument (Name " + instr + ")");
-            db_instruments.put(instr, facts.get(0));
-        }
-        qb.addPrecomputed_query("DATABASE::Instrument", db_instruments);
     }
 
     private void loadTemplates(Rete r, Workbook xls) {

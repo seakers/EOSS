@@ -20,14 +20,6 @@ public class QueryBuilder {
        this.r = r;
        precomputed_queries = new HashMap<String,HashMap>();
     }
-
-    public HashMap getPrecomputed_query(String key) {
-        return precomputed_queries.get(key);
-    }
-
-    public void addPrecomputed_query(String key, HashMap hm) {
-        this.precomputed_queries.put(key, hm);
-    }
     
     public ArrayList<Fact> makeQuery( String template )
     {

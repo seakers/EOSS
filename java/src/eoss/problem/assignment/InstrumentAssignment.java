@@ -80,7 +80,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     /**
      * Solution database to reuse the computed values;
      */
-    private final HashMap<Integer, InstrumentAssignmentArchitecture> solutionDB;
+    private final HashMap<Integer, double[]> solutionDB;
 
     /**
      *
@@ -130,7 +130,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         if (database != null) {
             try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(database))) {
                 System.out.println("Loading solution database: " + database.toString());
-                solutionDB.putAll((HashMap<Integer, InstrumentAssignmentArchitecture>) is.readObject());
+                solutionDB.putAll((HashMap<Integer, double[]>) is.readObject());
             } catch (IOException ex) {
                 Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
@@ -166,14 +166,18 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
 
     @Override
     public void evaluate(Solution sltn) {
-        InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
-        if (!loadArchitecture(arch)) {
-            arch.setMissions();
-            evaluate(arch);
-        }
+        try {
+            InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
+            if (!loadArchitecture(arch)) {
+                arch.setMissions();
+                evaluate(arch);
+            }
 
-        System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
-                arch.toString(), arch.getObjective(0),arch.getObjective(1),arch.payloadToString()));
+            System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
+                    arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
+        } catch (JessException ex) {
+            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -183,10 +187,22 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param solution the solution to evaluate
      * @return true if solution is found in database. Else false;
      */
-    private boolean loadArchitecture(InstrumentAssignmentArchitecture solution) {
+    private boolean loadArchitecture(InstrumentAssignmentArchitecture solution) throws JessException {
         if (solutionDB.containsKey(solution.hashCode())) {
-            InstrumentAssignmentArchitecture arch = solutionDB.get(solution.hashCode());
-            solution = (InstrumentAssignmentArchitecture) arch.copy();
+            double[] objectives = solutionDB.get(solution.hashCode());
+            for (int i = 0; i < solution.getNumberOfObjectives(); i++) {
+                solution.setObjective(i, objectives[i]);
+            }
+
+            //compute the auxilary facts
+            r.eval("(reset)");
+            ArrayList<Mission> missions = new ArrayList<>();
+            for (String missionName : solution.getMissionNames()) {
+                missions.add(solution.getMission(missionName));
+            }
+            assertMissions(missions);
+            designSpacecraft(solution);
+            getAuxFacts(solution);
             return true;
         } else {
             return false;
@@ -199,32 +215,43 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             missions.add(arch.getMission(missionName));
         }
         try {
-            r.reset();
+            r.eval("(reset)");
             assertMissions(missions);
             ValueTree tree = evaluatePerformance(arch); //compute science score
             arch.setObjective(0, -tree.computeScores()); //negative because MOEAFramework assumes minimization problems
 
-            r.reset();
+            r.eval("(clear-storage)");
+            r.eval("(reset)");
             assertMissions(missions);
             double cost = evaluateCost(arch);
             arch.setObjective(1, cost / 33495.939796); //normalize cost to maximum value
 
-            //record auxilary information
-            ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
-            for (Fact fact : missionFacts) {
-                String name = fact.getSlotValue("Name").stringValue(r.getGlobalContext());
-                Mission mission = arch.getMission(name);
-                //assumes each mission only has one spacecraft
-                Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
-                for (String slot : auxFacts) {
-                    s.setProperty(slot, fact.getSlotValue(slot).toString());
-                }
-            }
+            getAuxFacts(arch);
+
             r.clearStorage();
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
-        solutionDB.put(arch.hashCode(), arch);
+        solutionDB.put(arch.hashCode(), new double[]{arch.getObjective(0), arch.getObjective(1)});
+    }
+
+    /**
+     * record auxilarys information
+     *
+     * @param arch
+     * @throws JessException
+     */
+    private void getAuxFacts(InstrumentAssignmentArchitecture arch) throws JessException {
+        ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
+        for (Fact fact : missionFacts) {
+            String name = fact.getSlotValue("Name").stringValue(r.getGlobalContext());
+            Mission mission = arch.getMission(name);
+            //assumes each mission only has one spacecraft
+            Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
+            for (String slot : auxFacts) {
+                s.setProperty(slot, fact.getSlotValue(slot).toString());
+            }
+        }
     }
 
     /**
@@ -257,8 +284,6 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             r.run();
 
             designSpacecraft(arch);
-            r.eval("(focus SAT-CONFIGURATION)");
-            r.run();
 
             r.eval("(focus LV-SELECTION0)");
             r.run();
@@ -405,8 +430,6 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             r.eval("(defadvice before (create$ >= <= < >) (foreach ?xxx $?argv (if (eq ?xxx nil) then (return FALSE))))");
             r.eval("(defadvice before (create$ sqrt + * **) (foreach ?xxx $?argv (if (eq ?xxx nil) then (bind ?xxx 0))))");
 
-            Explanation explanations = new Explanation();
-
             r.setFocus("MANIFEST");
             r.run();
 
@@ -507,11 +530,12 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             }
 
 //            aggregate_performance_score_facts(arch);
-            if (explanation) {
-                explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
-                explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
-                arch.setAttribute("satisfactionExplantion", explanations);
-            }
+//            if (explanation) {
+//                Explanation explanations = new Explanation();
+//                explanations.put("partials", qb.makeQuery("REASONING::partially-satisfied"));
+//                explanations.put("full", qb.makeQuery("REASONING::fully-satisfied"));
+//                arch.setAttribute("satisfactionExplantion", explanations);
+//            }
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
