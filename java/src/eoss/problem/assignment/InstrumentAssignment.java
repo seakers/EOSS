@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.BitSet;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
@@ -80,7 +81,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     /**
      * Solution database to reuse the computed values;
      */
-    private final HashMap<Integer, double[]> solutionDB;
+    private final HashMap<BitSet, double[]> solutionDB;
 
     /**
      *
@@ -130,7 +131,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         if (database != null) {
             try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(database))) {
                 System.out.println("Loading solution database: " + database.toString());
-                solutionDB.putAll((HashMap<Integer, double[]>) is.readObject());
+                solutionDB.putAll((HashMap<BitSet, double[]>) is.readObject());
             } catch (IOException ex) {
                 Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
@@ -188,8 +189,8 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @return true if solution is found in database. Else false;
      */
     private boolean loadArchitecture(InstrumentAssignmentArchitecture solution) throws JessException {
-        if (solutionDB.containsKey(solution.hashCode())) {
-            double[] objectives = solutionDB.get(solution.hashCode());
+        if (solutionDB.containsKey(solution.getBitString())) {
+            double[] objectives = solutionDB.get(solution.getBitString());
             for (int i = 0; i < solution.getNumberOfObjectives(); i++) {
                 solution.setObjective(i, objectives[i]);
             }
@@ -236,7 +237,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
-        solutionDB.put(arch.hashCode(), new double[]{arch.getObjective(0), arch.getObjective(1)});
+        solutionDB.put(arch.getBitString(), new double[]{arch.getObjective(0), arch.getObjective(1)});
     }
 
     /**
