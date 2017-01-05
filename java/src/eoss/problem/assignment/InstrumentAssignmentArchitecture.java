@@ -44,12 +44,12 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * The available options of the number of satellites
      */
     private final int[] altnertivesForNumberOfSatellites;
-    
+
     /**
      * The missions represented by this architecture
      */
     private final HashMap<String, Mission> missions;
-    
+
     /**
      * A tree containing the scores for each architecture
      */
@@ -75,6 +75,19 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         this.combine = (Combining) this.getVariable(0);
         this.assignment = (Assigning) this.getVariable(1);
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
+        this.missions = new HashMap<>();
+    }
+
+    /**
+     * makes a copy solution from the input solution
+     *
+     * @param solution
+     */
+    private InstrumentAssignmentArchitecture(Solution solution) {
+        super(solution);
+        this.combine = (Combining) this.getVariable(0);
+        this.assignment = (Assigning) this.getVariable(1);
+        this.altnertivesForNumberOfSatellites = ((InstrumentAssignmentArchitecture) solution).altnertivesForNumberOfSatellites;
         this.missions = new HashMap<>();
     }
 
@@ -298,7 +311,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         assignment.connect(instrumentIndex, orbIndex);
         return out;
     }
-    
+
     /**
      * adds the instrument to the orbit
      *
@@ -336,30 +349,33 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         }
         return str;
     }
-    
+
     /**
      * Gets all the mission names
+     *
      * @return all the mission names
      */
-    public Collection<String> getMissionNames(){
+    public Collection<String> getMissionNames() {
         return missions.keySet();
     }
-    
+
     /**
      * Gets the mission by the mission name
+     *
      * @param name
-     * @return 
+     * @return
      */
-    public Mission getMission(String name){
+    public Mission getMission(String name) {
         return missions.get(name);
     }
-    
+
     /**
-     * Sets the mission field represented by this architecture. Resets any missions fields that are computed (e.g. mass, power).
+     * Sets the mission field represented by this architecture. Resets any
+     * missions fields that are computed (e.g. mass, power).
      */
-    public void setMissions(){
+    public void setMissions() {
         missions.clear();
-        for(Orbit orb : getOccupiedOrbits()){
+        for (Orbit orb : getOccupiedOrbits()) {
             HashMap<Spacecraft, Orbit> map = new HashMap<>(1);
             map.put(new Spacecraft(getInstrumentsInOrbit(orb)), orb);
             Mission miss = new Mission.Builder(orb.getName(), map).build();
@@ -377,17 +393,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
 
     @Override
     public Solution copy() {
-        InstrumentAssignmentArchitecture copy = 
-                new InstrumentAssignmentArchitecture(altnertivesForNumberOfSatellites, 
-                        EOSSDatabase.getNumberOfInstruments(), 
-                        EOSSDatabase.getNumberOfOrbits(), this.getNumberOfObjectives());
-        for(int i=0; i<this.getNumberOfVariables(); i++){
-            copy.setVariable(i, this.getVariable(i).copy());
-        }
-
-        copy.combine = (Combining)copy.getVariable(0);
-        copy.assignment = (Assigning)copy.getVariable(1);
-        return copy;
+        return new InstrumentAssignmentArchitecture(this);
     }
 
     @Override
@@ -415,7 +421,5 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         }
         return true;
     }
-    
-    
 
 }
