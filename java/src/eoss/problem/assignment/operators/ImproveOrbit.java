@@ -8,7 +8,7 @@ package eoss.problem.assignment.operators;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Orbit;
-import eoss.problem.assignment.InstrumentAssignmentParams;
+import eoss.problem.evaluation.ArchitectureEvaluatorParams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,11 +67,11 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         //getallorbit scores
         ArrayList<Map.Entry<String, Double>> list2 = new ArrayList<>();
         try{
-            list2.addAll(InstrumentAssignmentParams.scores.get(instSubsetNames).entrySet());
+            list2.addAll(ArchitectureEvaluatorParams.scores.get(instSubsetNames).entrySet());
         }catch(NullPointerException ex){
             //There isn't all permutaions of a subset in the scores map so may need to reorder the arraylist of instrument names
             ArrayList<String> reorder = new ArrayList<>(Arrays.asList(new String[]{instSubsetNames.get(1),instSubsetNames.get(0)}));
-            list2.addAll(InstrumentAssignmentParams.scores.get(reorder).entrySet());
+            list2.addAll(ArchitectureEvaluatorParams.scores.get(reorder).entrySet());
             instSubsetNames = reorder;
         }
 
@@ -80,7 +80,7 @@ public class ImproveOrbit extends AbstractEOSSOperator {
         String best_orbit = list2.get(0).getKey();
         int best_orbit_index = EOSSDatabase.findOrbitIndex(EOSSDatabase.getOrbit(best_orbit));
         Double new_score = list2.get(0).getValue();
-        Double old_score = InstrumentAssignmentParams.scores.get(instSubsetNames).get(randOrbit.getName());
+        Double old_score = ArchitectureEvaluatorParams.scores.get(instSubsetNames).get(randOrbit.getName());
 
         if (new_score > old_score) {
             for (int index : instSubsetIndices) {

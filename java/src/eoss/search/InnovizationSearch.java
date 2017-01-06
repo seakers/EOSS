@@ -82,11 +82,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
     private final OperatorReplacementStrategy ops;
     
     /**
-     * parameter to decide whether to start jess in constructor
-     */
-    private final boolean jessInit;
-
-    /**
      * Constructs new search and automatically initializes Jess
      * @param alg
      * @param properties
@@ -96,20 +91,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
      * @param name 
      */
     public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name) {
-        this(alg, properties, dataLabeler, ops, savePath, name, true);
-    }
-    
-    /**
-     * Constructs new search and can decide to initializes Jess in constructor or during call
-     * @param alg
-     * @param properties
-     * @param dataLabeler
-     * @param ops
-     * @param savePath
-     * @param name 
-     * @param init true if jess should initialize in constructor
-     */
-    public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name, boolean init) {
         this.alg = alg;
         this.properties = properties;
         this.savePath = savePath;
@@ -122,17 +103,10 @@ public class InnovizationSearch implements Callable<Algorithm> {
         } else {
             this.opCreator = (EOSSOperatorCreator) ops.getOperatorCreator();
         }
-        if(init){
-            //initialize jess
-            ((InstrumentAssignment)alg.getProblem()).renewJess();
-        }this.jessInit = init;
     }
 
     @Override
     public Algorithm call() throws Exception {
-        if(!jessInit){
-            ((InstrumentAssignment)alg.getProblem()).renewJess();
-        }
         int populationSize = (int) properties.getDouble("populationSize", 600);
         int maxEvaluations = (int) properties.getDouble("maxEvaluations", 10000);
         int nOpsToAdd = (int) properties.getInt("nOpsToAdd", 2);
@@ -220,7 +194,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
 
             //print out the search stats every once in a while
             if (nFuncEvals % 500 == 0) {
-                ((InstrumentAssignment) instAlgorithm.getProblem()).renewJess();
                 System.out.println("NFE: " + instAlgorithm.getNumberOfEvaluations());
                 System.out.print("Popsize: " + ((AbstractEvolutionaryAlgorithm) alg).getPopulation().size());
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());

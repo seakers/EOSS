@@ -8,6 +8,8 @@ package eoss.problem.scheduling;
 import eoss.problem.Instrument;
 import eoss.problem.Measurement;
 import eoss.problem.Mission;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
@@ -50,7 +52,7 @@ public class DataContinutityMatrix {
      * the allowable dates that are spaced evenly using the start date and the
      * timestep
      */
-    private final HashSet<AbsoluteDate> allowableDates;
+    private final ArrayList<AbsoluteDate> allowableDates;
 
     /**
      *
@@ -64,38 +66,70 @@ public class DataContinutityMatrix {
         this.startDate = startDate;
         this.endDate = endDate;
         this.matrix = new HashMap<>();
-        this.allowableDates = new HashSet<>();
+        this.allowableDates = new ArrayList<>();
 
         int i = 0;
         while (endDate.durationFrom(startDate.shiftedBy(timestep * i)) / (3600. * 24. * 365.) > timestep) {
             allowableDates.add(startDate.shiftedBy(i * timestep * 3600. * 24. * 365.));
             i++;
         }
+        Collections.sort(allowableDates);
+        Collections.unmodifiableList(allowableDates);
     }
 
     /**
-     * Adds an element to the data continuity matrix.
+     * Adds an element to the data continuity matrix. If the start or end date
+     * falls between a time interval, that time interval will count as having
+     * the measurement
      *
      * @param measurement the measurement to continue
-     * @param time the time of interest
-     * @param mission the mission name
+     * @param startDate the date when this mission-instrument pair begins
+     * acquiring this measurement
+     * @param endDate the date when the measurement is no longer taken by this
+     * mission-instrument pair
+     * @param mission the mission 
      * @param instrument the instrument aboard the given mission that will take
      * the measurement
      * @return true if the added data continuity element changed the matrix
      */
-    public boolean addDataContinutity(Measurement measurement, AbsoluteDate time, Mission mission, Instrument instrument) {
-        if (!allowableDates.contains(time)) {
-            throw new IllegalArgumentException("Given date is not allowed. Must be between start and end date and fall within a time step");
+    public boolean addDataContinutity(Measurement measurement, AbsoluteDate startDate, AbsoluteDate endDate, Mission mission, Instrument instrument) {
+        if (startDate.compareTo(endDate) >= 0) {
+            throw new IllegalArgumentException("Start date must occur strictly before the end date");
         }
 
-        if (!matrix.containsKey(measurement)) {
-            HashMap<AbsoluteDate, HashSet<MissionInstrumentPair>> measMatrix = new HashMap<>();
-            for (AbsoluteDate date : allowableDates) {
-                measMatrix.put(date, new HashSet<>());
+        boolean out = false;
+        for (int i = 0; i < allowableDates.size(); i++) {
+            if (allowableDates.get(i).compareTo(startDate) >= 0 && allowableDates.get(i).compareTo(endDate) <= 0) {
+                boolean change = addDataContinuity(measurement, allowableDates.get(i), mission, instrument);
+                if(change){
+                    out = true;
+                }
+            } else if (allowableDates.get(i).compareTo(endDate) > 0) {
+                break;
             }
         }
 
-        return matrix.get(measurement).get(time).add(new MissionInstrumentPair(instrument, mission));
+        return out;
+    }
+
+    /**
+     * 
+     * @param measurement
+     * @param date
+     * @param mission
+     * @param instrument he instrument aboard the given mission that will take
+     * the measurement
+     * @return true if the added data continuity element changed the matrix
+     */
+    private boolean addDataContinuity(Measurement measurement, AbsoluteDate date, Mission mission, Instrument instrument) {
+        //if the measurement is new, create array for each date
+        if (!matrix.containsKey(measurement)) {
+            HashMap<AbsoluteDate, HashSet<MissionInstrumentPair>> measMatrix = new HashMap<>();
+            for (AbsoluteDate d : allowableDates) {
+                measMatrix.put(d, new HashSet<>());
+            }
+        }
+        return matrix.get(measurement).get(date).add(new MissionInstrumentPair(instrument, mission));
     }
 
     /**
@@ -130,7 +164,7 @@ public class DataContinutityMatrix {
      * @param lifetime the lifetime in years
      * @param launchdate the launch date
      * @return a matrix offset from a copy of this matrix
-     */
+     */ 
     public DataContinutityMatrix offset(double lifetime, AbsoluteDate launchdate) {
         double life = FastMath.floor(lifetime / timestep) * 365. * 24. * 3600.;
         if (!allowableDates.contains(launchdate)) {
@@ -144,8 +178,7 @@ public class DataContinutityMatrix {
             for (AbsoluteDate date : allowableDates) {
                 if (date.shiftedBy(offset + life).compareTo(endDate) < 1) {
                     for (MissionInstrumentPair mi : matrix.get(meas).get(date)) {
-                        out.addDataContinutity(meas, date.shiftedBy(offset + life),
-                                mi.getMission(), mi.getInstrument());
+                        out.addDataContinuity(meas, date.shiftedBy(offset + life), mi.getMission(), mi.getInstrument());
                     }
                 }
             }
@@ -160,7 +193,9 @@ public class DataContinutityMatrix {
      * @return a new instance of a data continuity matrix that is merged
      */
     public DataContinutityMatrix merge(DataContinutityMatrix other) {
-        if (!this.allowableDates.equals(other.getAllowableDates())) {
+        if (!this.startDate.equals(other.startDate)
+                || !this.endDate.equals(other.endDate)
+                || this.timestep != other.timestep) {
             throw new IllegalArgumentException("Data continuity matrices must "
                     + "have same start and end dates and the same time step");
         }
@@ -175,12 +210,12 @@ public class DataContinutityMatrix {
             for (AbsoluteDate date : allowableDates) {
                 if (this.matrix.containsKey(meas) && this.matrix.get(meas).containsKey(date)) {
                     for (MissionInstrumentPair mi : this.matrix.get(meas).get(date)) {
-                        out.addDataContinutity(meas, date, mi.getMission(), mi.getInstrument());
+                        out.addDataContinuity(meas, date, mi.getMission(), mi.getInstrument());
                     }
                 }
                 if (other.matrix.containsKey(meas) && other.matrix.get(meas).containsKey(date)) {
                     for (MissionInstrumentPair mi : other.matrix.get(meas).get(date)) {
-                        out.addDataContinutity(meas, date, mi.getMission(), mi.getInstrument());
+                        out.addDataContinuity(meas, date, mi.getMission(), mi.getInstrument());
                     }
                 }
             }
@@ -195,15 +230,6 @@ public class DataContinutityMatrix {
      */
     public Set<Measurement> getMeasurements() {
         return matrix.keySet();
-    }
-
-    /**
-     * Gets the dates that are allowed to be declared
-     *
-     * @return the dates that are allowed to be declared
-     */
-    public Set<AbsoluteDate> getAllowableDates() {
-        return allowableDates;
     }
 
     /**
@@ -244,7 +270,7 @@ public class DataContinutityMatrix {
         for (Measurement m : matrix.keySet()) {
             for (AbsoluteDate d : allowableDates) {
                 for (MissionInstrumentPair p : matrix.get(m).get(d)) {
-                    copy.addDataContinutity(m, d, p.getMission(), p.getInstrument());
+                    copy.addDataContinuity(m, d, p.getMission(), p.getInstrument());
                 }
             }
         }

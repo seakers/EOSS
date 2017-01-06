@@ -9,7 +9,7 @@ import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Orbit;
-import eoss.problem.assignment.InstrumentAssignmentParams;
+import eoss.problem.evaluation.ArchitectureEvaluatorParams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -87,7 +87,7 @@ public class AddSynergy extends AbstractEOSSOperator {
      * @return
      */
     private int checkNthOrderSynergy(ArrayList<String> thepayload, Orbit orbit, int order) {
-        NDSM dsm = (NDSM) InstrumentAssignmentParams.all_dsms.get("SDSM" + order + "@" + orbit.getName());
+        NDSM dsm = (NDSM) ArchitectureEvaluatorParams.all_dsms.get("SDSM" + order + "@" + orbit.getName());
 
         TreeSet<Interaction> stm = dsm.getAllInteractions("+");
 

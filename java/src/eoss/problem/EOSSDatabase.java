@@ -5,8 +5,8 @@
  */
 package eoss.problem;
 
-import eoss.jess.JessInitializer;
-import eoss.problem.assignment.InstrumentAssignmentParams;
+import eoss.problem.evaluation.ArchitectureEvaluatorParams;
+import eoss.problem.evaluation.JessInitializer;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -311,13 +311,13 @@ public final class EOSSDatabase {
                 EOSSDatabase.addOrbit(new Orbit(orbName, Orbit.OrbitType.valueOf(orbType), semimajorAxis, inclination, RAAN, meanAnomaly, eccentricity, argPeri));
             }
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -362,13 +362,13 @@ public final class EOSSDatabase {
                 EOSSDatabase.addBus(new Bus(busName, busSize, busCost, busLife));
             }
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignmentParams.class
+            Logger.getLogger(ArchitectureEvaluatorParams.class
                     .getName()).log(Level.SEVERE, null, ex);
         }
     }

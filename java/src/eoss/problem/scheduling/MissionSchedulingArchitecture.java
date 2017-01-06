@@ -28,11 +28,11 @@ public class MissionSchedulingArchitecture extends Architecture {
      * The permutation that defines the schedule
      */
     private final Permuting permuting;
-    
+
     /**
      * The launch dates of each mission
      */
-    private HashMap<Mission,AbsoluteDate> launchDates;
+    private HashMap<Mission, AbsoluteDate> launchDates;
 
     //Constructors
     /**
@@ -56,11 +56,7 @@ public class MissionSchedulingArchitecture extends Architecture {
      */
     public MissionSchedulingArchitecture(Solution solution) {
         super(solution);
-        if (solution instanceof MissionSchedulingArchitecture) {
-            this.permuting = (Permuting) this.getVariable(0);
-        } else {
-            throw new IllegalArgumentException("Expected type SchedulingArchitecture class. Found " + solution.getClass().getSimpleName());
-        }
+        this.permuting = (Permuting) this.getVariable(0);
     }
 
     /**
@@ -80,21 +76,23 @@ public class MissionSchedulingArchitecture extends Architecture {
     public int[] getSequence() {
         return permuting.getSequence();
     }
-    
+
     /**
      * Gets the launch dates for each mission
-     * @return 
+     *
+     * @return
      */
     public HashMap<Mission, AbsoluteDate> getLaunchDates() {
         return launchDates;
     }
-    
+
     /**
      * Sets the launch dates for each mission
+     *
      * @param launchDates the launch dates for each mission
      */
     public void setLaunchDates(HashMap<Mission, AbsoluteDate> launchDates) {
-         this.launchDates = launchDates;
+        this.launchDates = launchDates;
     }
 
     @Override

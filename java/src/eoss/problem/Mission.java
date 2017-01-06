@@ -9,7 +9,11 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.orekit.errors.OrekitException;
 import org.orekit.time.AbsoluteDate;
+import org.orekit.time.TimeScalesFactory;
 
 /**
  *
@@ -49,18 +53,13 @@ public class Mission implements Serializable{
     private final AbsoluteDate eolDate;
 
     /**
-     * Panel scores for this mission
-     */
-    private final HashMap<Panel, Double> scores;
-
-    /**
      * Mission status
      */
     private final MissionStatus status;
 
     public Mission(String name, HashMap<Spacecraft, Orbit> spacecraft,
             AbsoluteDate launchDate, double lifetime, MissionStatus status,
-            int devYears, double costPerYear, HashMap<Panel, Double> scores) {
+            int devYears, double costPerYear) {
         this.costProfile = new double[devYears];
         Arrays.fill(this.costProfile, costPerYear);
         this.name = name;
@@ -69,12 +68,11 @@ public class Mission implements Serializable{
         this.eolDate = launchDate.shiftedBy(lifetime * 365. * 24. * 3600.);
         this.status = status;
         this.lifetime = lifetime;
-        this.scores = scores;
     }
     
     public Mission(String name, HashMap<Spacecraft, Orbit> spacecraft,
             AbsoluteDate launchDate, AbsoluteDate endOfLife, MissionStatus status,
-            int devYears, double costPerYear, HashMap<Panel, Double> scores) {
+            int devYears, double costPerYear) {
         this.costProfile = new double[devYears];
         Arrays.fill(this.costProfile, costPerYear);
         this.name = name;
@@ -83,7 +81,6 @@ public class Mission implements Serializable{
         this.eolDate = endOfLife;
         this.status = status;
         this.lifetime = endOfLife.durationFrom(launchDate)/(365. * 24. * 3600.);
-        this.scores = scores;
     }
 
     public String getName() {
@@ -109,21 +106,20 @@ public class Mission implements Serializable{
     }
 
     /**
-     * Gets the panel scores for this mission
-     *
-     * @return the panel scores for this mission
-     */
-    public HashMap<Panel, Double> getScores() {
-        return scores;
-    }
-
-    /**
      * Gets the spacecraft for this mission and their orbits
      *
      * @return the spacecraft for this mission and their orbits
      */
     public HashMap<Spacecraft, Orbit> getSpacecraft() {
         return spacecraft;
+    }
+
+    public AbsoluteDate getLaunchDate() {
+        return launchDate;
+    }
+
+    public AbsoluteDate getEolDate() {
+        return eolDate;
     }
 
     /**
@@ -137,7 +133,7 @@ public class Mission implements Serializable{
         Builder out = new Builder(this.name, this.spacecraft).
                 devYr(this.costProfile.length).devCostYr(this.costProfile[0]).
                 lifetime(this.lifetime).status(this.status).
-                launchDate(this.launchDate).panelScores(this.scores);
+                launchDate(this.launchDate);
         return out;
     }
 
@@ -163,12 +159,12 @@ public class Mission implements Serializable{
         /**
          * Launch date name
          */
-        private AbsoluteDate launchDate = AbsoluteDate.PAST_INFINITY;
+        private AbsoluteDate launchDate; 
 
         /**
          * The lifetime of the mission in years
          */
-        private double lifetime = 3;
+        private double lifetime = 5;
 
         /**
          * Mission status
@@ -186,11 +182,6 @@ public class Mission implements Serializable{
         private double developmentCostYr = 0;
 
         /**
-         * Scores for each panel
-         */
-        private HashMap<Panel, Double> scores = new HashMap<>();
-
-        /**
          * The constructor for the builder
          *
          * @param name the name of the mission
@@ -200,6 +191,11 @@ public class Mission implements Serializable{
         public Builder(String name, HashMap<Spacecraft, Orbit> spacecraft) {
             this.name = name;
             this.spacecraft = spacecraft;
+            try {
+                this.launchDate = new AbsoluteDate(2015, 01, 01, TimeScalesFactory.getUTC());
+            } catch (OrekitException ex) {
+                Logger.getLogger(Mission.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
         /**
@@ -259,18 +255,13 @@ public class Mission implements Serializable{
             return this;
         }
 
-        public Builder panelScores(HashMap<Panel, Double> scores) {
-            this.scores = scores;
-            return this;
-        }
-
         /**
          * Builds an instance of a mission with all the specified parameters.
          *
          * @return
          */
         public Mission build() {
-            return new Mission(name, spacecraft, launchDate, lifetime, status, developmentYears, developmentCostYr, scores);
+            return new Mission(name, spacecraft, launchDate, lifetime, status, developmentYears, developmentCostYr);
         }
     }
 

@@ -4,6 +4,7 @@
  */
 package eoss.problem;
 
+import eoss.problem.evaluation.ArchitectureEvaluatorParams;
 import aos.aos.AOSEpsilonMOEA;
 import aos.aos.AOSFactory;
 import aos.creditassigment.CreditDefFactory;
@@ -12,8 +13,9 @@ import aos.nextoperator.INextOperator;
 import aos.operatorselectors.replacement.EpochTrigger;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
-import eoss.problem.assignment.InstrumentAssignmentParams;
 import eoss.problem.assignment.InstrumentAssignment;
+import eoss.problem.evaluation.RequirementMode;
+import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.Initialization;
@@ -28,6 +30,7 @@ import org.moeaframework.util.TypedProperties;
 import eoss.search.InnovizationSearch;
 import eoss.search.InstrumentedSearch;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,15 +38,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.parsers.ParserConfigurationException;
+import jess.JessException;
+import jxl.read.biff.BiffException;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
+import orekit.util.OrekitConfig;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.operator.CompoundVariation;
 import org.moeaframework.core.operator.RandomInitialization;
+import org.orekit.errors.OrekitException;
+import org.orekit.time.AbsoluteDate;
+import org.orekit.time.TimeScale;
+import org.orekit.time.TimeScalesFactory;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -75,10 +87,11 @@ public class RBSAEOSSSMAP {
             args = new String[4];
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
-            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[1] = "1"; //Mode
+//            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
+            args[1] = "4"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "30"; //numRuns
+            args[3] = "1"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -94,6 +107,9 @@ public class RBSAEOSSSMAP {
 
         pool = Executors.newFixedThreadPool(numCPU);
         futures = new ArrayList<>(numRuns);
+        
+        //setup for using orekit
+        OrekitConfig.init();
 
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
@@ -140,7 +156,7 @@ public class RBSAEOSSSMAP {
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                    problem = getAssignmentProblem(path, "FUZZY-ATTRIBUTES", "normal", false);
+                    problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
                     try {
@@ -164,7 +180,7 @@ public class RBSAEOSSSMAP {
             case 2://AOS search Assignment
                 try {
                     for (int i = 0; i < numRuns; i++) {
-                        problem = getAssignmentProblem(path, "FUZZY-ATTRIBUTES", "normal", false);
+                        problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
                         ArrayList<Variation> heuristics = new ArrayList();
 
@@ -201,7 +217,7 @@ public class RBSAEOSSSMAP {
                 String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     try {
-                        problem = getAssignmentProblem(path, "FUZZY-ATTRIBUTES", "normal", false);
+                        problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
 
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
 
@@ -233,12 +249,7 @@ public class RBSAEOSSSMAP {
                                 initialization, selector, creditAssignment);
 
                         AbstractPopulationLabeler labeler = new NondominatedSortingLabeler(.25);
-                        InnovizationSearch run;
-                        if (i < numCPU) {
-                            run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i, true);
-                        } else {
-                            run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i, false);
-                        }
+                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i);
                         futures.add(pool.submit(run));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
@@ -263,7 +274,7 @@ public class RBSAEOSSSMAP {
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                    problem = getAssignmentProblem(path, "FUZZY-ATTRIBUTES", "normal", false);
+                    problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
                     futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i))));
@@ -284,7 +295,14 @@ public class RBSAEOSSSMAP {
         pool.shutdown();
     }
 
-    public static InstrumentAssignment getAssignmentProblem(String path, String fuzzyMode, String normalMode, boolean explanation) {
-        return new InstrumentAssignment(path, fuzzyMode, normalMode, InstrumentAssignmentParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+    public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode, boolean explanation) {
+        return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+    }
+    
+    public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) throws OrekitException, ParseException, BiffException, IOException, SAXException, ParserConfigurationException, JessException {
+        TimeScale utc = TimeScalesFactory.getUTC();
+        return new MissionScheduling(path, mode, 
+                new AbsoluteDate(2010, 1, 1, utc),
+                new AbsoluteDate(2050, 1, 1, utc), 1.);
     }
 }
