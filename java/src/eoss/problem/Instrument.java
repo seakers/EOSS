@@ -20,20 +20,33 @@ public class Instrument implements Serializable{
     
     private final String name;
     private final HashMap<String, String> properties;
+    
+    //the field of view of the instrument
+    private double fov;
 
     /**
      * 
      * @param name the name of the instrument
+     * @param fieldOfView the half angle of the conical field of view [deg]
      * @param prop properties of the instrument
      */
-    public Instrument(String name, HashMap<String, String> prop) {
+    public Instrument(String name, double fieldOfView, HashMap<String, String> prop) {
         this.name = name;
+        this.fov = fieldOfView;
         this.properties = prop;
     }
 
     public String getName() {
         return name;
     }
+
+    /**
+     * Gets the the half angle of the conical field of view [deg]
+     * @return 
+     */
+    public double getFieldOfView() {
+        return fov;
+    }    
     
     public String getProperty(String propertyName){
         return properties.get(propertyName);
@@ -50,15 +63,12 @@ public class Instrument implements Serializable{
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 97 * hash + Objects.hashCode(this.name);
+        hash = 89 * hash + Objects.hashCode(this.name);
+        hash = 89 * hash + Objects.hashCode(this.properties);
+        hash = 89 * hash + (int) (Double.doubleToLongBits(this.fov) ^ (Double.doubleToLongBits(this.fov) >>> 32));
         return hash;
     }
 
-    /**
-     * Checks if names are the same
-     * @param obj
-     * @return 
-     */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -68,7 +78,13 @@ public class Instrument implements Serializable{
             return false;
         }
         final Instrument other = (Instrument) obj;
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
         if (!Objects.equals(this.properties, other.properties)) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.fov) != Double.doubleToLongBits(other.fov)) {
             return false;
         }
         return true;
@@ -91,6 +107,11 @@ public class Instrument implements Serializable{
          * The name of the instrument
          */
         private final String name;
+        
+        /**
+         * the field of view of the instrument
+         */
+        private final double fov;
 
         
         /**
@@ -98,8 +119,9 @@ public class Instrument implements Serializable{
          */
         private HashMap<String, String> prop =  new HashMap();
         
-        public Builder(String name){
+        public Builder(String name, double fieldOfView){
             this.name = name;
+            this.fov = fieldOfView;
         }
         
         public Builder properties(HashMap<String, String> prop){
@@ -113,7 +135,7 @@ public class Instrument implements Serializable{
          * @return
          */
         public Instrument build() {
-            return new Instrument(name, prop);
+            return new Instrument(name, fov, prop);
         }
     }
     

@@ -140,9 +140,9 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     public void evaluate(Solution sltn) {
         try {
             InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
+            arch.setMissions();
             if (!loadArchitecture(arch)) {
-                arch.setMissions();
-                evaluate(arch);
+                evaluateArch(arch);
             }
 
             System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
@@ -174,7 +174,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             if (missions.isEmpty()) {
                 return true;
             } else {
-                eval.cost(missions); //computation of cost is quick
+                eval.designSpacecraft(missions);
                 getAuxFacts(solution);
                 return true;
             }
@@ -183,7 +183,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         }
     }
 
-    private void evaluate(InstrumentAssignmentArchitecture arch) {
+    private void evaluateArch(InstrumentAssignmentArchitecture arch) {
         ArrayList<Mission> missions = new ArrayList<>();
         for (String missionName : arch.getMissionNames()) {
             missions.add(arch.getMission(missionName));

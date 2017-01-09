@@ -220,7 +220,8 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
                         "REQUIREMENTS::Measurement (Parameter " + meas.getName() + ")"
                                 + " (flies-in " + o.getName() + ")");
                 for(Fact f : facts){
-                    Instrument inst = new Instrument(f.getSlotValue("Instrument").toString(), null);
+                    Instrument inst = new Instrument(f.getSlotValue("Instrument").toString(),
+                            Double.parseDouble(f.getSlotValue("Field-of-view#").toString()), null);
                     dcMatrix.addDataContinutity(meas, m.getLaunchDate(), m.getEolDate(), m, inst);
                 }
             }
@@ -348,7 +349,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
                 String missionStatus = row[4].getContents();
                 String instrument = row[5].getContents();
 
-                Instrument inst = new Instrument(instrument, null);
+                Instrument inst = new Instrument(instrument, Double.NaN , null);
 
                 Measurement meas = new Measurement(measurementMap.get(measType), Double.NaN, Double.NaN, Double.NaN, Double.NaN);
 

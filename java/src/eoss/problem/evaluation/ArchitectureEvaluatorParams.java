@@ -8,11 +8,15 @@ package eoss.problem.evaluation;
  *
  * @author dani
  */
+import eoss.problem.EOSSDatabase;
+import eoss.problem.Orbit;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,7 +86,9 @@ public class ArchitectureEvaluatorParams {
     public static int npanels;
     public static ArrayList<Double> panel_weights;
     public static ArrayList<String> panel_names;
-    public static Map<String, HashMap<String, Double>> revtimes;
+    
+    
+    public static HashMap<HashMap<Orbit, Double>, HashMap<String, Double>> revtimes;//map <orbit, fov>, <region, revtime>
     public static Map<ArrayList<String>, HashMap<String, Double>> scores;
     public static Map<String, NDSM> all_dsms;
 
@@ -184,16 +190,47 @@ public class ArchitectureEvaluatorParams {
             Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        
         System.out.println("Loading revisit time look-up table...");
-        try (ObjectInputStream ois = new ObjectInputStream( new FileInputStream(revtimes_dat_file))) {
-            revtimes = Collections.unmodifiableMap((HashMap<String, HashMap<String, Double>>) ois.readObject());
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(revtimes_dat_file))) {
+            revtimes = (HashMap<HashMap<Orbit, Double>, HashMap<String, Double>>) ois.readObject();
+            Collections.unmodifiableMap(revtimes);
         } catch (IOException ex) {
             throw ex;
         } catch (ClassNotFoundException ex) {
             throw ex;
         }
 
+//        //map <orbit, fov>, <region, revtime>
+//        HashMap<HashMap<Orbit, Double>, HashMap<String, Double>> newDb = new HashMap();
+//        for (String s : revtimes.keySet()) {
+//            String[] split = s.split(" ");
+//            String[] split2 = new String[7];
+//            int d = 0;
+//            for (String ss : split) {
+//                if (!ss.equals("")) {
+//                    split2[d] = ss;
+//                    d++;
+//                }
+//            }
+//
+//            int satPerOrbit = Integer.parseInt(split[0]);
+//            if (satPerOrbit == 1) {
+//                HashMap<Orbit, Double> orbits = new HashMap();
+//                for (int i = 0; i < 5; i++) {
+//                    double fov = Double.parseDouble(split2[i + 2]);
+//                    if (fov != -1) {
+//                        orbits.put(EOSSDatabase.getOrbit(i), fov);
+//                    }
+//                }
+//                newDb.put(orbits, revtimes.get(s));
+//            }
+//        }
+//        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("newRevtimes"));) {
+//            os.writeObject(newDb);
+//            os.close();
+//        } catch (IOException ex) {
+//            Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
+//        }
         System.out.println("Loading dsm_dat ...");
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(dsm_dat_file))) {
             all_dsms = Collections.unmodifiableMap((HashMap<String, NDSM>) ois.readObject());

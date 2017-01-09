@@ -23,7 +23,6 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
-import org.moeaframework.util.TypedProperties;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -185,6 +184,7 @@ public final class EOSSDatabase {
             for (int i = 1; i < ninst; i++) {
                 Cell[] row = meas.getRow(i);
                 String instrumentName = "";
+                double fov = Double.NaN;
                 HashMap<String, String> properties = new HashMap();
                 for (int j = 0; j < nattributes; j++) {
                     String cell_value = row[j].getContents();
@@ -192,7 +192,9 @@ public final class EOSSDatabase {
                     String propertyName = headerOrder.get(j);
                     if (propertyName.equals("Name")) {
                         instrumentName = cell_value.trim();
-                    } else {
+                    } else if(propertyName.equals("Field-of-view#")){
+                        fov = Double.parseDouble(cell_value.trim());
+                    }else{
                         String[] splitted = cell_value.split(" ");
                         String propertyValue;
                         if (splitted.length == 0) {
@@ -212,7 +214,7 @@ public final class EOSSDatabase {
                 if (instrumentName.isEmpty()) {
                     throw new IllegalStateException(String.format("Could not find name for instrument in row %d", i));
                 }
-                Instrument newInstrument = new Instrument(instrumentName, properties);
+                Instrument newInstrument = new Instrument(instrumentName, fov, properties);
                 EOSSDatabase.addInstrument(newInstrument);
             }
             
@@ -392,12 +394,7 @@ public final class EOSSDatabase {
      * returns -1;
      */
     public static int findOrbitIndex(Orbit orbit) {
-        for (int i = 0; i < orbitMap.size(); i++) {
-            if (orbitMap.get(i).equals(orbit)) {
-                return i;
-            }
-        }
-        return -1;
+        return orbitMap.get(orbit);
     }
 
     /**

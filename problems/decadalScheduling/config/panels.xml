@@ -7,7 +7,7 @@
 			<subobjective> <id>WEA1-2</id> <weight> 0.2 </weight> <description> Atmospheric wind direction </description> </subobjective>
 			<subobjective> <id>WEA1-3</id> <weight> 0.3 </weight> <description> Ocean surface wind speed </description> </subobjective>
 			<subobjective> <id>WEA1-4</id> <weight> 0.2 </weight> <description> Ocean surface wind direction </description> </subobjective>
-			<subobjective> <id>WEA1-1</id> <weight> 0.1 </weight> <description> Water vapor transport winds </description> </subobjective>
+			<subobjective> <id>WEA1-5</id> <weight> 0.1 </weight> <description> Water vapor transport winds </description> </subobjective>
 		</objective>
 		<objective> <id>WEA2</id> <weight> 0.1538 </weight> <description> High temporal resolution air pollution </description>
 			<subobjective> <id>WEA2-1</id> <weight> 1/3 </weight> <description> Regional tropospheric ozone measurement </description> </subobjective>
@@ -141,7 +141,7 @@
 		<discountRate>0.1</discountRate>
 	</panel>
 	<panel> 
-		<id>WAT</id> <weight> 0.15.6 </weight> <description> Water </description>
+		<id>WAT</id> <weight> 0.156 </weight> <description> Water </description>
 		<objective> <id>WAT1</id> <weight> 0.287 </weight> <description> Soil moisture and freeze-thaw state </description>
 			<subobjective> <id>WAT1-1</id> <weight> 0.5 </weight> <description> Freeze/thaw state </description> </subobjective>
 			<subobjective> <id>WAT1-2</id> <weight> 0.5 </weight> <description> Soil Moisture </description> </subobjective>
@@ -268,8 +268,8 @@
 			<subobjective> <id>SOL2-3</id> <weight> 0.2 </weight> <description> Hydrocarbon reservoir monitoring </description> </subobjective>
 		</objective>
 		<objective> <id>SOL3</id> <weight> 0.19 </weight> <description> High resolution topography </description>
-			<subobjective> <id>SOL3-3</id> <weight> 0.8 </weight> <description> High resolution topography </description> </subobjective>
-			<subobjective> <id>SOL3-3</id> <weight> 0.2 </weight> <description> Flood monitoring </description> </subobjective>
+			<subobjective> <id>SOL3-1</id> <weight> 0.8 </weight> <description> High resolution topography </description> </subobjective>
+			<subobjective> <id>SOL3-2</id> <weight> 0.2 </weight> <description> Flood monitoring </description> </subobjective>
 		</objective>
 		<objective> <id>SOL4</id> <weight> 0.143 </weight> <description> Temporal variations in Earth gravity field </description>
 			<subobjective> <id>SOL4-1</id> <weight> 0.5 </weight> <description> Gravity field variations </description> </subobjective>

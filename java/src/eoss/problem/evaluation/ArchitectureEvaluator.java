@@ -74,7 +74,7 @@ public class ArchitectureEvaluator {
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(ArchitectureEvaluator.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         this.reqMode = reqMode;
         this.explanation = explanation;
         this.withSynergy = withSynergy;
@@ -222,23 +222,25 @@ public class ArchitectureEvaluator {
             Value v = r.eval("(update-fovs " + measurement + " (create$ " + StringUtils.join(EOSSDatabase.getOrbits(), " ") + "))");
             if (RU.getTypeName(v.type()).equalsIgnoreCase("LIST")) {
                 ValueVector thefovs = v.listValue(r.getGlobalContext());
-                ArrayList<String> fovs = new ArrayList<>(thefovs.size());
+                HashMap<Orbit, Double> keyMap = new HashMap<>();
                 for (int i = 0; i < thefovs.size(); i++) {
-                    int tmp = thefovs.get(i).intValue(r.getGlobalContext());
-                    fovs.add(i, String.valueOf(tmp));
+                    double f = thefovs.get(i).numericValue(r.getGlobalContext());
+                    if(f != -1){
+                        keyMap.put(EOSSDatabase.getOrbit(i), f);
+                    }
                 }
-                String key = "1 x" + StringUtils.join(fovs, ",");
+//                String key = "1 x" + StringUtils.join(fovs, ",");
                 //if(!key.equals("5 x -1  -1  -1  -1  50")){
                 //System.out.println(param);
                 //key = "5 x -1  -1  -1  -1  50";
                 //}
-                HashMap<String, Double> therevtimes = ArchitectureEvaluatorParams.revtimes.get(key); //key: 'Global' or 'US', value Double
+                HashMap<String, Double> therevtimes = ArchitectureEvaluatorParams.revtimes.get(keyMap); //key: 'Global' or 'US', value Double
 
                 //there were two different maps at one point. one with spaces and the other without spaces and commas
-                if (therevtimes == null) {
-                    key = "1 x " + StringUtils.join(fovs, "  ");
-                    therevtimes = ArchitectureEvaluatorParams.revtimes.get(key); //key: 'Global' or 'US', value Double
-                }
+//                if (therevtimes == null) {
+//                    key = "1 x " + StringUtils.join(fovs, "  ");
+//                    therevtimes = ArchitectureEvaluatorParams.revtimes.get(key); //key: 'Global' or 'US', value Double
+//                }
                 String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
                         + "(avg-revisit-time-US# " + therevtimes.get("US") + ")))";
                 r.eval(call);
@@ -363,15 +365,9 @@ public class ArchitectureEvaluator {
      * @throws JessException
      */
     public double cost(Collection<Mission> missions) throws JessException {
+        designSpacecraft(missions);
+        
         double cost = 0.0;
-        r.eval("(reset)");
-
-        assertMissions(missions);
-
-        r.eval("(focus MANIFEST)");
-        r.run();
-
-        designSpacecraft();
 
         r.eval("(focus LV-SELECTION0)");
         r.run();
@@ -414,17 +410,24 @@ public class ArchitectureEvaluator {
         return cost;
     }
 
-    private void designSpacecraft() throws JessException {
+    public void designSpacecraft(Collection<Mission> missions) throws JessException {
+        r.eval("(reset)");
+
+        assertMissions(missions);
+
+        r.eval("(focus MANIFEST)");
+        r.run();
+
         r.eval("(focus PRELIM-MASS-BUDGET)");
         r.run();
 
-        ArrayList<Fact> missions = qb.makeQuery("MANIFEST::Mission");
-        Double[] oldmasses = new Double[missions.size()];
-        for (int i = 0; i < missions.size(); i++) {
-            oldmasses[i] = missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
+        ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
+        Double[] oldmasses = new Double[missionFacts.size()];
+        for (int i = 0; i < missionFacts.size(); i++) {
+            oldmasses[i] = missionFacts.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
         }
-        Double[] diffs = new Double[missions.size()];
-        double tolerance = 10 * missions.size();
+        Double[] diffs = new Double[missionFacts.size()];
+        double tolerance = 10 * missionFacts.size();
         boolean converged = false;
         while (!converged) {
             r.eval("(focus CLEAN1)");
@@ -439,11 +442,11 @@ public class ArchitectureEvaluator {
             r.eval("(focus UPDATE-MASS-BUDGET)");
             r.run();
 
-            Double[] drymasses = new Double[missions.size()];
+            Double[] drymasses = new Double[missionFacts.size()];
             double sumdiff = 0.0;
             double summasses = 0.0;
-            for (int i = 0; i < missions.size(); i++) {
-                drymasses[i] = missions.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
+            for (int i = 0; i < missionFacts.size(); i++) {
+                drymasses[i] = missionFacts.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
                 diffs[i] = Math.abs(drymasses[i] - oldmasses[i]);
                 sumdiff = sumdiff + diffs[i];
                 summasses = summasses + drymasses[i];

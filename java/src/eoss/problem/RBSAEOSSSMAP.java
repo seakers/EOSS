@@ -29,9 +29,12 @@ import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 import eoss.search.InnovizationSearch;
 import eoss.search.InstrumentedSearch;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +43,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import jess.JessException;
+import jxl.Cell;
+import jxl.Sheet;
+import jxl.Workbook;
 import jxl.read.biff.BiffException;
+import knowledge.operator.RepairDataDutyCycle;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
@@ -87,13 +94,13 @@ public class RBSAEOSSSMAP {
             args = new String[4];
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
-//            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
-            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "4"; //Mode
+            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+//            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
+            args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
-
+        
         System.out.println("Path set to " + args[0]);
         System.out.println("Running mode " + args[1]);
         System.out.println("Will get " + args[2] + " resources");
@@ -107,14 +114,14 @@ public class RBSAEOSSSMAP {
 
         pool = Executors.newFixedThreadPool(numCPU);
         futures = new ArrayList<>(numRuns);
-        
+
         //setup for using orekit
         OrekitConfig.init();
 
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 2;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -153,12 +160,13 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     BitFlip = new BitFlip(mutationProbability);
                     GAVariation = new GAVariation(singlecross, BitFlip);
+                    CompoundVariation var = new CompoundVariation(GAVariation, new RepairDataDutyCycle(0.8, 5));
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
                     problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     try {
                         //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
                         new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
@@ -298,11 +306,57 @@ public class RBSAEOSSSMAP {
     public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode, boolean explanation) {
         return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
-    
+
     public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) throws OrekitException, ParseException, BiffException, IOException, SAXException, ParserConfigurationException, JessException {
         TimeScale utc = TimeScalesFactory.getUTC();
-        return new MissionScheduling(path, mode, 
+        return new MissionScheduling(path, mode,
                 new AbsoluteDate(2010, 1, 1, utc),
                 new AbsoluteDate(2050, 1, 1, utc), 1.);
+    }
+
+    public static void convertXlsToMap() {
+        HashMap<HashMap<Orbit, Double>, HashMap<String, Double>> newDb = new HashMap();
+        try {
+            Workbook xls = Workbook.getWorkbook(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling/xls/Mission Analysis Database.xls"));
+            Sheet sheet = xls.getSheet("Walker");
+            int nlines = sheet.getRows();
+            for (int i = 1; i < nlines; i++) {
+                HashMap<Orbit, Double> orbMap = new HashMap();
+                Cell[] row = sheet.getRow(i);
+                if (Integer.parseInt(row[0].getContents()) == 1) {
+                    double sa = Double.parseDouble(row[2].getContents()) * 1000. + 6378100.0;
+                    String inclination = row[2].getContents();
+                    Orbit.OrbitType type;
+                    if(inclination.equals("12345")){
+                         inclination = "SSO";
+                         type = Orbit.OrbitType.SSO;
+                    }else{
+                        type = Orbit.OrbitType.LEO;
+                    }
+                    Orbit orb = new Orbit(String.valueOf(i), type, sa, inclination, "N/A", 0, 0, 0);
+                    double fov = Double.parseDouble(row[4].getContents());
+                    orbMap.put(orb, fov);
+                }
+                HashMap<String, Double> revTimes = new HashMap();
+                revTimes.put("avg_revisit_time", Double.parseDouble(row[5].getContents()));
+                revTimes.put("avg_revisit_time_tropics", Double.parseDouble(row[6].getContents()));
+                revTimes.put("avg_revisit_time_NH", Double.parseDouble(row[7].getContents()));
+                revTimes.put("avg_revisit_time_SH", Double.parseDouble(row[8].getContents()));
+                revTimes.put("avg_revisit_time_cold regions", Double.parseDouble(row[9].getContents()));
+                revTimes.put("avg_revisit_time_US", Double.parseDouble(row[10].getContents()));
+                newDb.put(orbMap, revTimes);
+            }
+            
+            try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("newRevtimes"));) {
+            os.writeObject(newDb);
+                os.close();
+            } catch (IOException ex) {
+                Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        } catch (IOException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BiffException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
