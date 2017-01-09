@@ -122,6 +122,10 @@ public class Mission implements Serializable{
         return eolDate;
     }
 
+    public MissionStatus getStatus() {
+        return status;
+    }
+
     /**
      * Gets a builder that copies all parameters over into the builder. This
      * builder can be used to make new instances that are variations of this
