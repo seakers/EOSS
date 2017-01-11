@@ -6,18 +6,24 @@
 package knowledge.operator;
 
 import eoss.problem.EOSSDatabase;
-import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.assignment.operators.AbstractEOSSOperator;
+import eoss.problem.evaluation.ArchitectureEvaluator;
+import eoss.problem.evaluation.RequirementMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jess.Fact;
+import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 
 /**
- * Checks that the spacecraft mass of the spacecraft falls within the
+ * Checks that the dry mass of the spacecraft fall within the
  * acceptable bounds. Multiple changes may occur within a spacecraft to ensure
  * the threshold bound. Random instruments are removed until acceptable bounds
  * are met. User can define whether to change one or multiple spacecraft
@@ -27,7 +33,7 @@ import org.moeaframework.core.ParallelPRNG;
 public class RepairMass extends AbstractEOSSOperator {
 
     /**
-     * The data rate duty cycle that a spacecraft must be at or higher
+     * The dry mass of the spacecraft must be at or lower
      */
     private final double threshold;
 
@@ -38,63 +44,72 @@ public class RepairMass extends AbstractEOSSOperator {
 
     private final ParallelPRNG pprng;
 
-    public RepairMass(double threshold, int numModifications) {
+    private final ArchitectureEvaluator eval;
+
+    public RepairMass(String path, double threshold, int numModifications) {
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
         this.threshold = threshold;
         this.numModifications = numModifications;
         this.pprng = new ParallelPRNG();
     }
-    
+
     @Override
     protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
         child.setMissions();
         InstrumentAssignmentArchitecture copy = (InstrumentAssignmentArchitecture) child.copy();
-        ArrayList<Orbit> candidateOrbits = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            Mission mission = child.getMission(name);
-            for (Spacecraft s : mission.getSpacecraft().keySet()) {
-                if(checkDataRate(copy, mission.getSpacecraft().get(s), threshold)){
-                    candidateOrbits.add(mission.getSpacecraft().get(s));
+        ArrayList<Mission> candidateMission = new ArrayList();
+        try {
+            for (String name : child.getMissionNames()) {
+                Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
+                
+                if (!checkMass(child.getMission(name), threshold) && !s.getPaylaod().isEmpty()) {
+                    candidateMission.add(child.getMission(name));
                 }
             }
-        }
-        for (int i = 0; i < numModifications; i++) {
-            if (i > child.getNorbits() || i >= candidateOrbits.size()) {
-                break;
+            for (int i = 0; i < numModifications; i++) {
+                if (i > child.getNorbits() || i >= candidateMission.size()) {
+                    break;
+                }
+                int missionIndex = pprng.nextInt(candidateMission.size());
+                Mission mission = candidateMission.get(missionIndex);
+                Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
+                Orbit orbit = mission.getSpacecraft().get(s);
+                int index = EOSSDatabase.findOrbitIndex(orbit);
+                while (!checkMass(mission, threshold)) {
+                    ArrayList<Integer> instruments = copy.getInstrumentsInOrbit(index);
+                    copy.removeInstrumentFromOrbit(instruments.get(pprng.nextInt(instruments.size())), index);
+                    HashMap<Spacecraft, Orbit> map = new HashMap();
+                    map.put(new Spacecraft(copy.getInstrumentsInOrbit(orbit)), orbit);
+                    mission = new Mission.Builder(orbit.getName(), map).build();
+                    if(copy.getInstrumentsInOrbit(orbit).isEmpty()){
+                        break;
+                    }
+                }
+                candidateMission.remove(missionIndex);
             }
-            Orbit change = candidateOrbits.get(pprng.nextInt(candidateOrbits.size()));
-            int index = EOSSDatabase.findOrbitIndex(change);
-            while (!checkDataRate(copy, change, threshold)) {
-                ArrayList<Integer> instruments = copy.getInstrumentsInOrbit(index);
-                copy.removeInstrumentFromOrbit(instruments.get(pprng.nextInt(instruments.size())), index);
-            }
+        } catch (JessException ex) {
+            Logger.getLogger(RepairDataDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
         }
         return copy;
     }
     
     /**
-     * Computes the data rate duty cycle from the data rate per orbit
-     * @param dataRatePerOrbit
-     * @return 
-     */
-    private double computeDataRateDutyCycle(double dataRatePerOrbit){
-        return (1. * 7. * 60. * 500. * (1. / 8192.)) / dataRatePerOrbit;
-    }
-    
-    /**
-     * Check to see if the data rate duty cycle of this spacecraft meets the threshold
+     * Check to see if the dry mass of this spacecraft meets the
+     * threshold
+     *
      * @param arch
      * @param orbit
      * @param threshold
-     * @return 
+     * @return true if the dry mass is at or below the threshold.
+     * Otherwise false.
      */
-    private boolean checkDataRate(InstrumentAssignmentArchitecture arch, Orbit orbit, double threshold){
-        Collection<Instrument> payload = arch.getInstrumentsInOrbit(orbit);
-        double dataRate = 0;
-        for(Instrument inst : payload){
-            dataRate += Double.parseDouble(inst.getProperty("average-data-rate#"));
-        }
-        double dataRatePerOrbit = (dataRate * 1.2 * orbit.getPeriod()) / (1024 * 8); //(GByte/orbit) 20% overhead
-        return computeDataRateDutyCycle(dataRatePerOrbit) > threshold;
+    private boolean checkMass(Mission mission, double threshold) throws JessException {
+        Collection<Mission> missions = new ArrayList<>();
+        missions.add(mission);
+        this.eval.designSpacecraft(missions);
+        Collection<Fact> missionFacts = eval.makeQuery(String.format("MANIFEST::Mission (Name %s)", mission.getName()));
+        Fact fact = missionFacts.iterator().next();
+        return Double.parseDouble(fact.getSlotValue("satellite-dry-mass").toString()) <= threshold;
     }
 
     @Override

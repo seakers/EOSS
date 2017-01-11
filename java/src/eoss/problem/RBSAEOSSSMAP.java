@@ -49,6 +49,7 @@ import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import knowledge.operator.RepairDataDutyCycle;
 import knowledge.operator.EOSSOperatorCreator;
+import knowledge.operator.RepairMass;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import orekit.util.OrekitConfig;
@@ -121,7 +122,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 2;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -160,7 +161,7 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     BitFlip = new BitFlip(mutationProbability);
                     GAVariation = new GAVariation(singlecross, BitFlip);
-                    CompoundVariation var = new CompoundVariation(singlecross, new RepairDataDutyCycle(path,0.8, 5),BitFlip);
+                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path,0.8, 5),BitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
