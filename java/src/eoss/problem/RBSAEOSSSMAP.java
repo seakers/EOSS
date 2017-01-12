@@ -122,7 +122,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 2;
+        int popSize = 100;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -195,6 +195,7 @@ public class RBSAEOSSSMAP {
 
                         //add domain-independent heuristics
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),new RepairMass(path,0.8, 5),new BitFlip(mutationProbability)));
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
