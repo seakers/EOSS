@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 import org.moeaframework.Instrumenter;
@@ -65,10 +66,10 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         alg.step();
         long startTime = System.currentTimeMillis();
 
-        HashMap<BitSet, Solution> allSolutions = new HashMap();
+        HashSet<Solution> allSolutions = new HashSet();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
-            allSolutions.put(((InstrumentAssignmentArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
+            allSolutions.add( initPop.get(i));
         }
 
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
@@ -81,9 +82,9 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         }
 
         Population allpop = new Population();
-        Iterator<BitSet> iter = allSolutions.keySet().iterator();
+        Iterator<Solution> iter = allSolutions.iterator();
         while (iter.hasNext()) {
-            allpop.add(allSolutions.get(iter.next()));
+            allpop.add(iter.next());
         }
 
         alg.terminate();

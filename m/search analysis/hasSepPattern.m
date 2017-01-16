@@ -34,7 +34,7 @@ ind = true(size(dec1,1),1);
 % %separate2's
 % ind = and(indSepPattern({'CNES_KaRIN', 'GACM_SWIR'},dec1), ind);
 % ind = and(indSepPattern({'DESD_LID', 'DESD_SAR'},dec1), ind);
-ind = and(indSepPattern({'ACE_LID', 'ACE_ORCA'},dec1), ind);
+% ind = and(indSepPattern({'ACE_LID', 'ACE_ORCA'},dec1), ind);
 % ind = and(indSepPattern({'DESD_SAR', 'GACM_SWIR'},dec1), ind);
 % ind = and(indSepPattern({'CLAR_ERB', 'HYSP_TIR'},dec1), ind);
 % ind = and(indSepPattern({'GACM_SWIR', 'POSTEPS_IRS'},dec1), ind);
@@ -42,6 +42,14 @@ ind = and(indSepPattern({'ACE_LID', 'ACE_ORCA'},dec1), ind);
 % ind = and(indSepPattern({'ACE_ORCA', 'ACE_POL'},dec1), ind);
 % ind = and(indSepPattern({'ACE_CPR', 'DESD_LID'},dec1), ind);
 % ind = and(indSepPattern({'ACE_POL', 'GACM_VIS'},dec1), ind);
+
+%GACM_SWIR not in afternoon orbit
+ind = and(not(sum(dec1(:,16:20),2)>1), ind); %has at least one polarimeter
+ind = and(not(sum(dec1(:,16),2)==1), ind); %has polarimeter in 1st orbit
+ind = and(not(sum(dec1(:,17),2)==1), ind); %has polarimeter in 2nd orbit
+ind = and(not(sum(dec1(:,18),2)==1), ind); %has polarimeter in 3rd orbit
+% ind = and(not(sum(dec1(:,19),2)==1), ind); %has polarimeter in 4th orbit
+ind = and(not(sum(dec1(:,20),2)==1), ind); %has polarimeter in 5th orbit
 
 figure(1)
 scatter(-obj(:,1),obj(:,2)*33495.939796,'b')
@@ -58,44 +66,45 @@ legend('All solutions','Top 25% of solutions','Solutions with {I_i,I_j,I_k}')
 
 end
 
+function ind = instrumentInd(inst)
+%gets the instrument index
+if strcmp(inst,'ACE_ORCA')
+    ind = 1;
+elseif strcmp(inst,'ACE_POL')
+    ind = 2;
+elseif strcmp(inst,'ACE_LID')
+    ind = 3;
+elseif strcmp(inst,'CLAR_ERB')
+    ind = 4;
+elseif strcmp(inst,'ACE_CPR')
+    ind = 5;
+elseif strcmp(inst,'DESD_SAR')
+    ind = 6;
+elseif strcmp(inst,'DESD_LID')
+    ind = 7;
+elseif strcmp(inst,'GACM_VIS')
+    ind = 8;
+elseif strcmp(inst,'GACM_SWIR')
+    ind = 9;
+elseif strcmp(inst,'HYSP_TIR')
+    ind = 10;
+elseif strcmp(inst,'POSTEPS_IRS')
+    ind = 11;
+elseif strcmp(inst,'CNES_KaRIN')
+    ind = 12;
+else
+    error('Instrument %s is not recognized',inst_i)
+end
+end
 
 
 function p = sepDecPattern(inst)
 %inst is a cell of instrument names
 %p is matrix with possible separate patterns for each orbit
-
 norbs = 5;
 p = zeros(norbs,60);
 for i=1:length(inst)
-    inst_i = inst{i};
-    if strcmp(inst_i,'ACE_ORCA')
-        d = 1;
-    elseif strcmp(inst_i,'ACE_POL')
-        d = 2;
-    elseif strcmp(inst_i,'ACE_LID')
-        d = 3;
-    elseif strcmp(inst_i,'CLAR_ERB')
-        d = 4;
-    elseif strcmp(inst_i,'ACE_CPR')
-        d = 5;
-    elseif strcmp(inst_i,'DESD_SAR')
-        d = 6;
-    elseif strcmp(inst_i,'DESD_LID')
-        d = 7;
-    elseif strcmp(inst_i,'GACM_VIS')
-        d = 8;
-    elseif strcmp(inst_i,'GACM_SWIR')
-        d = 9;
-    elseif strcmp(inst_i,'HYSP_TIR')
-        d = 10;
-    elseif strcmp(inst_i,'POSTEPS_IRS')
-        d = 11;
-    elseif strcmp(inst_i,'CNES_KaRIN')
-        d = 12;
-    else
-        error('Instrument %s is not recognized',inst_i)
-    end
-    
+    d = instrumentInd(inst{i});
     for j=1:norbs
         p(j,norbs*(d-1)+j)=1;
     end
@@ -108,4 +117,14 @@ bool = true(size(dec1,1),1);
 p = sepDecPattern(inst);
 ind = any(dec1*p'==length(inst),2);
 bool(ind) = false;
+end
+
+function bool = inOrbit(inst, orb, dec1)
+%true if the instrument is in the orbit
+norbs = 5;
+bool = false(size(dec1,1),1);
+p = zeros(norbs,60);
+p(norbs*(instrumentInd(inst)-1)+orb) = 1;
+ind = any(dec1*p'==1,2);
+bool(ind) = true;
 end

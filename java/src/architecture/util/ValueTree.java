@@ -21,6 +21,7 @@ import java.util.Set;
  * @author nozomihitomi
  */
 public class ValueTree implements Serializable {
+
     private static final long serialVersionUID = -7838300623785230194L;
 
     private final Node root;
@@ -72,6 +73,22 @@ public class ValueTree implements Serializable {
      */
     public Set<String> getNodeNames() {
         return nodeMap.keySet();
+    }
+
+    /**
+     * Gets the potential this node has which the product of each node's weight
+     * from the root node to the specified node
+     *
+     * @param nodeID the id of the node of interest
+     * @return the fraction of the total score at the node that this node can contribute
+     */
+    public double getPotential(String nodeID) {
+        double potential = 1;
+        while(!nodeID.equals(this.root.id)){
+            potential *= nodeMap.get(nodeID).weight;
+            nodeID = nodeMap.get(nodeID).getParent().id;
+        }
+        return potential;
     }
 
     /**
@@ -278,6 +295,7 @@ public class ValueTree implements Serializable {
          */
         public boolean addChild(Node child) {
             if (child.getParent() == null) {
+                child.parent = this;
                 return children.add(child);
             } else {
                 return false;

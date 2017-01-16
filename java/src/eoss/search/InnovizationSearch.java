@@ -17,6 +17,7 @@ import java.io.File;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 import knowledge.operator.EOSSOperatorCreator;
@@ -126,10 +127,10 @@ public class InnovizationSearch implements Callable<Algorithm> {
         long startTime = System.currentTimeMillis();
 
         //keep track of each solution that is ever created, but only keep the unique ones
-        HashMap<BitSet, Solution> allSolutions = new HashMap();
+        HashSet<Solution> allSolutions = new HashSet();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
-            allSolutions.put(((InstrumentAssignmentArchitecture) initPop.get(i)).getBitString(), initPop.get(i));
+            allSolutions.add(initPop.get(i));
         }
 
 
@@ -140,8 +141,8 @@ public class InnovizationSearch implements Callable<Algorithm> {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
             for (int i = pop.size() - 3; i < pop.size(); i++) {
-                if (!allSolutions.containsKey(((InstrumentAssignmentArchitecture) pop.get(i)).getBitString())) {
-                    allSolutions.put(((InstrumentAssignmentArchitecture) pop.get(i)).getBitString(), pop.get(i));
+                if (!allSolutions.contains(pop.get(i))) {
+                    allSolutions.add(pop.get(i));
                 }
             }
 
@@ -163,7 +164,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 }
 
                 //conduct learning
-                Population allSolnPop = new Population(allSolutions.values());
+                Population allSolnPop = new Population(allSolutions);
                 dataLabeler.label(allSolnPop);
                 String labledDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_labels.csv";
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
@@ -202,9 +203,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
         }
 
         Population allpop = new Population();
-        Iterator<BitSet> iter = allSolutions.keySet().iterator();
+        Iterator<Solution> iter = allSolutions.iterator();
         while (iter.hasNext()) {
-            allpop.add(allSolutions.get(iter.next()));
+            allpop.add(iter.next());
         }
 
         alg.terminate();

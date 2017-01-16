@@ -14,6 +14,7 @@ import aos.operatorselectors.replacement.EpochTrigger;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
 import eoss.problem.assignment.InstrumentAssignment;
+import eoss.problem.assignment.InstrumentAssignment2;
 import eoss.problem.evaluation.RequirementMode;
 import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
@@ -47,7 +48,6 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
-import knowledge.operator.RepairDataDutyCycle;
 import knowledge.operator.EOSSOperatorCreator;
 import knowledge.operator.RepairMass;
 import mining.label.AbstractPopulationLabeler;
@@ -101,7 +101,7 @@ public class RBSAEOSSSMAP {
             args[2] = "1"; //numCPU
             args[3] = "30"; //numRuns
         }
-        
+
         System.out.println("Path set to " + args[0]);
         System.out.println("Running mode " + args[1]);
         System.out.println("Will get " + args[2] + " resources");
@@ -122,17 +122,16 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 2;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
         double mutationProbability = 1. / 60.;
         Variation singlecross;
-        Variation BitFlip;
-        Variation GAVariation;
+        Variation bitFlip;
+        Variation gaVariation;
         Initialization initialization;
-        Problem problem = null;
 
         //setup for epsilon MOEA
         DominanceComparator comparator = new ParetoDominanceComparator();
@@ -155,19 +154,22 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
         EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits.xml"));
 
+        //initialize problem
+//        Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
+        Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
+
         switch (mode) {
             case 1: //Use epsilonMOEA Assignment
                 for (int i = 0; i < numRuns; i++) {
                     singlecross = new OnePointCrossover(crossoverProbability);
-                    BitFlip = new BitFlip(mutationProbability);
-                    GAVariation = new GAVariation(singlecross, BitFlip);
-                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path,0.8, 5),BitFlip);
+                    bitFlip = new BitFlip(mutationProbability);
+                    gaVariation = new GAVariation(singlecross, bitFlip);
+//                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 0.8, 5), bitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                    problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
                     try {
                         //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
                         new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
@@ -189,13 +191,12 @@ public class RBSAEOSSSMAP {
             case 2://AOS search Assignment
                 try {
                     for (int i = 0; i < numRuns; i++) {
-                        problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
                         ArrayList<Variation> heuristics = new ArrayList();
 
                         //add domain-independent heuristics
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),new RepairMass(path,0.8, 5),new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new RepairMass(path, 0.8, 5), new BitFlip(mutationProbability)));
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
@@ -227,8 +228,6 @@ public class RBSAEOSSSMAP {
                 String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     try {
-                        problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
-
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
 
                         ArrayList<Variation> operators = new ArrayList();
@@ -279,14 +278,13 @@ public class RBSAEOSSSMAP {
 
                 for (int i = 0; i < numRuns; i++) {
                     singlecross = new OnePointCrossover(crossoverProbability);
-                    BitFlip = new BitFlip(mutationProbability);
-                    GAVariation = new GAVariation(singlecross, BitFlip);
+                    bitFlip = new BitFlip(mutationProbability);
+                    gaVariation = new GAVariation(singlecross, bitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                    problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, GAVariation, initialization);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
                     futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i))));
                 }
                 for (Future<Algorithm> run : futures) {
@@ -309,6 +307,10 @@ public class RBSAEOSSSMAP {
         return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
 
+    public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode, boolean explanation) {
+        return new InstrumentAssignment2(path, nSpacecraft, mode, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+    }
+
     public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) throws OrekitException, ParseException, BiffException, IOException, SAXException, ParserConfigurationException, JessException {
         TimeScale utc = TimeScalesFactory.getUTC();
         return new MissionScheduling(path, mode,
@@ -329,10 +331,10 @@ public class RBSAEOSSSMAP {
                     double sa = Double.parseDouble(row[2].getContents()) * 1000. + 6378100.0;
                     String inclination = row[2].getContents();
                     Orbit.OrbitType type;
-                    if(inclination.equals("12345")){
-                         inclination = "SSO";
-                         type = Orbit.OrbitType.SSO;
-                    }else{
+                    if (inclination.equals("12345")) {
+                        inclination = "SSO";
+                        type = Orbit.OrbitType.SSO;
+                    } else {
                         type = Orbit.OrbitType.LEO;
                     }
                     Orbit orb = new Orbit(String.valueOf(i), type, sa, inclination, "N/A", 0, 0, 0);
@@ -348,13 +350,13 @@ public class RBSAEOSSSMAP {
                 revTimes.put("avg_revisit_time_US", Double.parseDouble(row[10].getContents()));
                 newDb.put(orbMap, revTimes);
             }
-            
+
             try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("newRevtimes"));) {
-            os.writeObject(newDb);
+                os.writeObject(newDb);
                 os.close();
             } catch (IOException ex) {
                 Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
-        }
+            }
         } catch (IOException ex) {
             Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
         } catch (BiffException ex) {

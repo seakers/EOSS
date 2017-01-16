@@ -116,7 +116,8 @@ public class ArchitectureEvaluator {
                         payloadDimensions.add(0, 0.0); //max dimension in x, y, and z
                         payloadDimensions.add(1, 0.0); //nadir-area
                         payloadDimensions.add(2, 0.0); //max z dimension
-                        String call = "(assert (MANIFEST::Mission (Name " + orbit + ") ";
+                        String fliesIn = mis.getName() + ":" +  orbit;
+                        String call = "(assert (MANIFEST::Mission (Name " + fliesIn + ") ";
                         for (Instrument inst : spacecraft.getPaylaod()) {
                             payload = payload + " " + inst.getName();
                             payloadMass += Double.parseDouble(inst.getProperty("mass#"));
@@ -137,7 +138,7 @@ public class ArchitectureEvaluator {
                                 String propertyName = (String) iter.next();
                                 callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
                             }
-                            callManifestInstrument += "(flies-in " + orbit.getName() + ")";
+                            callManifestInstrument += "(flies-in " + fliesIn + ")";
                             callManifestInstrument += "(orbit-altitude# " + String.valueOf((int) orbit.getAltitude()) + ")";
                             callManifestInstrument += "(orbit-inclination " + orbit.getInclination() + ")";
                             callManifestInstrument += "))";

@@ -8,9 +8,10 @@ import eoss.problem.Mission;
 import architecture.Architecture;
 import architecture.pattern.ArchitecturalDecision;
 import architecture.pattern.Permuting;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.variable.IntegerVariable;
 import org.orekit.time.AbsoluteDate;
 
 /**
@@ -25,9 +26,9 @@ public class MissionSchedulingArchitecture extends Architecture {
     private static final long serialVersionUID = -4409436112554811170L;
 
     /**
-     * The permutation that defines the schedule
+     * Tag used for the permuting decision
      */
-    private final Permuting permuting;
+    private static final String permTag = "perm";
 
     /**
      * The launch dates of each mission
@@ -43,10 +44,13 @@ public class MissionSchedulingArchitecture extends Architecture {
      * problem
      */
     public MissionSchedulingArchitecture(int numberMissions, int numberOfObjectives) {
-        super(Arrays.asList(new ArchitecturalDecision[]{
-            new Permuting(numberMissions)}), numberOfObjectives);
+        super(numberOfObjectives, 0, createDecisions(numberMissions));
+    }
 
-        this.permuting = (Permuting) this.getVariable(0);
+    private static ArrayList<ArchitecturalDecision> createDecisions(int numberMissions) {
+        ArrayList<ArchitecturalDecision> out = new ArrayList<>();
+        out.add(new Permuting(numberMissions, permTag));
+        return out;
     }
 
     /**
@@ -54,9 +58,9 @@ public class MissionSchedulingArchitecture extends Architecture {
      *
      * @param solution
      */
-    public MissionSchedulingArchitecture(Solution solution) {
+    private MissionSchedulingArchitecture(Solution solution) {
         super(solution);
-        this.permuting = (Permuting) this.getVariable(0);
+        launchDates = new HashMap<>();
     }
 
     /**
@@ -65,7 +69,7 @@ public class MissionSchedulingArchitecture extends Architecture {
      * @return the number of missions this problem is trying to schedule
      */
     public int getNumberOfMissions() {
-        return permuting.getLength();
+        return this.getDecision(permTag).getNumberOfVariables();
     }
 
     /**
@@ -74,7 +78,12 @@ public class MissionSchedulingArchitecture extends Architecture {
      * @return the sequence of the launch order
      */
     public int[] getSequence() {
-        return permuting.getSequence();
+        int startIndex = this.getDecisionIndex(permTag);
+        int[] out = new int[getNumberOfMissions()];
+        for(int i=0; i< getNumberOfMissions(); i++){
+            out[i] = ((IntegerVariable)this.getVariable(startIndex + i)).getValue();
+        }
+        return out;
     }
 
     /**

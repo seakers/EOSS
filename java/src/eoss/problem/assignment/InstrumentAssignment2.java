@@ -34,15 +34,13 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 /**
- * An assigning problem to optimize the allocation of n instruments to m orbits.
- * Also can choose the number of satellites per orbital plane. Objectives are
- * cost and scientific benefit
+ * An assigning problem to optimize the allocation of n instruments to m
+ * spacecraft. The orbit of each spacecraft is a combining decision. Objectives
+ * are cost and scientific benefit
  *
  * @author nozomihitomi
  */
-public class InstrumentAssignment extends AbstractProblem implements SystemArchitectureProblem {
-
-    private final int[] altnertivesForNumberOfSatellites;
+public class InstrumentAssignment2 extends AbstractProblem implements SystemArchitectureProblem {
 
     private final ArchitectureEvaluator eval;
 
@@ -63,46 +61,50 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * Solution database to reuse the computed values;
      */
     private final HashMap<Solution, double[]> solutionDB;
+    
+    private final int nSpacecraft;
+    
 
     /**
      *
      * @param path
+     * @param nSpacecraft The number of spacecraft to consider
      * @param reqMode
-     * @param altnertivesForNumberOfSatellites
      * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode,  int[] altnertivesForNumberOfSatellites, boolean explanation, boolean withSynergy) {
-        this(path, reqMode, altnertivesForNumberOfSatellites, explanation, withSynergy, null);
+    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy) {
+        this(path, nSpacecraft, reqMode, explanation, withSynergy, null);
     }
 
     /**
      *
      * @param path
+     * @param nSpacecraft The number of spacecraft to consider
      * @param reqMode
-     * @param altnertivesForNumberOfSatellites
      * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean explanation, boolean withSynergy, File database) {
-        //2 decisions for Choosing and Assigning Patterns
-        super(2, 2);
+    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy, File database) {
+        //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
+        super(EOSSDatabase.getNumberOfInstruments()*nSpacecraft + nSpacecraft, 2);
+        
+        this.nSpacecraft = nSpacecraft;
 
-        this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         ValueTree template = null;
         try {
             template = ValueAggregationBuilder.build(new File(path + File.separator + "config" + File.separator + "panels.xml"));
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.eval = new ArchitectureEvaluator(path, reqMode, explanation, withSynergy, template);
-        
+
         //load database of solution if requested.
         solutionDB = new HashMap<>();
         if (database != null) {
@@ -110,35 +112,17 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
                 System.out.println("Loading solution database: " + database.toString());
                 solutionDB.putAll((HashMap<Solution, double[]>) is.readObject());
             } catch (IOException ex) {
-                Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
-
-    /**
-     * Gets the instruments for this problem
-     *
-     * @return the instruments for this problem
-     */
-    public Collection<Instrument> getInstruments() {
-        return EOSSDatabase.getInstruments();
-    }
-
-    /**
-     * Gets the orbits for this problem
-     *
-     * @return the orbits for this problem
-     */
-    public Collection<Orbit> getOrbits() {
-        return EOSSDatabase.getOrbits();
-    }
-
+    
     @Override
     public void evaluate(Solution sltn) {
         try {
-            InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
+            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sltn;
             arch.setMissions();
             if (!loadArchitecture(arch)) {
                 evaluateArch(arch);
@@ -147,7 +131,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
                     arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
         } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -158,7 +142,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param solution the solution to evaluate
      * @return true if solution is found in database. Else false;
      */
-    private boolean loadArchitecture(InstrumentAssignmentArchitecture solution) throws JessException {
+    private boolean loadArchitecture(InstrumentAssignmentArchitecture2 solution) throws JessException {
         if (solutionDB.containsKey(solution)) {
             double[] objectives = solutionDB.get(solution);
             for (int i = 0; i < solution.getNumberOfObjectives(); i++) {
@@ -182,7 +166,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         }
     }
 
-    private void evaluateArch(InstrumentAssignmentArchitecture arch) {
+    private void evaluateArch(InstrumentAssignmentArchitecture2 arch) {
         ArrayList<Mission> missions = new ArrayList<>();
         for (String missionName : arch.getMissionNames()) {
             missions.add(arch.getMission(missionName));
@@ -196,7 +180,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
 
             getAuxFacts(arch);
         } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
         solutionDB.put(arch, new double[]{arch.getObjective(0), arch.getObjective(1)});
     }
@@ -207,7 +191,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param arch
      * @throws JessException
      */
-    private void getAuxFacts(InstrumentAssignmentArchitecture arch) throws JessException {
+    private void getAuxFacts(InstrumentAssignmentArchitecture2 arch) throws JessException {
         Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
         for (Fact fact : missionFacts) {
             String name = fact.getSlotValue("Name").toString();
@@ -232,7 +216,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             os.writeObject(solutionDB);
             os.close();
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
             flag = false;
         }
         return flag;
@@ -240,8 +224,9 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
 
     @Override
     public Solution newSolution() {
-        return new InstrumentAssignmentArchitecture(altnertivesForNumberOfSatellites, EOSSDatabase.getNumberOfInstruments(), EOSSDatabase.getNumberOfOrbits(), 2);
+        return new InstrumentAssignmentArchitecture2(
+                EOSSDatabase.getNumberOfInstruments(), nSpacecraft, 
+                EOSSDatabase.getNumberOfOrbits(), 2);
     }
-
 
 }

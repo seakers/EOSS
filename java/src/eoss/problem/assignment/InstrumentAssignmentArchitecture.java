@@ -5,9 +5,9 @@
 package eoss.problem.assignment;
 
 import architecture.Architecture;
+import architecture.pattern.ArchitecturalDecision;
 import architecture.pattern.Combining;
 import architecture.pattern.Assigning;
-import architecture.pattern.ArchitecturalDecision;
 import architecture.util.ValueTree;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
@@ -15,13 +15,12 @@ import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.variable.IntegerVariable;
 
 /**
  * This class creates a solution for the problem consisting of an assigning
@@ -36,9 +35,15 @@ public class InstrumentAssignmentArchitecture extends Architecture {
 
     private static final long serialVersionUID = 8776271523867355732L;
 
-    private Assigning assignment;
+    /**
+     * Tag used for the assigning decision
+     */
+    private static final String assignTag = "inst";
 
-    private Combining combine;
+    /**
+     * Tag used for the combining decision
+     */
+    private static final String combineTag = "nSat";
 
     /**
      * The available options of the number of satellites
@@ -68,14 +73,19 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      */
     public InstrumentAssignmentArchitecture(int[] altnertivesForNumberOfSatellites,
             int numberOfInstruments, int numberOfOrbits, int numberOfObjectives) {
-        super(Arrays.asList(new ArchitecturalDecision[]{
-            new Combining(new int[]{altnertivesForNumberOfSatellites.length}),
-            new Assigning(numberOfInstruments, numberOfOrbits)}), numberOfObjectives);
-
-        this.combine = (Combining) this.getVariable(0);
-        this.assignment = (Assigning) this.getVariable(1);
+        super(numberOfObjectives, 0,
+                createDecisions(altnertivesForNumberOfSatellites, numberOfInstruments, numberOfOrbits));
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         this.missions = new HashMap<>();
+    }
+
+    private static ArrayList<ArchitecturalDecision> createDecisions(
+            int[] altnertivesForNumberOfSatellites,
+            int numberOfInstruments, int numberOfOrbits) {
+        ArrayList<ArchitecturalDecision> out = new ArrayList<>();
+        out.add(new Combining(new int[]{altnertivesForNumberOfSatellites.length}, combineTag));
+        out.add(new Assigning(numberOfInstruments, numberOfOrbits, assignTag));
+        return out;
     }
 
     /**
@@ -85,8 +95,6 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      */
     private InstrumentAssignmentArchitecture(Solution solution) {
         super(solution);
-        this.combine = (Combining) this.getVariable(0);
-        this.assignment = (Assigning) this.getVariable(1);
         this.altnertivesForNumberOfSatellites = ((InstrumentAssignmentArchitecture) solution).altnertivesForNumberOfSatellites;
         this.missions = new HashMap<>();
     }
@@ -99,7 +107,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * @return the total number of satellites in the architecture
      */
     public int getTotalNumberOfSatellites() {
-        return altnertivesForNumberOfSatellites[combine.getValue(0)] * getNorbits();
+        return getNumberOfSatellitesPerOrbit() * getNorbits();
     }
 
     /**
@@ -108,7 +116,9 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * @return the number of satellites per orbit.
      */
     public int getNumberOfSatellitesPerOrbit() {
-        return altnertivesForNumberOfSatellites[combine.getValue(0)];
+        int index = this.getDecisionIndex(combineTag);
+        IntegerVariable var = (IntegerVariable) this.getVariable(index);
+        return this.altnertivesForNumberOfSatellites[var.getValue()];
     }
 
     public int[] getAltnertivesForNumberOfSatellites() {
@@ -140,12 +150,14 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * @return
      */
     private BitSet getUniqueInstruments() {
-        BitSet bs = assignment.getBitSet();
-        BitSet inst = new BitSet(assignment.getNumberOfLHS());
-        for (int i = 0; i < assignment.getNumberOfLHS(); i++) {
-            BitSet inst_i = bs.get(i * assignment.getNumberOfRHS(), i * assignment.getNumberOfRHS() + assignment.getNumberOfRHS());
-            if (inst_i.cardinality() > 0) {
-                inst.set(i);
+        Assigning dec = (Assigning) this.getDecision(assignTag);
+        BitSet inst = new BitSet(dec.getNumberOfLHS());
+        for (int i = 0; i < dec.getNumberOfLHS(); i++) {
+            for (int j = 0; j < dec.getNumberOfRHS(); j++) {
+                if (Assigning.isConnected(i, j, this, assignTag)) {
+                    inst.set(i);
+                    break;
+                }
             }
         }
         return inst;
@@ -204,10 +216,15 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * instrument assigned to it
      */
     private BitSet getUniqueOrbits() {
-        BitSet bs = assignment.getBitSet();
-        BitSet orbs = new BitSet(assignment.getNumberOfRHS());
-        for (int o = 0; o < assignment.getNumberOfLHS(); o++) {
-            orbs.or(bs.get(o * assignment.getNumberOfRHS(), o * assignment.getNumberOfRHS() + assignment.getNumberOfRHS()));
+        Assigning dec = (Assigning) this.getDecision(assignTag);
+        BitSet orbs = new BitSet(dec.getNumberOfRHS());
+        for (int j = 0; j < dec.getNumberOfRHS(); j++) {
+            for (int i = 0; i < dec.getNumberOfLHS(); i++) {
+                if (Assigning.isConnected(i, j, this, assignTag)) {
+                    orbs.set(j);
+                    break;
+                }
+            }
         }
         return orbs;
     }
@@ -219,42 +236,6 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      */
     public int getNorbits() {
         return getUniqueOrbits().cardinality();
-    }
-
-    /**
-     * TODO fix this up to be more efficient. Use information in the BITSET
-     * Checks to see if the specified instrument has been assigned in this
-     * architecture
-     *
-     * @param instr
-     * @return
-     */
-    public boolean containsInst(Instrument instr) {
-        ArrayList<Instrument> validInstruments = new ArrayList<>();
-        validInstruments.addAll(EOSSDatabase.getInstruments());
-        if (!validInstruments.contains(instr)) {
-            return false;
-        }
-        for (int o = 0; o < assignment.getNumberOfRHS(); o++) {
-            Orbit orb = EOSSDatabase.getOrbit(o);
-            ArrayList<Instrument> payls = this.getInstrumentsInOrbit(orb);
-            if (payls != null) {
-                ArrayList<Instrument> paylds = new ArrayList();
-                paylds.addAll(payls);
-                if (paylds.contains(instr)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public BitSet getBitString() {
-        return assignment.getBitSet();
     }
 
     /**
@@ -290,7 +271,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         ArrayList<Integer> payloads = new ArrayList<>();
         //loop over the instruments
         for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); i++) {
-            if (assignment.isConnected(i, orbIndex)) {
+            if (Assigning.isConnected(i, orbIndex, this, assignTag)) {
                 payloads.add(i);
             }
         }
@@ -307,8 +288,8 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * decision
      */
     public boolean addInstrumentToOrbit(int instrumentIndex, int orbIndex) {
-        boolean out = !assignment.isConnected(instrumentIndex, orbIndex);
-        assignment.connect(instrumentIndex, orbIndex);
+        boolean out = !Assigning.isConnected(instrumentIndex, orbIndex, this, assignTag);
+        Assigning.connect(instrumentIndex, orbIndex, this, assignTag);
         return out;
     }
 
@@ -336,8 +317,8 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      * decision
      */
     public boolean removeInstrumentFromOrbit(int instrumentIndex, int orbIndex) {
-        boolean out = assignment.isConnected(instrumentIndex, orbIndex);
-        assignment.disconnect(instrumentIndex, orbIndex);
+        boolean out = Assigning.isConnected(instrumentIndex, orbIndex, this, assignTag);
+        Assigning.disconnect(instrumentIndex, orbIndex, this, assignTag);
         return out;
     }
 
@@ -395,31 +376,4 @@ public class InstrumentAssignmentArchitecture extends Architecture {
     public Solution copy() {
         return new InstrumentAssignmentArchitecture(this);
     }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.assignment);
-        hash = 37 * hash + Objects.hashCode(this.combine);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final InstrumentAssignmentArchitecture other = (InstrumentAssignmentArchitecture) obj;
-        if (!Objects.equals(this.assignment, other.assignment)) {
-            return false;
-        }
-        if (!Objects.equals(this.combine, other.combine)) {
-            return false;
-        }
-        return true;
-    }
-
 }
