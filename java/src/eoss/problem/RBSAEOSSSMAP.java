@@ -59,6 +59,7 @@ import org.moeaframework.core.Population;
 import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.operator.CompoundVariation;
 import org.moeaframework.core.operator.RandomInitialization;
+import org.moeaframework.core.operator.integer.IntegerUM;
 import org.orekit.errors.OrekitException;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
@@ -127,10 +128,10 @@ public class RBSAEOSSSMAP {
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
-        double mutationProbability = 1. / 60.;
+        double mutationProbability = 1. / 65.;
         Variation singlecross;
         Variation bitFlip;
-        Variation gaVariation;
+        Variation intergerMutation;
         Initialization initialization;
 
         //setup for epsilon MOEA
@@ -163,13 +164,14 @@ public class RBSAEOSSSMAP {
                 for (int i = 0; i < numRuns; i++) {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
-                    gaVariation = new GAVariation(singlecross, bitFlip);
+                    intergerMutation = new IntegerUM(mutationProbability);
+                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
 //                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 0.8, 5), bitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
                     initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     try {
                         //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
                         new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
@@ -279,7 +281,7 @@ public class RBSAEOSSSMAP {
                 for (int i = 0; i < numRuns; i++) {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
-                    gaVariation = new GAVariation(singlecross, bitFlip);
+                    GAVariation gaVariation = new GAVariation(singlecross, bitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
