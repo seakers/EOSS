@@ -122,8 +122,8 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 2;
-        int maxEvals = 5000;
+        int popSize = 100;
+        int maxEvals = 10000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;

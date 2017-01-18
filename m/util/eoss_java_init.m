@@ -4,7 +4,7 @@ function eoss_java_init()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Add the java class path for EOSS orekit jar file
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jarFile1 = ['.',filesep,'EOSS',filesep,'dist',filesep,'EOSS.jar'];
+jarFile1 = ['.',filesep,'dist',filesep,'EOSS.jar'];
 tmp = javaclasspath;
 javaclasspathadded1 = false;
 
@@ -18,5 +18,5 @@ for i=1:length(tmp)
 end
 
 if ~javaclasspathadded1
-    javaaddpath(['.',filesep,'EOSS',filesep,'dist',filesep,'EOSS.jar']);
+    javaaddpath(['.',filesep,'dist',filesep,'EOSS.jar']);
 end

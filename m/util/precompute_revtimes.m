@@ -9,7 +9,8 @@ function precompute_revtimes()
 eoss_java_init();
 
 %inspects the candidate orbits
-eoss.problem.EOSSDatabase.loadOrbits(java.io.File(strcat(cd, filesep, 'config', filesep, 'candidateOrbits.xml')));
+eoss.problem.EOSSDatabase.getInstance;
+eoss.problem.EOSSDatabase.loadOrbits(java.io.File(strcat(cd, filesep, 'problems', filesep, 'climateCentric', filesep, 'config', filesep, 'candidateOrbits.xml')));
 norbits = eoss.problem.EOSSDatabase.getNumberOfOrbits;
 
 %problem settings
@@ -28,7 +29,7 @@ revtimes = java.util.HashMap;
 %norbits + 1 is to account for the empty orbit
 %subtract 2 because EOSSDatabase is 0-indexed. So -1 would be an empty
 %orbit
-orbitIndices = fullfact(ones(1,norbits + 1)*nSats) - 2;
+orbitIndices = fullfact(ones(1,nSats + 1)*norbits) - 2;
 narch = size(orbitIndices,1);
 for i=1:narch
     tic;
@@ -36,10 +37,14 @@ for i=1:narch
     %begin simulation
     fprintf('Precomputing arch %d out of %d...\n',i,narch);
     orbits = orbitIndices(i, orbitIndices(i,:) >= 0); %non-empty orbits
+    if isempty(orbits)
+        continue;
+    end
+    
     sortedOrbits = sort(orbits);
     
     if ~revtimes.containsKey(sortedOrbits)
-        therevtimes = analyze_mixed_constellation(fov, orbits ,stk_params,params);
+        therevtimes = analyze_mixed_constellation(fov, orbits ,stk_params);
         revtimes.put(sortedOrbits, therevtimes);
     end
     
@@ -62,11 +67,6 @@ eoss_java_end();
 
 end
 
-function revtimes = put_revtimes(revtimes,fovs,nsat,therevtimes)
-revtimes.put(create_key(fovs,nsat),therevtimes);
-end
-
-
 function params = init_STK()
 params.DURATION = 7*24*60*60;% simulate for 7 days (in seconds)
 params.TSTEP = 60;% time step is set to 1 minute, this gives us about 95 points per orbit and 20160 points per simulation
@@ -88,9 +88,44 @@ stkSetTimePeriodInSec(0, params.DURATION)
 GEO_avg_revisit_time_constraint(15*60,params.DURATION,params.TSTEP);
 call = ['SetAnimation ' params.scenario_path ' StartAndCurrentTime UseAnalysisStartTime TimeStep ' num2str(params.TSTEP)];
 stkExec(params.conid,call);
+
+stkExec(params.conid,['Parallel ' params.scenario_path ' Configuration ParallelType Local NumberOfLocalCores 4']);
+stkExec(params.conid,['Parallel ' params.scenario_path ' ShutdownLocalWorkersOnJobCompletion Off']);
+stkExec(params.conid,['Parallel ' params.scenario_path ' AutomaticallyComputeInParallel On']);
 end
 
-function revtimes = analyze_mixed_constellation(fov, arch, stk_params,params)
+function num = getInclination(str, h_km)
+if strcmp(str,'SSO')
+    num = SSO_h_to_i(h_km);
+elseif strcmp(str,'polar')
+    num = 90;
+elseif strcmp(str,'ISS')
+    num = 51.6;
+elseif strcmp(str,'tropical')
+    num = 30;
+elseif strcmp(str,'equat')
+    num = 0;
+else
+    error('Unknown inclination');
+end
+end
+
+function num = getRAAN(raan)
+offset = 1.7595;%  ok for Jan 1 2013
+if strcmp(raan, 'AM')
+    num = offset + 7.5*pi/12;
+elseif strcmp(raan, 'PM')
+    num = offset + 13.5*pi/12;
+elseif strcmp(raan, 'DD')
+    num = offset + 6*pi/12;
+elseif strcmp(raan, 'NA')
+    num = 0.0;
+else
+    error('raan unknown');
+end
+end
+
+function revtimes = analyze_mixed_constellation(fov, arch, stk_params)
 % Global Coverage grid
 coverage_name = 'GlobalCoverage';
 stkNewObj(stk_params.scenario_path, 'CoverageDefinition', coverage_name);% creates coverage definition
@@ -129,28 +164,26 @@ constel_path = [stk_params.scenario_path 'Constellation/' 'MyCons'];
 tStart  = 0;
 tStop   = stk_params.DURATION;
 tStep   = stk_params.TSTEP;
-orbits = cell(params.orbit_list);
 
 % Add instrument with the right fov to all orbits
 % first find the number of occurences in each unique orbit
 uniqueOrbits = unique(arch);
 count = zeros(length(uniqueOrbits),1);
-for i=1:length(unqiueOrbits)
+for i=1:length(uniqueOrbits)
     count(i) = sum(arch == uniqueOrbits(i));
 end
 
 for i = 1:length(uniqueOrbits)
     orbit = eoss.problem.EOSSDatabase.getOrbit(uniqueOrbits(i));
     semimajorAxis = orbit.getSemimajorAxis;
-    [~,i1] = get_orbit_inclination(orbit.getInclination);
-    inc = i1*pi/180;
-    [~,raan] = get_orbit_raan(orbit.getRAAN);
+    inc = getInclination(orbit.getInclination, orbit.getAltitude)*pi/180;
+    raan = getRAAN(orbit.getRAAN);
     
     for j = 1:count(i)
-        sat_name = [orbits{i} '-' num2str(j)];
+        sat_name = [num2str(i) '-' num2str(j)];
         stkNewObj(stk_params.scenario_path, 'Satellite', sat_name);
         sat_path = [stk_params.scenario_path 'Satellite/' sat_name];
-        anomaly = double((j-1)*2*pi/nsat);% evenly spaced satellites within the plane
+        anomaly = double((j-1)*2*pi/count(i));% evenly spaced satellites within the plane
         stkSetPropClassical(sat_path, 'J2Perturbation','J2000',tStart,tStop,tStep,0,semimajorAxis,stk_params.e,inc,stk_params.arg_perigee,raan,anomaly);
         
         %set sensor
@@ -159,11 +192,6 @@ for i = 1:length(uniqueOrbits)
         sensor_path = [sat_path '/Sensor/' sensor_name];
         sensor_id = stkSetSensor(stk_params.conid, sensor_path,'Rectangular', fov,fov);
         
-        % apply constraint
-        if strcmp(orbits{i},'GEO-35788-equat-NA')
-            call = ['SetConstraint ' sensor_path ' Intervals Exclude SetIntervals Load "' pwd '\GEO_avg_revtime.int"'];
-            stkExec(stk_params.conid, call);
-        end
         call = ['Chains ' constel_path ' Add ' sensor_path];
         stkExec(stk_params.conid, call);
     end
@@ -182,9 +210,9 @@ stkExec(stk_params.conid, call);
 % Global coverage
 % CDF Revisit time
 [rt_data, ~] = stkReport(coverage_path, 'Gap Duration');
-cdf.over = stkFindData(rt_data{2},'% Over');
-cdf.under = stkFindData(rt_data{2},'% Under');
-cdf.duration = stkFindData(rt_data{2},'Duration');
+cdf.over = stkFindData(rt_data{4},'% Over');
+cdf.under = stkFindData(rt_data{4},'% Under');
+cdf.duration = stkFindData(rt_data{4},'Duration');
 
 times = cdf.duration;
 pctgs = cdf.under;
@@ -200,9 +228,9 @@ avg_rev_time_global = mean/3600;
 % Regional coverage
 % CDF Revisit time
 [rt_data2, ~] = stkReport(coverage_path2, 'Gap Duration');
-cdf2.over = stkFindData(rt_data2{2},'% Over');
-cdf2.under = stkFindData(rt_data2{2},'% Under');
-cdf2.duration = stkFindData(rt_data2{2},'Duration');
+cdf2.over = stkFindData(rt_data2{4},'% Over');
+cdf2.under = stkFindData(rt_data2{4},'% Under');
+cdf2.duration = stkFindData(rt_data2{4},'Duration');
 
 times2 = cdf2.duration;
 pctgs2 = cdf2.under;

@@ -2,20 +2,20 @@
 ; Payload cost (salience 20)
 ; ********************
 
-(defquery MANIFEST::search-instrument-by-name-manifest   (declare (variables ?name ?orb))
-    (CAPABILITIES::Manifested-instrument (Name ?name) (mass# ?m) (average-power# ?p) (peak-power# ?pp) 
+(defquery MANIFEST::search-instrument-by-name-manifest   (declare (variables ?instName ?missionName))
+    (CAPABILITIES::Manifested-instrument (Name ?instName) (mass# ?m) (average-power# ?p) (peak-power# ?pp) 
         (average-data-rate# ?rb) (dimension-x# ?dx) (dimension-y# ?dy) (characteristic-power# ?ppp)  
-        (dimension-z# ?dz) (cost# ?c) (cost ?fz-c) (flies-in ?orb))
+        (dimension-z# ?dz) (cost# ?c) (cost ?fz-c) (flies-in ?missionName))
     )
 	
-(deffunction get-instrument-cost-manifest (?instr ?orb)
-    (bind ?result (run-query* MANIFEST::search-instrument-by-name-manifest ?instr ?orb))
+(deffunction get-instrument-cost-manifest (?instr ?name)
+    (bind ?result (run-query* MANIFEST::search-instrument-by-name-manifest ?instr ?name))
     (?result next)
 	(return (?result getDouble c))
    )
 		
-(deffunction get-instrument-fuzzy-cost-manifest (?instr ?orb)
-    (bind ?result (run-query* MANIFEST::search-instrument-by-name-manifest ?instr ?orb))
+(deffunction get-instrument-fuzzy-cost-manifest (?instr ?name)
+    (bind ?result (run-query* MANIFEST::search-instrument-by-name-manifest ?instr ?name))
     (?result next)
     (return (?result get fz-c))
    )
@@ -53,14 +53,14 @@
     "This rule estimates payload cost using a very simplified version of the 
     NASA Instrument Cost Model available on-line"
     (declare (salience 18))
-    ?miss <- (MANIFEST::Mission (payload-cost# nil) (instruments $?payload) (orbit-string ?orb)
+    ?miss <- (MANIFEST::Mission (payload-cost# nil) (instruments $?payload) (Name ?name)
         )
     =>
-	(bind ?cost (get-instrument-cost-manifest (nth$ 1 $?payload) ?orb)); in FY04$
-	(bind ?fuzzy-cost (get-instrument-fuzzy-cost-manifest (nth$ 1 $?payload) ?orb)); in FY04$
+	(bind ?cost (get-instrument-cost-manifest (nth$ 1 $?payload) ?name)); in FY04$
+	(bind ?fuzzy-cost (get-instrument-fuzzy-cost-manifest (nth$ 1 $?payload) ?name)); in FY04$
 	(for (bind ?i 2) (<= ?i (length$ $?payload)) (++ ?i)
-		(bind ?cost (+ ?cost (get-instrument-cost-manifest (nth$ ?i $?payload) ?orb))) ; correct for inflation from FY04 to FY00, from http://oregonstate.edu/cla/polisci/faculty-research/sahr/cv2000.pdf
-		(bind ?fuzzy-cost (fuzzysum$ (create$ ?fuzzy-cost (get-instrument-fuzzy-cost-manifest (nth$ 1 $?payload) ?orb)))); correct for inflation from FY04 to FY00, from http://oregonstate.edu/cla/polisci/faculty-research/sahr/cv2000.pdf
+		(bind ?cost (+ ?cost (get-instrument-cost-manifest (nth$ ?i $?payload) ?name))) ; correct for inflation from FY04 to FY00, from http://oregonstate.edu/cla/polisci/faculty-research/sahr/cv2000.pdf
+		(bind ?fuzzy-cost (fuzzysum$ (create$ ?fuzzy-cost (get-instrument-fuzzy-cost-manifest (nth$ 1 $?payload) ?name)))); correct for inflation from FY04 to FY00, from http://oregonstate.edu/cla/polisci/faculty-research/sahr/cv2000.pdf
 	 	)	
     (modify ?miss (payload-cost# ?cost) (payload-non-recurring-cost# (* 0.8 ?cost))
         (payload-recurring-cost# (* 0.2 ?cost))

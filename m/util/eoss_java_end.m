@@ -4,7 +4,7 @@ function eoss_java_end()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %remove the java class path for the EOSS jar file
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jarFile1 = ['.',filesep,'EOSS',filesep,'dist',filesep,'EOSS.jar'];
+jarFile1 = ['.',filesep,'dist',filesep,'EOSS.jar'];
 tmp = javaclasspath;
 javaclasspathadded1 = false;
 
@@ -19,5 +19,5 @@ for i=1:length(tmp)
 end
 
 if javaclasspathadded1
-    javaarmpath(['.',filesep,'EOSS',filesep,'dist',filesep,'EOSS.jar']);
+    javaarmpath(['.',filesep,'dist',filesep,'EOSS.jar']);
 end

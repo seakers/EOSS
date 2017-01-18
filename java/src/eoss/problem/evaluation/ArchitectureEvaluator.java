@@ -19,7 +19,9 @@ import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -220,30 +222,30 @@ public class ArchitectureEvaluator {
 
         //Revisit times
         for (String measurement : ArchitectureEvaluatorParams.measurements) {
-            Value v = r.eval("(update-fovs " + measurement + " (create$ " + StringUtils.join(EOSSDatabase.getOrbits(), " ") + "))");
-            if (RU.getTypeName(v.type()).equalsIgnoreCase("LIST")) {
-                ValueVector thefovs = v.listValue(r.getGlobalContext());
-                HashMap<Orbit, Double> keyMap = new HashMap<>();
-                for (int i = 0; i < thefovs.size(); i++) {
-                    double f = thefovs.get(i).numericValue(r.getGlobalContext());
-                    if(f != -1){
-                        keyMap.put(EOSSDatabase.getOrbit(i), f);
-                    }
+            ArrayList<Fact> qResults = qb.makeQuery("REQUIREMENTS::Measurement (Parameter " + measurement + ")");
+            if (!qResults.isEmpty()) {
+                HashSet<String> orbits = new HashSet<>();
+                for (Fact fact : qResults) {
+                    String orbStr = fact.getSlotValue("orbit-string").toString();
+                    orbits.add(orbStr);
                 }
-//                String key = "1 x" + StringUtils.join(fovs, ",");
-                //if(!key.equals("5 x -1  -1  -1  -1  50")){
-                //System.out.println(param);
-                //key = "5 x -1  -1  -1  -1  50";
-                //}
-                HashMap<String, Double> therevtimes = ArchitectureEvaluatorParams.revtimes.get(keyMap); //key: 'Global' or 'US', value Double
+                ArrayList<Integer> key = new ArrayList<>(orbits.size());
+                for(String s : orbits){
+                    int orbitIndex = EOSSDatabase.findOrbitIndex(EOSSDatabase.getOrbit(s));
+                    key.add(orbitIndex);
+                }
+                Collections.sort(key);
 
-                //there were two different maps at one point. one with spaces and the other without spaces and commas
-//                if (therevtimes == null) {
-//                    key = "1 x " + StringUtils.join(fovs, "  ");
-//                    therevtimes = ArchitectureEvaluatorParams.revtimes.get(key); //key: 'Global' or 'US', value Double
-//                }
-                String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + therevtimes.get("Global") + ") "
-                        + "(avg-revisit-time-US# " + therevtimes.get("US") + ")))";
+                HashMap<String, Double> therevtimes = ArchitectureEvaluatorParams.revtimes.get(key);
+                if(therevtimes == null){
+                    throw new NullPointerException(String.format("Could not find key %s in revisit time look-up table.",key.toString()));
+                }
+                //convert revisit times from seconds to hours
+                double globalRevtime_H = therevtimes.get("Global")/3600.;
+                double usRevtime_H = therevtimes.get("US")/3600.;
+                
+                String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + globalRevtime_H + ") "
+                        + "(avg-revisit-time-US# " + usRevtime_H + ")))";
                 r.eval(call);
             }
         }

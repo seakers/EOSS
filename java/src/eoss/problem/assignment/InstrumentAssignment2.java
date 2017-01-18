@@ -17,9 +17,7 @@ import org.moeaframework.problem.AbstractProblem;
 import architecture.util.ValueTree;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.EOSSDatabase;
-import eoss.problem.Instrument;
 import eoss.problem.Mission;
-import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
@@ -64,7 +62,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     
     private final int nSpacecraft;
     
-
     /**
      *
      * @param path
@@ -176,7 +173,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             arch.setObjective(0, -tree.computeScores()); //negative because MOEAFramework assumes minimization problems
 
             double cost = eval.cost(missions);
-            arch.setObjective(1, cost / 33495.939796); //normalize cost to maximum value
+            arch.setObjective(1, cost); 
 
             getAuxFacts(arch);
         } catch (JessException ex) {
@@ -194,7 +191,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     private void getAuxFacts(InstrumentAssignmentArchitecture2 arch) throws JessException {
         Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
         for (Fact fact : missionFacts) {
-            String name = fact.getSlotValue("Name").toString();
+            String name = fact.getSlotValue("Name").toString().split(":")[0];
             Mission mission = arch.getMission(name);
             //assumes each mission only has one spacecraft
             Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
