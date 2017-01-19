@@ -176,7 +176,7 @@ public class RBSAEOSSSMAP {
                     try {
                         //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
                         new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
-                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                        ((InstrumentAssignment2) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
