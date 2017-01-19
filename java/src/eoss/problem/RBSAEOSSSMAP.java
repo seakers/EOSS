@@ -158,7 +158,7 @@ public class RBSAEOSSSMAP {
 
         //initialize problem
 //        Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
-        Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
+        Problem problem; 
 
         switch (mode) {
             case 1: //Use epsilonMOEA Assignment
@@ -170,30 +170,27 @@ public class RBSAEOSSSMAP {
 //                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 0.8, 5), bitFlip);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-
+                    
+                    problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
+                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
+//                    ((InstrumentAssignment2) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                }
+                for (Future<Algorithm> run : futures) {
                     try {
-                        //                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
-                        new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)).call();
-                        ((InstrumentAssignment2) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
-                    } catch (IOException ex) {
+                        run.get();
+//                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                    } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-//                for (Future<Algorithm> run : futures) {
-//                    try {
-//                        run.get();
-//                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
-//                    } catch (InterruptedException | ExecutionException ex) {
-//                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
-//                }
                 break;
 
             case 2://AOS search Assignment
                 try {
                     for (int i = 0; i < numRuns; i++) {
+                        problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
                         ArrayList<Variation> heuristics = new ArrayList();
 
@@ -228,6 +225,7 @@ public class RBSAEOSSSMAP {
                 }
                 break;
             case 3://innovization search Assignment
+                problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                 String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
                 for (int i = 0; i < numRuns; i++) {
                     try {
@@ -278,7 +276,7 @@ public class RBSAEOSSSMAP {
                 break;
 
             case 4: { //Use epsilonMOEA Scheduling
-
+                problem = getSchedulingProblem(path, RequirementMode.FUZZYATTRIBUTE);
                 for (int i = 0; i < numRuns; i++) {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
@@ -314,11 +312,28 @@ public class RBSAEOSSSMAP {
         return new InstrumentAssignment2(path, nSpacecraft, mode, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
 
-    public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) throws OrekitException, ParseException, BiffException, IOException, SAXException, ParserConfigurationException, JessException {
-        TimeScale utc = TimeScalesFactory.getUTC();
-        return new MissionScheduling(path, mode,
-                new AbsoluteDate(2010, 1, 1, utc),
-                new AbsoluteDate(2050, 1, 1, utc), 1.);
+    public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) {
+        try {
+            TimeScale utc = TimeScalesFactory.getUTC();
+            return new MissionScheduling(path, mode,
+                    new AbsoluteDate(2010, 1, 1, utc),
+                    new AbsoluteDate(2050, 1, 1, utc), 1.);
+        } catch (OrekitException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BiffException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (JessException ex) {
+            Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     public static void convertXlsToMap() {

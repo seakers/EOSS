@@ -34,7 +34,6 @@ import jess.RU;
 import jess.Rete;
 import jess.Value;
 import jess.ValueVector;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Evaluates an architecture based on the missions
