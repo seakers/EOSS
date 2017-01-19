@@ -6,11 +6,13 @@
 package eoss.problem.evaluation;
 
 import architecture.util.FuzzyValue;
+import architecture.util.Interval;
 import architecture.util.ValueTree;
 import eoss.explanation.Explanation;
 import eoss.jess.QueryBuilder;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
+import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
@@ -118,7 +120,7 @@ public class ArchitectureEvaluator {
                         payloadDimensions.add(0, 0.0); //max dimension in x, y, and z
                         payloadDimensions.add(1, 0.0); //nadir-area
                         payloadDimensions.add(2, 0.0); //max z dimension
-                        String fliesIn = mis.getName() + ":" +  orbit;
+                        String fliesIn = mis.getName() + ":" + orbit;
                         String call = "(assert (MANIFEST::Mission (Name " + fliesIn + ") ";
                         for (Instrument inst : spacecraft.getPaylaod()) {
                             payload = payload + " " + inst.getName();
@@ -230,20 +232,20 @@ public class ArchitectureEvaluator {
                     orbits.add(orbStr);
                 }
                 ArrayList<Integer> key = new ArrayList<>(orbits.size());
-                for(String s : orbits){
+                for (String s : orbits) {
                     int orbitIndex = EOSSDatabase.findOrbitIndex(EOSSDatabase.getOrbit(s));
                     key.add(orbitIndex);
                 }
                 Collections.sort(key);
 
                 HashMap<String, Double> therevtimes = ArchitectureEvaluatorParams.revtimes.get(key);
-                if(therevtimes == null){
-                    throw new NullPointerException(String.format("Could not find key %s in revisit time look-up table.",key.toString()));
+                if (therevtimes == null) {
+                    throw new NullPointerException(String.format("Could not find key %s in revisit time look-up table.", key.toString()));
                 }
                 //convert revisit times from seconds to hours
-                double globalRevtime_H = therevtimes.get("Global")/3600.;
-                double usRevtime_H = therevtimes.get("US")/3600.;
-                
+                double globalRevtime_H = therevtimes.get("Global") / 3600.;
+                double usRevtime_H = therevtimes.get("US") / 3600.;
+
                 String call = "(assert (ASSIMILATION::UPDATE-REV-TIME (parameter " + measurement + ") (avg-revisit-time-global# " + globalRevtime_H + ") "
                         + "(avg-revisit-time-US# " + usRevtime_H + ")))";
                 r.eval(call);
@@ -369,17 +371,33 @@ public class ArchitectureEvaluator {
      */
     public double cost(Collection<Mission> missions) throws JessException {
         designSpacecraft(missions);
-        
-        double cost = 0.0;
 
-        r.eval("(focus LV-SELECTION0)");
-        r.run();
-        r.eval("(focus LV-SELECTION1)");
-        r.run();
-        r.eval("(focus LV-SELECTION2)");
-        r.run();
-        r.eval("(focus LV-SELECTION3)");
-        r.run();
+        //compute launch cost and set values into facts
+        ArrayList<Fact> facts = qb.makeQuery("MANIFEST::Mission");
+        for (Mission m : missions) {
+            HashMap<Spacecraft, LaunchVehicle> launches = LaunchVehicle.select(m);
+            StringBuilder launchStr = new StringBuilder();
+            double launchCost = 0;
+            for (Spacecraft s : launches.keySet()) {
+                LaunchVehicle lv = launches.get(s);
+                launchCost += lv.getCost();
+                launchStr.append(lv.getName()).append("_");
+            }
+            launchStr.deleteCharAt(launchStr.length()-1); //delete the last delimiter
+            FuzzyValue fcost = new FuzzyValue("Cost", new Interval("delta", launchCost, 10.0), "FY04$M");
+            for (int i = 0; i < facts.size(); i++) {
+                String name = facts.get(i).getSlotValue("Name").toString().split(":")[0];
+                if (name.equalsIgnoreCase(m.getName())) {
+                    r.modify(facts.get(i), "launch-cost#", new Value(launchCost, RU.FLOAT));
+                    r.modify(facts.get(i), "launch-cost", new Value(fcost));
+                    r.modify(facts.get(i), "launch-vehicle", new Value(launchStr.toString(), RU.STRING));
+                    facts.remove(i);
+                }
+            }
+        }
+        if (!facts.isEmpty()) {
+            throw new IllegalStateException("One of the mission facts didn't get assigned any launch vehicles");
+        }
 
         switch (reqMode) {
             case CRISPATTRIBUTE:
@@ -406,6 +424,7 @@ public class ArchitectureEvaluator {
                 throw new UnsupportedOperationException(String.format("Unknown requirements mode %s", reqMode));
         }
 
+        double cost = 0.0;
         ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
         for (Fact mission : missionFacts) {
             cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
@@ -448,6 +467,7 @@ public class ArchitectureEvaluator {
             Double[] drymasses = new Double[missionFacts.size()];
             double sumdiff = 0.0;
             double summasses = 0.0;
+            missionFacts = qb.makeQuery("MANIFEST::Mission");
             for (int i = 0; i < missionFacts.size(); i++) {
                 drymasses[i] = missionFacts.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
                 diffs[i] = Math.abs(drymasses[i] - oldmasses[i]);
@@ -456,6 +476,27 @@ public class ArchitectureEvaluator {
             }
             converged = sumdiff < tolerance || summasses == 0;
             oldmasses = drymasses;
+        }
+
+        //record the wetmass into the missions
+        for (Mission m : missions) {
+            for (int i = 0; i < missionFacts.size(); i++) {
+                Fact f = missionFacts.get(i);
+                String name = f.getSlotValue("Name").toString().split(":")[0];
+                if (name.equalsIgnoreCase(m.getName())) {
+                    //TODO need to generatlize to multiple spacecraft case
+                    Spacecraft s = m.getSpacecraft().keySet().iterator().next();
+                    s.setWetMass(f.getSlotValue("satellite-wet-mass").floatValue(r.getGlobalContext()));
+                    String[] dims = f.getSlotValue("satellite-dimensions").toString().split(" ");
+                    double[] dbDims = new double[3];
+                    for (int j = 0; j < 3; j++) {
+                        dbDims[j] = Double.parseDouble(dims[j]);
+                    }
+                    s.setDimensions(dbDims);
+                    missionFacts.remove(i);
+                    break;
+                }
+            }
         }
     }
 

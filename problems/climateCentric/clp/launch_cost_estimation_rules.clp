@@ -44,10 +44,12 @@
     ?f <- (MANIFEST::Mission (launch-vehicle ?lv&~nil) (num-launches ?num&~nil)
         (launch-cost# nil) (num-of-sats-per-plane# ?ns&~nil) )
     =>
-	(if (> ?num  ?ns) then (bind ?ccost 1e10)) ; If there are more launches than satellites then infeasible!
-	(bind ?result (run-query* DATABASE::getLaunchVehicleInformation ?lv))
+	(if (> ?num  ?ns) then (bind ?ccost 1e10); If there are more launches than satellites then infeasible!
+	 else  ((bind ?result (run-query* DATABASE::getLaunchVehicleInformation ?lv))
 		(?result next) ;advance cursor to next result in list of results obtained from query
-	    (bind ?ccost (?result get cost))
+	    (bind ?ccost (?result get cost)))
+	) 
+	
     (modify ?f (launch-cost# (* ?num ?ccost)) (launch-cost (fuzzyscprod (cost-fv ?ccost 10) ?num)) )
 	;(modify ?f (launch-cost# (* ?num ?ccost)) )
     )

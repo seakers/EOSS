@@ -124,7 +124,7 @@ public class RBSAEOSSSMAP {
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
         int popSize = 100;
-        int maxEvals = 10000;
+        int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
@@ -154,6 +154,7 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
         EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
         EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits.xml"));
+        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
 
         //initialize problem
 //        Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);

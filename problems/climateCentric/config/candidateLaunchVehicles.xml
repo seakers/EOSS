@@ -1,39 +1,147 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <candidateLaunchVehicles>
 	<launchVehicle>
-		<name>Minotaur-IV</name>
-	</launchVehicle>
-	
-	<launchVehicle>
-		<name>Taurus-XL</name>
-	</launchVehicle>
-	
-	<launchVehicle>
-		<name>Delta-7920</name>
-	</launchVehicle>
-	
-	<launchVehicle>
-		<name>Delta-7420</name>
+		<name>Airane5-ESCA</name>
+		<diameter>4.8</diameter>
+		<height>10.0</height>
+		<cost>100.0</cost>
+		<coeffs>
+			<LEO-equat> 20000.0 -0.04 0.0</LEO-equat>
+			<LEO-ISS>   20000.0 -0.04 0.0</LEO-ISS>
+			<LEO-polar> 15000.0 -0.04 0.0</LEO-polar>
+			<SSO-SSO>   12000.0 -0.04 0.0</SSO-SSO>
+			<MEO-polar> 12000.0  0.0  0.0</MEO-polar>
+			<HEO-polar> 10000.0  0.0  0.0</HEO-polar>
+			<GEO-equat> 10000.0  0.0  0.0</GEO-equat>
+		</coeffs>
 	</launchVehicle>
 	
 	<launchVehicle>
 		<name>Delta-7320</name>
+		<diameter>2.51</diameter>
+		<height>6.82</height>
+		<cost>45</cost>
+		<coeffs>
+			<LEO-equat> 2187.5 -0.53125 4.0625e-5</LEO-equat>
+			<LEO-ISS>   2187.5 -0.53125 4.0625e-5</LEO-ISS>
+			<LEO-polar> 2187.5 -0.53125 4.0625e-5</LEO-polar>
+			<SSO-SSO>   2100.0 -0.6     0.0</SSO-SSO>
+			<MEO-polar>    0.0  0.0     0.0</MEO-polar>
+			<HEO-polar>    0.0  0.0     0.0</HEO-polar>
+			<GEO-equat>  250.0  0.0     0.0</GEO-equat>
+		</coeffs>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Delta-7420</name>
+		<diameter>2.69</diameter>
+		<height>7.16</height>
+		<cost>55</cost>
+		<coeffs>
+			<LEO-equat> 2492.5 -0.57875 4.6875e-5</LEO-equat>
+			<LEO-ISS>   2492.5 -0.57875 4.6875e-5</LEO-ISS>
+			<LEO-polar> 2492.5 -0.57875 4.6875e-5</LEO-polar>
+			<SSO-SSO>   2525.0 -0.67    0.0</SSO-SSO>
+			<MEO-polar>    0.0  0.0     0.0</MEO-polar>
+			<HEO-polar>    0.0  0.0     0.0</HEO-polar>
+			<GEO-equat>  300.0  0.0     0.0</GEO-equat>
+		</coeffs>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Delta-7920</name>
+		<diameter>2.69</diameter>
+		<height>7.53</height>
+		<cost>65</cost>
+		<coeffs>
+			<LEO-equat> 3977.5 -0.8675 6.8750e-5</LEO-equat>
+			<LEO-ISS>   3977.5 -0.8675 6.8750e-5</LEO-ISS>
+			<LEO-polar> 3977.5 -0.8675 6.8750e-5</LEO-polar>
+			<SSO-SSO>   4000.0 -1.0    0.0</SSO-SSO>
+			<MEO-polar>    0.0  0.0    0.0</MEO-polar>
+			<HEO-polar>    0.0  0.0    0.0</HEO-polar>
+			<GEO-equat>  500.0  0.0    0.0</GEO-equat>
+		</coeffs>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>Minotaur-IV</name>
+		<diameter>2</diameter>
+		<height>5.44</height>
+		<cost>35</cost>
+		<coeffs>
+			<LEO-equat>1379.8 -0.4237  -9.375e-5</LEO-equat>
+			<LEO-ISS>  1379.8 -0.4237  -9.375e-5</LEO-ISS>
+			<LEO-polar>1379.8 -0.4237  -9.375e-5</LEO-polar>
+			<SSO-SSO>  1281.8 -0.22125 -9.375e-5</SSO-SSO>
+			<MEO-polar>   0.0  0.0      0.0</MEO-polar>
+			<HEO-polar>   0.0  0.0      0.0</HEO-polar>
+			<GEO-equat>   0.0  0.0      0.0</GEO-equat>
+		</coeffs>
 	</launchVehicle>
 	
 	<launchVehicle>
 		<name>SLS</name>
-	</launchVehicle>
-	
-	<launchVehicle>
-		<name>VEGA</name>
+		<diameter>8</diameter>
+		<height>20</height>
+		<cost>500</cost>
+		<coeffs>
+			<LEO-equat>70000.0 0.0 0.0</LEO-equat>
+			<LEO-ISS>  70000.0 0.0 0.0</LEO-ISS>
+			<LEO-polar>70000.0 0.0 0.0</LEO-polar>
+			<SSO-SSO>  70000.0 0.0 0.0</SSO-SSO>
+			<MEO-polar>40000.0 0.0 0.0</MEO-polar>
+			<HEO-polar>40000.0 0.0 0.0</HEO-polar>
+			<GEO-equat>40000.0 0.0 0.0</GEO-equat>
+		</coeffs>
 	</launchVehicle>
 	
 	<launchVehicle>
 		<name>Soyuz</name>
+		<diameter>3.85</diameter>
+		<height>5.06</height>
+		<cost>45</cost>
+		<coeffs>
+			<LEO-equat>5232.0  0.0869 -0.00024</LEO-equat>
+			<LEO-ISS>  5232.0  0.0869 -0.00024</LEO-ISS>
+			<LEO-polar>5232.0  0.0869 -0.00024</LEO-polar>
+			<SSO-SSO>  5767.0 -1.26667 0.0</SSO-SSO>
+			<MEO-polar>4000.0  0.0     0.0</MEO-polar>
+			<HEO-polar>3060.0  0.0     0.0</HEO-polar>
+			<GEO-equat>3060.0  0.0     0.0</GEO-equat>
+		</coeffs>
 	</launchVehicle>
 	
 	<launchVehicle>
-		<name>Airane5-ESCA</name>
+		<name>Taurus-XL</name>
+		<diameter>1.98</diameter>
+		<height>5.71</height>
+		<cost>30</cost>
+		<coeffs>
+			<LEO-equat>1716.0 -0.62   0.0</LEO-equat>
+			<LEO-ISS>  1716.0 -0.62   0.0</LEO-ISS>
+			<LEO-polar>1191.0 -0.44   0.0</LEO-polar>
+			<SSO-SSO>  1236.0 -0.4575 0.0</SSO-SSO>
+			<MEO-polar>   0.0  0.0    0.0</MEO-polar>
+			<HEO-polar>   0.0  0.0    0.0</HEO-polar>
+			<GEO-equat>   0.0  0.0    0.0</GEO-equat>
+		</coeffs>
+	</launchVehicle>
+	
+	<launchVehicle>
+		<name>VEGA</name>
+		<diameter>2.38</diameter>
+		<height>3.5</height>
+		<cost>20</cost>
+		<coeffs>
+			<LEO-equat> 1895.0 -0.5487 0.0</LEO-equat>
+			<LEO-ISS>   1895.0 -0.5487 0.0</LEO-ISS>
+			<LEO-polar> 2504.0 -0.6564 0.0</LEO-polar>
+			<SSO-SSO>   1825.0 -0.5371 0.0</SSO-SSO>
+			<MEO-polar> 0.0     0.0    0.0</MEO-polar>
+			<HEO-polar> 0.0     0.0    0.0</HEO-polar>
+			<GEO-equat> 0.0     0.0    0.0</GEO-equat>
+		</coeffs>
 	</launchVehicle>
 	
 </candidateLaunchVehicles>

@@ -14,14 +14,25 @@ import java.util.Objects;
  *
  * @author nozomihitomi
  */
-public class Spacecraft implements Serializable{
+public class Spacecraft implements Serializable {
+
     private static final long serialVersionUID = 42723869369021765L;
-    
+
     /**
      * The spacecraft's payload
      */
     private final Collection<Instrument> paylaod;
-    
+
+    /**
+     * The satellite's wet mass
+     */
+    private double wetMass;
+
+    /**
+     * The satellite's x, y, z dimensions
+     */
+    private double[] dimensions;
+
     /**
      * Properties pertaining to this spacecraft
      */
@@ -31,22 +42,58 @@ public class Spacecraft implements Serializable{
         this.paylaod = paylaod;
         this.properties = new HashMap<>();
     }
-    
-    public void setProperty(String key, String value){
+
+    public void setProperty(String key, String value) {
         properties.put(key, value);
     }
-    
-    public String getProperty(String key){
+
+    public String getProperty(String key) {
         return properties.get(key);
     }
 
     /**
      * Gets the payload hosted by this spacecraft
+     *
      * @return the payload hosted by this spacecraft
      */
     public Collection<Instrument> getPaylaod() {
         return paylaod;
     }
+
+    /**
+     * Gets the satellite's wetmass in kg
+     *
+     * @return
+     */
+    public double getWetMass() {
+        return wetMass;
+    }
+
+    /**
+     * Sets the satellite's wetmass in kg
+     *
+     * @param wetMass
+     */
+    public void setWetMass(double wetMass) {
+        this.wetMass = wetMass;
+    }
+
+    /**
+     * Gets the satellite's x, y, and z dimensions in m
+     * @return 
+     */
+    public double[] getDimensions() {
+        return dimensions;
+    }
+
+    /**
+     * Sets the satellite's x, y, and z dimensions in m
+     * @param dimensions 
+     */
+    public void setDimensions(double[] dimensions) {
+        this.dimensions = dimensions;
+    }
+    
 
     @Override
     public int hashCode() {
@@ -73,6 +120,5 @@ public class Spacecraft implements Serializable{
         }
         return true;
     }
-    
-    
+
 }

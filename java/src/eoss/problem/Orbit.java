@@ -120,6 +120,10 @@ public class Orbit implements Serializable{
         return argPeri;
     }
 
+    /**
+     * Returns the altitude of this orbit in km
+     * @return 
+     */
     public double getAltitude() {
         return altitude / 1000;
     }

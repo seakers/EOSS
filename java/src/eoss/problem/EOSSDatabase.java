@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,7 +38,7 @@ import org.xml.sax.SAXException;
  * @author nozomihitomi
  */
 public final class EOSSDatabase {
-    
+
     /**
      * List of instruments in order by index
      */
@@ -57,7 +58,7 @@ public final class EOSSDatabase {
      * List of orbits in order by index
      */
     private static ArrayList<Orbit> orbitList;
-    
+
     /**
      * Orbit mapping to indices
      */
@@ -72,11 +73,26 @@ public final class EOSSDatabase {
      * List of bus in order by index
      */
     private static ArrayList<Bus> busList;
-    
+
     /**
      * bus mapping to indices
      */
     private static HashMap<Bus, Integer> buses;
+
+    /**
+     * List of launch vehicles in order by index
+     */
+    private static ArrayList<LaunchVehicle> launchVehicleList;
+
+    /**
+     * vehicles mapping to indices
+     */
+    private static HashMap<LaunchVehicle, Integer> launchVehicleMap;
+
+    /**
+     * Mapping to connect vehicles names with vehicles
+     */
+    private static HashMap<String, LaunchVehicle> launchVehicleNames;
 
     private static EOSSDatabase instance;
 
@@ -92,6 +108,9 @@ public final class EOSSDatabase {
         EOSSDatabase.orbitNames = new HashMap<>();
         EOSSDatabase.busList = new ArrayList<>();
         EOSSDatabase.buses = new HashMap<>();
+        EOSSDatabase.launchVehicleList = new ArrayList<>();
+        EOSSDatabase.launchVehicleMap = new HashMap<>();
+        EOSSDatabase.launchVehicleNames = new HashMap<>();
     }
 
     /**
@@ -124,12 +143,12 @@ public final class EOSSDatabase {
     public static Collection<Instrument> getInstruments() {
         return instrumentMap.keySet();
     }
-    
+
     /**
-     * Gets the indexed instrument from the database if it exists. 
+     * Gets the indexed instrument from the database if it exists.
      *
      * @param index index of the instrument to get from the database
-     * @return the indexed instrument from the database 
+     * @return the indexed instrument from the database
      */
     public static Instrument getInstrument(int index) {
         return instrumentList.get(index);
@@ -146,12 +165,13 @@ public final class EOSSDatabase {
     public static Instrument getInstrument(String name) {
         return instrumentNames.get(name);
     }
-    
+
     /**
      * Gets the number of instruments stored in the database
+     *
      * @return the number of instruments stored in the database
      */
-    public static int getNumberOfInstruments(){
+    public static int getNumberOfInstruments() {
         return instrumentMap.size();
     }
 
@@ -192,9 +212,9 @@ public final class EOSSDatabase {
                     String propertyName = headerOrder.get(j);
                     if (propertyName.equals("Name")) {
                         instrumentName = cell_value.trim();
-                    } else if(propertyName.equals("Field-of-view#")){
+                    } else if (propertyName.equals("Field-of-view#")) {
                         fov = Double.parseDouble(cell_value.trim());
-                    }else{
+                    } else {
                         String[] splitted = cell_value.split(" ");
                         String propertyValue;
                         if (splitted.length == 0) {
@@ -217,7 +237,7 @@ public final class EOSSDatabase {
                 Instrument newInstrument = new Instrument(instrumentName, fov, properties);
                 EOSSDatabase.addInstrument(newInstrument);
             }
-            
+
             xls.close();
         } catch (IOException ex) {
             Logger.getLogger(JessInitializer.class.getName()).log(Level.SEVERE, null, ex);
@@ -232,39 +252,36 @@ public final class EOSSDatabase {
         EOSSDatabase.instrumentNames.remove(instrument.getName());
     }
 
-    public static List<Orbit> getOrbits() {
-        Orbit[] out = new Orbit[orbitMap.size()];
-        for (Orbit orb : orbitMap.keySet()) {
-            out[orbitMap.get(orb)] = orb;
-        }
-        return Arrays.asList(out);
+    public static Collection<Orbit> getOrbits() {
+        return orbitMap.keySet();
     }
-    
+
     /**
      * Gets the orbit by querying the name
+     *
      * @param name orbit name
      * @return the orbit in the database with the given name
      */
-    public static Orbit getOrbit(String name){
+    public static Orbit getOrbit(String name) {
         return orbitNames.get(name);
     }
-    
 
     /**
-     * Gets the indexed orbit from the database if it exists. 
+     * Gets the indexed orbit from the database if it exists.
      *
      * @param index index of the orbit to get from the database
-     * @return the indexed orbit from the database 
+     * @return the indexed orbit from the database
      */
     public static Orbit getOrbit(int index) {
         return orbitList.get(index);
     }
-    
+
     /**
      * Gets the number of instruments stored in the database
+     *
      * @return the number of instruments stored in the database
      */
-    public static int getNumberOfOrbits(){
+    public static int getNumberOfOrbits() {
         return orbitMap.size();
     }
 
@@ -324,7 +341,7 @@ public final class EOSSDatabase {
         }
     }
 
-    public static ArrayList<Bus> getBuses() {
+    public static Collection<Bus> getBuses() {
         ArrayList<Bus> out = new ArrayList<>(buses.size());
         for (Bus bus : buses.keySet()) {
             out.set(buses.get(bus), bus);
@@ -411,6 +428,99 @@ public final class EOSSDatabase {
             }
         }
         return -1;
+    }
+
+    /**
+     * Loads the characteristics of the launch vehicles and adds them to the
+     * database
+     *
+     * @param file the file containing the launch vehicle parameters
+     */
+    public static void loadLaunchVehicles(File file) {
+        try {
+            DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document doc = dBuilder.parse(file);
+            doc.getDocumentElement().normalize();
+            NodeList orbitNodeList = doc.getElementsByTagName("launchVehicle");
+            Pattern p = Pattern.compile("\\S");
+            for (int i = 0; i < orbitNodeList.getLength(); i++) {
+                Element vehicle = (Element) orbitNodeList.item(i);
+                String name = vehicle.getElementsByTagName("name").item(0).getTextContent().trim();
+                Double diameter = Double.valueOf(vehicle.getElementsByTagName("diameter").item(0).getTextContent());
+                Double height = Double.valueOf(vehicle.getElementsByTagName("height").item(0).getTextContent());
+                Double cost = Double.valueOf(vehicle.getElementsByTagName("cost").item(0).getTextContent());
+                Element coeffNode = (Element) vehicle.getElementsByTagName("coeffs").item(0);
+                NodeList coeffList = coeffNode.getChildNodes();
+                HashMap<String, List<Double>> coeffs = new HashMap();
+                for (int j = 0; j < coeffList.getLength(); j++) {
+                    try{
+                        String vals = coeffList.item(j).getFirstChild().getNodeValue();
+                        ArrayList<Double> dblVals = new ArrayList<>();
+                        for (String s : vals.trim().split("\\s.")) {
+                            if(s.isEmpty())
+                                continue;
+                            dblVals.add(Double.parseDouble(s));
+                        }
+                        coeffs.put(coeffList.item(j).getNodeName(), dblVals);
+                    }catch(NullPointerException ex){
+                        continue;
+                    }
+                }
+                EOSSDatabase.addLaunchVehicle(new LaunchVehicle(name, coeffs, diameter, height, cost));
+            }
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(ArchitectureEvaluatorParams.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(ArchitectureEvaluatorParams.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(ArchitectureEvaluatorParams.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * Gets the launch vehicles stored in the database
+     *
+     * @return
+     */
+    public static Collection<LaunchVehicle> getLaunchVehicles() {
+        return launchVehicleMap.keySet();
+    }
+
+    /**
+     * Adds the launch vehicle to the database
+     *
+     * @param lv
+     */
+    public static void addLaunchVehicle(LaunchVehicle lv) {
+        Integer check = launchVehicleMap.put(lv, launchVehicleMap.size());
+        if (check != null) {
+            throw new IllegalArgumentException(String.format("Bus %s already exists", lv.getName()));
+        }
+    }
+
+    /**
+     * Removes the launch vehicle from the database
+     *
+     * @param lv
+     */
+    public static void removeLaunchVehicle(LaunchVehicle lv) {
+        EOSSDatabase.launchVehicleList.set(launchVehicleMap.get(lv), null);
+        EOSSDatabase.launchVehicleMap.remove(lv);
+        EOSSDatabase.launchVehicleNames.remove(lv.getName());
+    }
+
+    /**
+     * finds and returns the index of the given launch vehicle
+     *
+     * @param lv launch vehicle
+     * @return returns the index of the given launch vehicle if found in
+     * Database. else throws null pointer exception
+     */
+    public static int findLaunchVehicleIndex(LaunchVehicle lv) {
+        return launchVehicleMap.get(lv);
     }
 
 }
