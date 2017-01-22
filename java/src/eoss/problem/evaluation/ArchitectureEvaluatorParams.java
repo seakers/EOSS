@@ -8,15 +8,11 @@ package eoss.problem.evaluation;
  *
  * @author dani
  */
-import eoss.problem.EOSSDatabase;
-import eoss.problem.Orbit;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,8 +82,7 @@ public class ArchitectureEvaluatorParams {
     public static int npanels;
     public static ArrayList<Double> panel_weights;
     public static ArrayList<String> panel_names;
-    
-    
+
     public static HashMap<ArrayList<Integer>, HashMap<String, Double>> revtimes;//map <sorted orbit indices>, <region, revtime>
     public static Map<ArrayList<String>, HashMap<String, Double>> scores;
     public static Map<String, NDSM> all_dsms;
@@ -96,14 +91,15 @@ public class ArchitectureEvaluatorParams {
     public static String revtimes_dat_file;
     public static String dsm_dat_file;
     public static double time_horizon;
-    
+
     public static ArchitectureEvaluatorParams instance;
-    
-    public static ArchitectureEvaluatorParams getInstance(String p) throws IOException, ClassNotFoundException{
-        if(instance == null){
-                return new ArchitectureEvaluatorParams(p);
-        }else{
-            if(!(p.equals(ArchitectureEvaluatorParams.path))){
+
+    public static ArchitectureEvaluatorParams getInstance(String p) throws IOException, ClassNotFoundException {
+        if (instance == null) {
+            instance = new ArchitectureEvaluatorParams(p);
+            return instance;
+        } else {
+            if (!(p.equals(ArchitectureEvaluatorParams.path))) {
                 throw new IllegalArgumentException("Given path is not the same as the instantiated params object");
             }
             return instance;
