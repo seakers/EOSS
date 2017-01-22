@@ -71,7 +71,7 @@ public class ArchitectureEvaluator {
 
     public ArchitectureEvaluator(String path, RequirementMode reqMode, boolean explanation, boolean withSynergy, ValueTree valueTree) {
         try {
-            new ArchitectureEvaluatorParams(path);
+            ArchitectureEvaluatorParams.getInstance(path);
         } catch (IOException ex) {
             Logger.getLogger(ArchitectureEvaluator.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ClassNotFoundException ex) {

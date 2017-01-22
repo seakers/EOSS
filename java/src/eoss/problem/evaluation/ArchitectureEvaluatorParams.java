@@ -29,7 +29,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import rbsa.eoss.NDSM;
 
@@ -97,6 +96,19 @@ public class ArchitectureEvaluatorParams {
     public static String revtimes_dat_file;
     public static String dsm_dat_file;
     public static double time_horizon;
+    
+    public static ArchitectureEvaluatorParams instance;
+    
+    public static ArchitectureEvaluatorParams getInstance(String p) throws IOException, ClassNotFoundException{
+        if(instance == null){
+                return new ArchitectureEvaluatorParams(p);
+        }else{
+            if(!(p.equals(ArchitectureEvaluatorParams.path))){
+                throw new IllegalArgumentException("Given path is not the same as the instantiated params object");
+            }
+            return instance;
+        }
+    }
 
     /**
      * Constructor loads in all the paths from a .properties file stored in the
@@ -107,7 +119,7 @@ public class ArchitectureEvaluatorParams {
      * @throws java.io.IOException
      * @throws java.lang.ClassNotFoundException
      */
-    public ArchitectureEvaluatorParams(String p) throws IOException, ClassNotFoundException {
+    private ArchitectureEvaluatorParams(String p) throws IOException, ClassNotFoundException {
         //this.master_xls = master_xls;
         //this.recompute_scores = recompute_scores;
         ArchitectureEvaluatorParams.path = p;

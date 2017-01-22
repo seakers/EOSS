@@ -6,6 +6,7 @@ package eoss.problem.assignment;
 
 import architecture.Architecture;
 import architecture.pattern.ArchitecturalDecision;
+import architecture.pattern.Assigning;
 import architecture.pattern.Combining;
 import architecture.pattern.DownSelecting;
 import architecture.util.ValueTree;
@@ -234,6 +235,19 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
             }
         }
         return payloads;
+    }
+    
+    /**
+     * removes the instrument from the orbit
+     *
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
+     * @param scIndex the index of the spacecraft
+     * @return true if removing the instrument to orbit changes the architecture
+     * decision
+     */
+    public boolean removeInstrumentFromSpacecraft(int instrumentIndex, int scIndex){
+        return DownSelecting.set(instrumentIndex, false, this, downTag + scIndex);
     }
 
     public String payloadToString() {

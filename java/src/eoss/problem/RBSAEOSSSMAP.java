@@ -49,6 +49,7 @@ import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import knowledge.operator.EOSSOperatorCreator;
+import knowledge.operator.RepairDataDutyCycle;
 import knowledge.operator.RepairMass;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
@@ -100,7 +101,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "30"; //numRuns
+            args[3] = "1"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -165,8 +166,8 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-//                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 0.8, 5), bitFlip);
+//                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 5000., 5), bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                     

@@ -5,22 +5,21 @@
  */
 package knowledge.operator;
 
-import eoss.problem.EOSSDatabase;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
-import eoss.problem.assignment.InstrumentAssignmentArchitecture;
-import eoss.problem.assignment.operators.AbstractEOSSOperator;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.evaluation.RequirementMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jess.Fact;
 import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
+import org.moeaframework.core.Solution;
+import org.moeaframework.core.Variation;
 
 /**
  * Checks that the data rate duty cycle of the spacecraft fall within the
@@ -30,7 +29,7 @@ import org.moeaframework.core.ParallelPRNG;
  *
  * @author nozomihitomi
  */
-public class RepairDataDutyCycle extends AbstractEOSSOperator {
+public class RepairDataDutyCycle implements Variation {
 
     /**
      * The data rate duty cycle that a spacecraft must be at or higher
@@ -54,9 +53,10 @@ public class RepairDataDutyCycle extends AbstractEOSSOperator {
     }
 
     @Override
-    protected InstrumentAssignmentArchitecture evolve(InstrumentAssignmentArchitecture child) {
+    public Solution[] evolve(Solution[] sltns) {
+        InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
         child.setMissions();
-        InstrumentAssignmentArchitecture copy = (InstrumentAssignmentArchitecture) child.copy();
+        InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
         try {
             for (String name : child.getMissionNames()) {
@@ -67,22 +67,17 @@ public class RepairDataDutyCycle extends AbstractEOSSOperator {
                 }
             }
             for (int i = 0; i < numModifications; i++) {
-                if (i > child.getNorbits() || i >= candidateMission.size()) {
+                if (i > child.getMissionNames().size()|| i >= candidateMission.size()) {
                     break;
                 }
                 int missionIndex = pprng.nextInt(candidateMission.size());
                 Mission mission = candidateMission.get(missionIndex);
-                Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
-                Orbit orbit = mission.getSpacecraft().get(s);
-                int index = EOSSDatabase.findOrbitIndex(orbit);
                 while (!checkDataRate(mission, threshold)) {
-                    ArrayList<Integer> instruments = copy.getInstrumentsInOrbit(index);
-                    copy.removeInstrumentFromOrbit(instruments.get(pprng.nextInt(instruments.size())), index);
-                    HashMap<Spacecraft, Orbit> map = new HashMap();
-                    map.put(new Spacecraft(copy.getInstrumentsInOrbit(orbit)), orbit);
-                    mission = new Mission.Builder(orbit.getName(), map).build();
-                    if(copy.getInstrumentsInOrbit(orbit).isEmpty()){
+                    ArrayList<Integer> instruments = copy.getInstrumentsInSpacecraft(missionIndex);
+                    if(instruments.isEmpty()){
                         break;
+                    }else{
+                        copy.removeInstrumentFromSpacecraft(instruments.get(pprng.nextInt(instruments.size())), missionIndex);
                     }
                 }
                 candidateMission.remove(missionIndex);
@@ -90,7 +85,7 @@ public class RepairDataDutyCycle extends AbstractEOSSOperator {
         } catch (JessException ex) {
             Logger.getLogger(RepairDataDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return copy;
+        return new Solution[]{copy};
     }
 
     /**
@@ -110,14 +105,15 @@ public class RepairDataDutyCycle extends AbstractEOSSOperator {
      * @param arch
      * @param orbit
      * @param threshold
-     * @return true if the data rate duty cycle is at or above the threhsold.
+     * @return true if the data rate duty cycle is at or above the threshold.
      * Otherwise false.
      */
     private boolean checkDataRate(Mission mission, double threshold) throws JessException {
         Collection<Mission> missions = new ArrayList<>();
         missions.add(mission);
         this.eval.designSpacecraft(missions);
-        Collection<Fact> missionFacts = eval.makeQuery(String.format("MANIFEST::Mission (Name %s)", mission.getName()));
+        Orbit o = mission.getSpacecraft().values().iterator().next();
+        Collection<Fact> missionFacts = eval.makeQuery(String.format("MANIFEST::Mission (Name %s:%s)", mission.getName(), o.getName()));
         Fact fact = missionFacts.iterator().next();
         return computeDataRateDutyCycle(Double.parseDouble(fact.getSlotValue("sat-data-rate-per-orbit#").toString())) >= threshold;
     }
