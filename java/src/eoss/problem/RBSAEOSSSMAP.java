@@ -157,8 +157,7 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
 
         //initialize problem
-//        Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE, false);
-        Problem problem; 
+        Problem problem = null; 
 
         switch (mode) {
             case 1: //Use epsilonMOEA Assignment
@@ -179,8 +178,8 @@ public class RBSAEOSSSMAP {
                 }
                 for (Future<Algorithm> run : futures) {
                     try {
-                        run.get();
-//                        ((InstrumentAssignment) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                        Algorithm alg = run.get();
+                        ((InstrumentAssignment2) alg.getProblem()).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "emoea" + System.currentTimeMillis() + "solutions.dat"));
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
