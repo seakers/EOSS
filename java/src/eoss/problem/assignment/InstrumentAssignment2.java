@@ -218,6 +218,13 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         }
         return flag;
     }
+    
+    /**
+     * Clears the database to free up memory
+     */
+    public void clearDB(){
+        solutionDB.clear();
+    }
 
     @Override
     public Solution newSolution() {

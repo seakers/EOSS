@@ -181,6 +181,7 @@ public class RBSAEOSSSMAP {
                     try {
                         Algorithm alg = run.get();
                         ((InstrumentAssignment2) alg.getProblem()).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "emoea" + System.currentTimeMillis() + "solutions.dat"));
+                        ((InstrumentAssignment2) alg.getProblem()).clearDB();
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
