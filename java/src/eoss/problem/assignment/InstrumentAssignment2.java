@@ -62,6 +62,12 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     
     private final int nSpacecraft;
     
+    private final double drdcThreshold = 0.5;
+    
+    private final double pdcThreshold = 0.5;
+    
+    private final double massThreshold = 5000.0; //[kg]
+    
     /**
      *
      * @param path
@@ -86,7 +92,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      */
     public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy, File database) {
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
-        super(EOSSDatabase.getNumberOfInstruments()*nSpacecraft + nSpacecraft, 2);
+        super(EOSSDatabase.getNumberOfInstruments()*nSpacecraft + nSpacecraft, 2, 4);
         
         this.nSpacecraft = nSpacecraft;
 
@@ -189,6 +195,10 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      * @throws JessException
      */
     private void getAuxFacts(InstrumentAssignmentArchitecture2 arch) throws JessException {
+        double drdcViolationSum = 0;
+        double pdcViolationSum = 0;
+        double massViolationSum = 0;
+        
         Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
         for (Fact fact : missionFacts) {
             String name = fact.getSlotValue("Name").toString().split(":")[0];
@@ -198,7 +208,26 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             for (String slot : auxFacts) {
                 s.setProperty(slot, fact.getSlotValue(slot).toString());
             }
+            
+            // Computes the data rate duty cycle from the data rate per orbit 
+            // assuming 1 seven minute pass at 500Mbps max
+            double drdc =  (1. * 7.  * 60. * 500. * (1. / 8192.)) * 
+                    Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
+            s.setProperty("data-rate duty cycle", Double.toString(drdc));
+            drdcViolationSum += Math.abs(Math.min(0.0, drdc - drdcThreshold));
+            
+            // Computes the power duty cycle assuming a limit at 10kW
+            double pdc = 10000.0/
+                    Double.parseDouble(s.getProperty("satellite-BOL-power#"));
+            s.setProperty("power duty cycle", Double.toString(pdc));
+            pdcViolationSum += Math.abs(Math.min(0.0, pdc - pdcThreshold));
+            
+            massViolationSum += Math.abs(Math.min(0.0, massThreshold - s.getWetMass()));
         }
+        
+//        arch.setConstraint(0, drdcViolationSum);
+//        arch.setConstraint(1, pdcViolationSum);
+        arch.setConstraint(2, massViolationSum);
     }
 
     /**

@@ -167,7 +167,7 @@ public class RBSAEOSSSMAP {
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
 //                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(path, 5000., 5), bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(5000., 1, 1), bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                     
@@ -197,7 +197,7 @@ public class RBSAEOSSSMAP {
 
                         //add domain-independent heuristics
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new RepairMass(path, 0.8, 5), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new RepairMass(5000., 1, 1), new BitFlip(mutationProbability)));
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
