@@ -259,7 +259,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture2(
                 EOSSDatabase.getNumberOfInstruments(), nSpacecraft, 
-                EOSSDatabase.getNumberOfOrbits(), 2);
+                EOSSDatabase.getNumberOfOrbits(), 2 , 4);
     }
 
 }

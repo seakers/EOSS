@@ -81,10 +81,11 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
      * @param numberOfSpacecraft The number of spacecraft
      * @param numberOfOrbits The number of possible orbits
      * @param numberOfObjectives
+     * @param numberOfConstraints The number of constraints
      */
     public InstrumentAssignmentArchitecture2(int numberOfInstruments,
-            int numberOfSpacecraft, int numberOfOrbits, int numberOfObjectives) {
-        super(numberOfObjectives, 0,
+            int numberOfSpacecraft, int numberOfOrbits, int numberOfObjectives, int numberOfConstraints) {
+        super(numberOfObjectives, numberOfConstraints,
                 createDecisions(numberOfInstruments, numberOfSpacecraft, numberOfOrbits));
         this.missions = new HashMap<>();
         this.numberOfSpacecraft = numberOfSpacecraft;
