@@ -94,12 +94,25 @@ public class Spacecraft implements Serializable {
         this.dimensions = dimensions;
     }
     
+    /**
+     * Creates a copy of this instance
+     * @return 
+     */
+    public Spacecraft copy(){
+        Spacecraft copy =  new Spacecraft(paylaod);
+        for(String str : properties.keySet()){
+            copy.setProperty(str, properties.get(str));
+        }
+        copy.setDimensions(this.getDimensions());
+        copy.setWetMass(this.getWetMass());
+        return copy;
+    }
+    
 
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.paylaod);
-        hash = 67 * hash + Objects.hashCode(this.properties);
         return hash;
     }
 

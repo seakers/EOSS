@@ -6,7 +6,6 @@ package eoss.problem.assignment;
 
 import architecture.Architecture;
 import architecture.pattern.ArchitecturalDecision;
-import architecture.pattern.Assigning;
 import architecture.pattern.Combining;
 import architecture.pattern.DownSelecting;
 import architecture.util.ValueTree;
@@ -123,6 +122,9 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
         }
         InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) solution;
         this.missions = new HashMap<>();
+        for(String missionName : arch.getMissionNames()){
+            this.missions.put(missionName, arch.getMission(missionName).copy());
+        }
         this.numberOfSpacecraft = arch.numberOfSpacecraft;
         this.numberOfInstruments = arch.numberOfInstruments;
         this.numberOfOrbits = arch.numberOfOrbits;
@@ -239,6 +241,17 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
     }
     
     /**
+     * Gets the indices of the instruments assigned to a specified orbit
+     *
+     * @param m the mission
+     * @return the indices of the instruments as they are in the EOSSDatabase
+     */
+    public ArrayList<Integer> getInstrumentsInSpacecraft(Mission m) {
+        int scIndex = Integer.parseInt(m.getName().split("_")[1]);
+        return getInstrumentsInSpacecraft(scIndex);
+    }
+    
+    /**
      * removes the instrument from the orbit
      *
      * @param instrumentIndex the index of the instrument as it is in the
@@ -249,6 +262,20 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
      */
     public boolean removeInstrumentFromSpacecraft(int instrumentIndex, int scIndex){
         return DownSelecting.set(instrumentIndex, false, this, downTag + scIndex);
+    }
+    
+    /**
+     * removes the instrument from the orbit
+     *
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
+     * @param m to remove the instrument from
+     * @return true if removing the instrument to orbit changes the architecture
+     * decision
+     */
+    public boolean removeInstrumentFromSpacecraft(int instrumentIndex, Mission m){
+        int scIndex = Integer.parseInt(m.getName().split("_")[1]);
+        return removeInstrumentFromSpacecraft(instrumentIndex, scIndex);
     }
 
     public String payloadToString() {

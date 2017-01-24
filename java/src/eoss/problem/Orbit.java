@@ -20,27 +20,30 @@ public class Orbit implements Serializable{
      * semimajor axis in meters
      */
     private final double semimajorAxis;
+    
     /**
      * Altitude in meters
      */
     private final double altitude;
+    
     /**
      * Inclination in degrees
      */
     private final String inclination;
-//    /**
-//     * Type of inclination (e.g. SSO, polar)
-//     */
-//    private final String inclinationStr;
+    
     /**
      * RAAN in degrees
      */
     private final String RAAN;
+    
     /**
      * Mean anomaly in degrees
      */
     private final double meanAnomaly;
 
+    /**
+     * Eccentricity of the orbit
+     */
     private final double eccentricity;
 
     /**
@@ -77,12 +80,6 @@ public class Orbit implements Serializable{
         this.meanAnomaly = meanAnomaly;
         this.eccentricity = eccentricity;
         this.argPeri = argPeri;
-//        if(inclination==0.0)
-//            this.inclinationStr = "polar";
-//        else if(inclination==getSSOInclination(semimajorAxis))
-//            this.inclinationStr = "SSO";
-//        else
-//            this.inclinationStr = "";
         this.altitude = semimajorAxis - Constants.WGS84_EARTH_EQUATORIAL_RADIUS;
         this.period = 2*FastMath.PI*FastMath.sqrt(FastMath.pow(semimajorAxis, 3.)/Constants.WGS84_EARTH_MU);
     }

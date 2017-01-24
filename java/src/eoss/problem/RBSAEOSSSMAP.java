@@ -51,6 +51,7 @@ import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import knowledge.operator.EOSSOperatorCreator;
 import knowledge.operator.RepairDataDutyCycle;
+import knowledge.operator.RepairInstrumentOrbit;
 import knowledge.operator.RepairMass;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
@@ -168,7 +169,7 @@ public class RBSAEOSSSMAP {
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
 //                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(5000., 1, 1), bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(3000., 1, 1), bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                     

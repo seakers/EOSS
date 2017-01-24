@@ -19,7 +19,8 @@ import org.orekit.time.TimeScalesFactory;
  *
  * @author nozomihitomi
  */
-public class Mission implements Serializable{
+public class Mission implements Serializable {
+
     private static final long serialVersionUID = -4727595371483693432L;
 
     /**
@@ -69,7 +70,7 @@ public class Mission implements Serializable{
         this.status = status;
         this.lifetime = lifetime;
     }
-    
+
     public Mission(String name, HashMap<Spacecraft, Orbit> spacecraft,
             AbsoluteDate launchDate, AbsoluteDate endOfLife, MissionStatus status,
             int devYears, double costPerYear) {
@@ -80,7 +81,7 @@ public class Mission implements Serializable{
         this.launchDate = launchDate;
         this.eolDate = endOfLife;
         this.status = status;
-        this.lifetime = endOfLife.durationFrom(launchDate)/(365. * 24. * 3600.);
+        this.lifetime = endOfLife.durationFrom(launchDate) / (365. * 24. * 3600.);
     }
 
     public String getName() {
@@ -142,6 +143,21 @@ public class Mission implements Serializable{
     }
 
     /**
+     * Creates a copy of the mission. Deep copy of the spacecraft stored in this
+     * mission
+     *
+     * @return copy of this mission
+     */
+    public Mission copy() {
+        HashMap<Spacecraft, Orbit> map = new HashMap<>(this.spacecraft.size());
+        for(Spacecraft s : getSpacecraft().keySet()){
+            map.put(s.copy(), getSpacecraft().get(s));
+        }
+        return new Mission(this.name, map, this.launchDate, this.eolDate, 
+                this.status, this.costProfile.length, this.costProfile[0]);
+    }
+
+    /**
      * A builder pattern to set parameters for the missions
      */
     public static class Builder implements Serializable {
@@ -163,7 +179,7 @@ public class Mission implements Serializable{
         /**
          * Launch date name
          */
-        private AbsoluteDate launchDate; 
+        private AbsoluteDate launchDate;
 
         /**
          * The lifetime of the mission in years
@@ -178,7 +194,7 @@ public class Mission implements Serializable{
         /**
          * Years to develop the mission
          */
-        private int developmentYears = 0;
+        private int developmentYears = 1;
 
         /**
          * Cost per year to develop the mission
@@ -273,7 +289,8 @@ public class Mission implements Serializable{
      * The status of a mission
      */
     public static enum MissionStatus {
-        PAST,  //past mission
+
+        PAST, //past mission
         FLYING, //currently flying
         APPROVED, //approved to fly at a future date
         PLANNED //planned but not approved

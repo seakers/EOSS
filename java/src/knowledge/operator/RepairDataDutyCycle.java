@@ -58,7 +58,6 @@ public class RepairDataDutyCycle implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
-        child.setMissions();
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
         for (String name : child.getMissionNames()) {
@@ -74,12 +73,13 @@ public class RepairDataDutyCycle implements Variation {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());
+            Mission m =  candidateMission.get(missionIndex);
             for (int j = 0; j < xInstruments; j++) {
-                ArrayList<Integer> instruments = copy.getInstrumentsInSpacecraft(missionIndex);
+                ArrayList<Integer> instruments = copy.getInstrumentsInSpacecraft(m);
                 if (instruments.isEmpty()) {
                     break;
                 } else {
-                    copy.removeInstrumentFromSpacecraft(instruments.get(pprng.nextInt(instruments.size())), missionIndex);
+                    copy.removeInstrumentFromSpacecraft(instruments.get(pprng.nextInt(instruments.size())), m);
                 }
             }
             candidateMission.remove(missionIndex);
