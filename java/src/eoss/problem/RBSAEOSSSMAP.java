@@ -36,10 +36,11 @@ import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
@@ -77,11 +78,11 @@ public class RBSAEOSSSMAP {
      * pool of resources
      */
     private static ExecutorService pool;
-
+    
     /**
-     * List of future tasks to perform
+     * Executor completion services helps remove completed tasks
      */
-    private static ArrayList<Future<Algorithm>> futures;
+    private static CompletionService<Algorithm> ecs;
 
     /**
      * First argument is the path to the project folder. Second argument is the
@@ -101,7 +102,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "1"; //numRuns
+            args[3] = "30"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -116,7 +117,7 @@ public class RBSAEOSSSMAP {
         int numRuns = Integer.parseInt(args[3]);
 
         pool = Executors.newFixedThreadPool(numCPU);
-        futures = new ArrayList<>(numRuns);
+        ecs = new ExecutorCompletionService<>(pool);
 
         //setup for using orekit
         OrekitConfig.init();
@@ -174,12 +175,11 @@ public class RBSAEOSSSMAP {
                     problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
-                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i))));
-//                    ((InstrumentAssignment2) problem).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+                    ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                 }
-                for (Future<Algorithm> run : futures) {
+                for (int i = 0; i < numRuns; i++) {
                     try {
-                        Algorithm alg = run.get();
+                        Algorithm alg = ecs.take().get();
                         ((InstrumentAssignment2) alg.getProblem()).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "emoea" + System.currentTimeMillis() + "solutions.dat"));
                         ((InstrumentAssignment2) alg.getProblem()).clearDB();
                     } catch (InterruptedException | ExecutionException ex) {
@@ -211,15 +211,15 @@ public class RBSAEOSSSMAP {
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
 
-                        futures.add(pool.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i))));
+                        ecs.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i)));
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
-                for (Future<Algorithm> run : futures) {
+                for (int i = 0; i < numRuns; i++) {
                     try {
-                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
+                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) ecs.take().get();
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -260,16 +260,15 @@ public class RBSAEOSSSMAP {
                                 initialization, selector, creditAssignment);
 
                         AbstractPopulationLabeler labeler = new NondominatedSortingLabeler(.25);
-                        InnovizationSearch run = new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i);
-                        futures.add(pool.submit(run));
+                        ecs.submit(new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
 
-                for (Future<Algorithm> run : futures) {
+                for (int i = 0; i < numRuns; i++) {
                     try {
-                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) run.get();
+                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) ecs.take().get();
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -287,11 +286,11 @@ public class RBSAEOSSSMAP {
 
                     initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
-                    futures.add(pool.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i))));
+                    ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i)));
                 }
-                for (Future<Algorithm> run : futures) {
+                 for (int i = 0; i < numRuns; i++) {
                     try {
-                        run.get();
+                        ecs.take().get();
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
