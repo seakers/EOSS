@@ -15,6 +15,7 @@ import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignment2;
+import eoss.problem.assignment.KnowledgeConstraintComparator;
 import eoss.problem.evaluation.RequirementMode;
 import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
@@ -59,7 +60,9 @@ import orekit.util.OrekitConfig;
 import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
+import org.moeaframework.core.comparator.ChainedComparator;
 import org.moeaframework.core.comparator.DominanceComparator;
+import org.moeaframework.core.comparator.ParetoObjectiveComparator;
 import org.moeaframework.core.operator.CompoundVariation;
 import org.moeaframework.core.operator.RandomInitialization;
 import org.moeaframework.core.operator.integer.IntegerUM;
@@ -103,7 +106,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "30"; //numRuns
+            args[3] = "1"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -175,7 +178,8 @@ public class RBSAEOSSSMAP {
                     
                     problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
+                    ChainedComparator comp = new ChainedComparator(new KnowledgeConstraintComparator(), new ParetoObjectiveComparator());
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization,comp);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                 }
                 for (int i = 0; i < numRuns; i++) {

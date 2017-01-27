@@ -66,7 +66,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     
     private final double pdcThreshold = 0.5;
     
-    private final double massThreshold = 5000.0; //[kg]
+    private final double massThreshold = 3000.0; //[kg]
     
     /**
      *
@@ -222,12 +222,12 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             s.setProperty("power duty cycle", Double.toString(pdc));
             pdcViolationSum += Math.abs(Math.min(0.0, pdc - pdcThreshold));
             
-            massViolationSum += Math.abs(Math.min(0.0, massThreshold - s.getWetMass()));
+            massViolationSum += Math.max(0.0, s.getWetMass() - massThreshold);
         }
         
-//        arch.setConstraint(0, drdcViolationSum);
-//        arch.setConstraint(1, pdcViolationSum);
-        arch.setConstraint(2, massViolationSum);
+//        arch.setAttribute("constraint", drdcViolationSum);
+//        arch.setAttribute("constraint", pdcViolationSum);
+        arch.setAttribute("constraint", massViolationSum);
     }
 
     /**
