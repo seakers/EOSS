@@ -17,7 +17,9 @@ import org.moeaframework.problem.AbstractProblem;
 import architecture.util.ValueTree;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.EOSSDatabase;
+import eoss.problem.Instrument;
 import eoss.problem.Mission;
+import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
@@ -59,15 +61,15 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      * Solution database to reuse the computed values;
      */
     private final HashMap<Solution, double[]> solutionDB;
-    
+
     private final int nSpacecraft;
-    
-    private final double drdcThreshold = 0.5;
-    
-    private final double pdcThreshold = 0.5;
-    
+
+    private final double dcThreshold = 0.6;
+
     private final double massThreshold = 3000.0; //[kg]
-    
+
+    private final double packingEffThreshold = 0.8; //[kg]
+
     /**
      *
      * @param path
@@ -92,8 +94,8 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      */
     public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy, File database) {
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
-        super(EOSSDatabase.getNumberOfInstruments()*nSpacecraft + nSpacecraft, 2, 4);
-        
+        super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 4);
+
         this.nSpacecraft = nSpacecraft;
 
         ValueTree template = null;
@@ -121,7 +123,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             }
         }
     }
-    
+
     @Override
     public void evaluate(Solution sltn) {
         try {
@@ -179,7 +181,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             arch.setObjective(0, -tree.computeScores()); //negative because MOEAFramework assumes minimization problems
 
             double cost = eval.cost(missions);
-            arch.setObjective(1, cost); 
+            arch.setObjective(1, cost);
 
             getAuxFacts(arch);
         } catch (JessException ex) {
@@ -189,16 +191,20 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     }
 
     /**
-     * record auxiliary information
+     * record auxiliary information and check constraints
      *
      * @param arch
      * @throws JessException
      */
     private void getAuxFacts(InstrumentAssignmentArchitecture2 arch) throws JessException {
-        double drdcViolationSum = 0;
+        double dcViolationSum = 0;
         double pdcViolationSum = 0;
         double massViolationSum = 0;
-        
+        double packingEfficiencyViolationSum = 0;
+        int instrumentOrbitAssingmentViolationSum = 0;
+        int synergyViolationSum = 0;
+        int interferenceViolationSum = 0;
+
         Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
         for (Fact fact : missionFacts) {
             String name = fact.getSlotValue("Name").toString().split(":")[0];
@@ -208,26 +214,74 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             for (String slot : auxFacts) {
                 s.setProperty(slot, fact.getSlotValue(slot).toString());
             }
-            
+
             // Computes the data rate duty cycle from the data rate per orbit 
             // assuming 1 seven minute pass at 500Mbps max
-            double drdc =  (1. * 7.  * 60. * 500. * (1. / 8192.)) * 
-                    Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
+            double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
+                    * Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
             s.setProperty("data-rate duty cycle", Double.toString(drdc));
-            drdcViolationSum += Math.abs(Math.min(0.0, drdc - drdcThreshold));
-            
+
             // Computes the power duty cycle assuming a limit at 10kW
-            double pdc = 10000.0/
-                    Double.parseDouble(s.getProperty("satellite-BOL-power#"));
+            double pdc = 10000.0
+                    / Double.parseDouble(s.getProperty("satellite-BOL-power#"));
             s.setProperty("power duty cycle", Double.toString(pdc));
-            pdcViolationSum += Math.abs(Math.min(0.0, pdc - pdcThreshold));
-            
+
+            double dutycycle = Math.min(drdc, pdc);
+            s.setProperty("duty cycle", Double.toString(dutycycle));
+            dcViolationSum += Math.max(0.0, dcThreshold - dutycycle);
+
             massViolationSum += Math.max(0.0, s.getWetMass() - massThreshold);
+
+            //compute the packing efficiency
+            for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
+                if (group.contains(s)) {
+                    double totalVolume = 0;
+                    for (Spacecraft sTemp : group) {
+                        double volume = 1.0;
+                        for (double d : sTemp.getDimensions()) {
+                            volume *= d;
+                        }
+                        totalVolume += volume;
+                    }
+                    double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                    //divide any violation by the size of the launch group to not double count violations
+                    packingEfficiencyViolationSum += Math.max(0.0, (packingEffThreshold - packingEfficiency) / group.size());
+                }
+            }
+
+            //check poor assignment of instrument to orbit
+            Orbit o = mission.getSpacecraft().get(s);
+            if (!o.getRAAN().equals("PM")) {
+                for (Instrument inst : s.getPaylaod()) {
+                    String concept = inst.getProperty("Concept");
+                    if (concept.contains("chemistry")) {
+                        instrumentOrbitAssingmentViolationSum++;
+                    }
+                }
+            }
+            if (o.getRAAN().equals("DD")) {
+                for (Instrument inst : s.getPaylaod()) {
+                    if (inst.getProperty("Illumination").equals("Passive")) {
+                        instrumentOrbitAssingmentViolationSum++;
+                    }
+                }
+            }
+            if (o.getAltitude() <= 400.) {
+                for (Instrument inst : s.getPaylaod()) {
+                    if (inst.getProperty("Geometry").equals("slant")) {
+                        instrumentOrbitAssingmentViolationSum++;
+                    }
+                }
+            }
+
+            arch.setAttribute("constraint", 0.0);
+            arch.setAttribute("dcViolationSum", dcViolationSum);
+            arch.setAttribute("massViolationSum", massViolationSum);
+            arch.setAttribute("packingEfficiencyViolationSum", packingEfficiencyViolationSum);
+            arch.setAttribute("instrumentOrbitAssingmentViolationSum", instrumentOrbitAssingmentViolationSum);
+            arch.setAttribute("synergyViolationSum", massViolationSum);
+            arch.setAttribute("interferenceViolationSum", massViolationSum);
         }
-        
-//        arch.setAttribute("constraint", drdcViolationSum);
-//        arch.setAttribute("constraint", pdcViolationSum);
-        arch.setAttribute("constraint", massViolationSum);
     }
 
     /**
@@ -241,25 +295,27 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));) {
             os.writeObject(solutionDB);
             os.close();
+
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class
+                    .getName()).log(Level.SEVERE, null, ex);
             flag = false;
         }
         return flag;
     }
-    
+
     /**
      * Clears the database to free up memory
      */
-    public void clearDB(){
+    public void clearDB() {
         solutionDB.clear();
     }
 
     @Override
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture2(
-                EOSSDatabase.getNumberOfInstruments(), nSpacecraft, 
-                EOSSDatabase.getNumberOfOrbits(), 2 , 4);
+                EOSSDatabase.getNumberOfInstruments(), nSpacecraft,
+                EOSSDatabase.getNumberOfOrbits(), 2, 4);
     }
 
 }

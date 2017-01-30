@@ -372,28 +372,32 @@ public class ArchitectureEvaluator {
         designSpacecraft(missions);
 
         //compute launch cost and set values into facts
+        HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
         ArrayList<Fact> facts = qb.makeQuery("MANIFEST::Mission");
-        for (Mission m : missions) {
-            HashMap<Spacecraft, LaunchVehicle> launches = LaunchVehicle.select(m);
-            StringBuilder launchStr = new StringBuilder();
-            double launchCost = 0;
-            for (Spacecraft s : launches.keySet()) {
-                LaunchVehicle lv = launches.get(s);
-                launchCost += lv.getCost();
-                launchStr.append(lv.getName()).append("_");
-            }
-            launchStr.deleteCharAt(launchStr.length()-1); //delete the last delimiter
-            FuzzyValue fcost = new FuzzyValue("Cost", new Interval("delta", launchCost, 10.0), "FY04$M");
-            for (int i = 0; i < facts.size(); i++) {
-                String name = facts.get(i).getSlotValue("Name").toString().split(":")[0];
-                if (name.equalsIgnoreCase(m.getName())) {
-                    r.modify(facts.get(i), "launch-cost#", new Value(launchCost, RU.FLOAT));
-                    r.modify(facts.get(i), "launch-cost", new Value(fcost));
-                    r.modify(facts.get(i), "launch-vehicle", new Value(launchStr.toString(), RU.STRING));
-                    facts.remove(i);
+        for (Collection<Spacecraft> group : lvSelection.keySet()) {
+            LaunchVehicle lv = lvSelection.get(group);
+            for (Mission m : missions) {
+                for (Spacecraft s : group) {
+                    if (m.getSpacecraft().containsKey(s)) {
+                        m.getLaunchVehicles().put(group, lv);
+                    }
+                }
+                double launchCost = lvSelection.get(group).getCost() / ((double) group.size());
+                FuzzyValue fcost = new FuzzyValue("Cost", new Interval("delta", launchCost, 10.0), "FY04$M");
+                
+                //modify relevant mission fact
+                for (int i = 0; i < facts.size(); i++) {
+                    String name = facts.get(i).getSlotValue("Name").toString().split(":")[0];
+                    if (name.equalsIgnoreCase(m.getName())) {
+                        r.modify(facts.get(i), "launch-cost#", new Value(launchCost, RU.FLOAT));
+                        r.modify(facts.get(i), "launch-cost", new Value(fcost));
+                        r.modify(facts.get(i), "launch-vehicle", new Value(lv.getName(), RU.STRING));
+                        facts.remove(i);
+                    }
                 }
             }
         }
+
         if (!facts.isEmpty()) {
             throw new IllegalStateException("One of the mission facts didn't get assigned any launch vehicles");
         }

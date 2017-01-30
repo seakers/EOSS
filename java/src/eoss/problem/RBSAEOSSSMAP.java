@@ -106,7 +106,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "1"; //numRuns
+            args[3] = "30"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -171,8 +171,8 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-//                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(3000., 1, 1), bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
+//                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(3000., 1, 1), bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
                     

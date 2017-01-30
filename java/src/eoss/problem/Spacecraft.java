@@ -17,6 +17,8 @@ import java.util.Objects;
 public class Spacecraft implements Serializable {
 
     private static final long serialVersionUID = 42723869369021765L;
+    
+    private final String name;
 
     /**
      * The spacecraft's payload
@@ -38,13 +40,22 @@ public class Spacecraft implements Serializable {
      */
     private final HashMap<String, String> properties;
 
-    public Spacecraft(Collection<Instrument> paylaod) {
+    public Spacecraft(String name, Collection<Instrument> paylaod) {
+        this.name = name;
         this.paylaod = paylaod;
         this.properties = new HashMap<>();
     }
 
     public void setProperty(String key, String value) {
         properties.put(key, value);
+    }
+
+    /**
+     * Gets the name of this spacecraft
+     * @return 
+     */
+    public String getName() {
+        return name;
     }
 
     public String getProperty(String key) {
@@ -99,7 +110,7 @@ public class Spacecraft implements Serializable {
      * @return 
      */
     public Spacecraft copy(){
-        Spacecraft copy =  new Spacecraft(paylaod);
+        Spacecraft copy =  new Spacecraft(name, paylaod);
         for(String str : properties.keySet()){
             copy.setProperty(str, properties.get(str));
         }

@@ -7,6 +7,7 @@ package eoss.problem;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -42,6 +43,11 @@ public class Mission implements Serializable {
      * The spacecraft that are part of this mission and their orbits
      */
     private final HashMap<Spacecraft, Orbit> spacecraft;
+    
+    /**
+     * The spacecraft that are part of this mission and their orbits
+     */
+    private HashMap<Collection<Spacecraft>, LaunchVehicle> launchvehicles;
 
     /**
      * Launch date name
@@ -58,17 +64,22 @@ public class Mission implements Serializable {
      */
     private final MissionStatus status;
 
+    /**
+     * 
+     * @param name
+     * @param spacecraft
+     * @param launchDate
+     * @param lifetime in years
+     * @param status
+     * @param devYears
+     * @param costPerYear 
+     */
     public Mission(String name, HashMap<Spacecraft, Orbit> spacecraft,
             AbsoluteDate launchDate, double lifetime, MissionStatus status,
             int devYears, double costPerYear) {
-        this.costProfile = new double[devYears];
-        Arrays.fill(this.costProfile, costPerYear);
-        this.name = name;
-        this.spacecraft = spacecraft;
-        this.launchDate = launchDate;
-        this.eolDate = launchDate.shiftedBy(lifetime * 365. * 24. * 3600.);
-        this.status = status;
-        this.lifetime = lifetime;
+        this(name, spacecraft, launchDate, 
+                launchDate.shiftedBy(lifetime* 365. * 24. * 3600.), 
+                status, devYears, costPerYear);
     }
 
     public Mission(String name, HashMap<Spacecraft, Orbit> spacecraft,
@@ -82,6 +93,7 @@ public class Mission implements Serializable {
         this.eolDate = endOfLife;
         this.status = status;
         this.lifetime = endOfLife.durationFrom(launchDate) / (365. * 24. * 3600.);
+        this.launchvehicles = new HashMap<>();
     }
 
     public String getName() {
@@ -125,6 +137,22 @@ public class Mission implements Serializable {
 
     public MissionStatus getStatus() {
         return status;
+    }
+    
+    /**
+     * Can set the launch vehicle that will carry one or multiple satellites
+     * @return 
+     */
+    public HashMap<Collection<Spacecraft>, LaunchVehicle> getLaunchVehicles(){
+        return this.launchvehicles;
+    }
+    
+    /**
+     * Can set the launch vehicle that will carry one or multiple satellites
+     * @param lv 
+     */
+    public void setLaunchVehicles(HashMap<Collection<Spacecraft>, LaunchVehicle> lv){
+        this.launchvehicles = lv;
     }
 
     /**

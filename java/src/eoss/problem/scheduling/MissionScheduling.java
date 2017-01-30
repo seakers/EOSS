@@ -372,7 +372,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
                 }
 
                 HashMap spacecraft = new HashMap(1);
-                spacecraft.put(new Spacecraft(Arrays.asList(new Instrument[]{inst})), null);
+                spacecraft.put(new Spacecraft(missionName + "_1", Arrays.asList(new Instrument[]{inst})), null);
 
                 Mission miss = new Mission(missionName, spacecraft, launchDate, endOfLifeDate, status, 0, 0.0);
                 matrix.addDataContinutity(meas, startDate, endDate, miss, inst);
@@ -422,7 +422,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
                     throw new IllegalArgumentException(String.format("Spacecraft must have one and only one orbit. Error in mission %s", name));
                 }
                 String orbitName = orbitList.item(0).getTextContent();
-                crafts.put(new Spacecraft(instruments), EOSSDatabase.getOrbit(orbitName));
+                crafts.put(new Spacecraft(name + "_0", instruments), EOSSDatabase.getOrbit(orbitName));
             }
             out.add(new Mission.Builder(name, crafts).devYr(devYr).devCostYr(devCostYr).lifetime(lifetime).build());
         }

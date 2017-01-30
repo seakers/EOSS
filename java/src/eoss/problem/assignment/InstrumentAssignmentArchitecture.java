@@ -358,7 +358,7 @@ public class InstrumentAssignmentArchitecture extends Architecture {
         missions.clear();
         for (Orbit orb : getOccupiedOrbits()) {
             HashMap<Spacecraft, Orbit> map = new HashMap<>(1);
-            map.put(new Spacecraft(getInstrumentsInOrbit(orb)), orb);
+            map.put(new Spacecraft(orb.getName() + "_0", getInstrumentsInOrbit(orb)), orb);
             Mission miss = new Mission.Builder(orb.getName(), map).build();
             missions.put(miss.getName(), miss);
         }
