@@ -4,6 +4,7 @@
  */
 package eoss.problem;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,7 +18,8 @@ import java.util.Objects;
  *
  * @author nozomi
  */
-public class LaunchVehicle {
+public class LaunchVehicle implements Serializable{
+    private static final long serialVersionUID = 2902112748976731561L;
 
     private final String name;
     private final HashMap<String, List<Double>> payload_coeffs;
