@@ -24,7 +24,6 @@ import org.moeaframework.core.Initialization;
 import org.moeaframework.core.Problem;
 import org.moeaframework.core.Variation;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
-import org.moeaframework.core.operator.GAVariation;
 import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
@@ -168,59 +167,53 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits.xml"));
         EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
 
-        //initialize problem
-        Problem problem = null;
+        for (int i = 0; i < numRuns; i++) {
 
-        //Random knowledge operator
-        Variation repairMass = new RepairMass(path,3000.0, 1, 1);
-        Variation repairDC = new RepairDutyCycle(path,0.5, 1, 1);
-        Variation repairPE = new RepairPackingEfficiency(path,0.4, 1, 1);
-        Variation repairSynergy = new RepairSynergy(1, 1);
-        Variation repairInter = new RepairInterference(1, 1);
-        Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
-        
-        Variation[] operators = new Variation[]{
+            //initialize problem
+            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
+
+            //initialize population structure for algorithm
+            Population population = new Population();
+            EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
+
+            //Random knowledge operator
+            Variation repairMass = new RepairMass(path, 3000.0, 1, 1);
+            Variation repairDC = new RepairDutyCycle(path, 0.5, 1, 1);
+            Variation repairPE = new RepairPackingEfficiency(path, 0.4, 1, 1);
+            Variation repairSynergy = new RepairSynergy(1, 1);
+            Variation repairInter = new RepairInterference(1, 1);
+            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
+
+            Variation[] operators = new Variation[]{
                 repairMass, repairDC, repairPE,
                 repairSynergy, repairInter, repairInstOrb};
-        RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6,operators);
-        
-        HashMap<String, Variation> constraintOperatorMap =  new HashMap<>();
-        constraintOperatorMap.put("massViolationSum", repairMass);
-        constraintOperatorMap.put("dcViolationSum", repairDC);
-        constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
-        constraintOperatorMap.put("synergyViolationSum", repairSynergy);
-        constraintOperatorMap.put("interferenceViolationSum", repairInter);
-        constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
+            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
 
-        switch (mode) {
-            case 1: //Use epsilonMOEA Assignment
-                for (int i = 0; i < numRuns; i++) {
+            HashMap<String, Variation> constraintOperatorMap = new HashMap<>();
+            constraintOperatorMap.put("massViolationSum", repairMass);
+            constraintOperatorMap.put("dcViolationSum", repairDC);
+            constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
+            constraintOperatorMap.put("synergyViolationSum", repairSynergy);
+            constraintOperatorMap.put("interferenceViolationSum", repairInter);
+            constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
+
+            switch (mode) {
+                case 1: //Use epsilonMOEA Assignment
+
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
 //                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
                     CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
-                    Population population = new Population();
-                    EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
-                    problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     ChainedComparator comp = new ChainedComparator(new KnowledgeConstraintComparator(), new ParetoObjectiveComparator());
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization, comp);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
-                }
-                for (int i = 0; i < numRuns; i++) {
-                    try {
-                        Algorithm alg = ecs.take().get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                break;
+                    break;
 
-            case 2://AOS search Assignment
-                try {
-                    for (int i = 0; i < numRuns; i++) {
+                case 2://AOS search Assignment
+                    try {
                         problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
                         ArrayList<Variation> heuristics = new ArrayList();
@@ -238,13 +231,10 @@ public class RBSAEOSSSMAP {
 
                         //all other properties use default parameters
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
-                        
+
                         /////////
                         selector = new AdaptiveConstraintSelection(operators);
                         creditAssignment = new PopulationConsistency(constraintOperatorMap);
-
-                        Population population = new Population();
-                        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
                         initialization = new RandomInitialization(problem, popSize);
 
@@ -252,23 +242,14 @@ public class RBSAEOSSSMAP {
                                 initialization, selector, creditAssignment);
 
                         ecs.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i)));
-                    }
-                } catch (IOException ex) {
-                    Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-                }
 
-                for (int i = 0; i < numRuns; i++) {
-                    try {
-                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) ecs.take().get();
-                    } catch (InterruptedException | ExecutionException ex) {
+                    } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                break;
-            case 3://innovization search Assignment
-                problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
-                String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
-                for (int i = 0; i < numRuns; i++) {
+                    break;
+                case 3://innovization search Assignment
+                    problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
+                    String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
                     try {
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
 
@@ -291,9 +272,6 @@ public class RBSAEOSSSMAP {
                         //all other properties use default parameters
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators2);
 
-                        Population population = new Population();
-                        EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-
                         initialization = new RandomInitialization(problem, popSize);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
@@ -303,44 +281,23 @@ public class RBSAEOSSSMAP {
                         ecs.submit(new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
 
-                for (int i = 0; i < numRuns; i++) {
-                    try {
-                        AOSEpsilonMOEA hemoea = (AOSEpsilonMOEA) ecs.take().get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                break;
+                    break;
 
-            case 4: { //Use epsilonMOEA Scheduling
-                problem = getSchedulingProblem(path, RequirementMode.FUZZYATTRIBUTE);
-                for (int i = 0; i < numRuns; i++) {
-                    singlecross = new OnePointCrossover(crossoverProbability);
-                    bitFlip = new BitFlip(mutationProbability);
-                    GAVariation gaVariation = new GAVariation(singlecross, bitFlip);
-                    Population population = new Population();
-                    EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-
-                    initialization = new RandomInitialization(problem, popSize);
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
-                    ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i)));
-                }
-                for (int i = 0; i < numRuns; i++) {
-                    try {
-                        ecs.take().get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                break;
+                default:
+                    throw new IllegalArgumentException(String.format("%d is an invalid option", mode));
             }
-
-            default:
-                throw new IllegalArgumentException(String.format("%d is an invalid option", mode));
         }
+
+        for (int i = 0; i < numRuns; i++) {
+            try {
+                Algorithm alg = ecs.take().get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
         pool.shutdown();
     }
 
