@@ -12,19 +12,18 @@ import eoss.problem.Orbit;
 import eoss.problem.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
 
 /**
- * This operator removes instruments if they are not well suited at the orbit
- * they are assigned to
+ * This operator removes an instrument if two instruments are known to
+ * significantly increase engineering costs
  *
  * @author nozomihitomi
  */
-public class RepairInstrumentOrbit implements Variation {
+public class RepairInterference implements Variation {
 
     /**
      * The number of instruments to remove from each satellite that does not
@@ -37,12 +36,27 @@ public class RepairInstrumentOrbit implements Variation {
      */
     private final int ySatellites;
 
+    /**
+     * synergistic instrument pairs
+     */
+    private final HashMap<String, String[]> map;
+
     private final ParallelPRNG pprng;
 
-    public RepairInstrumentOrbit(int xInstruments, int ySatellites) {
+    public RepairInterference(int xInstruments, int ySatellites) {
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
+
+        this.map = new HashMap();
+        map.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
+        map.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
+        map.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});
+        map.put("CLAR_ERB", new String[]{"ACE_LID", "ACE_CPR"});
+        map.put("CNES_KaRIN", new String[]{"ACE_CPR"});
+        map.put("ACE_POL", new String[]{"ACE_CPR"});
+        map.put("ACE_ORCA", new String[]{"ACE_CPR"});
+        map.put("GACM_SWIR", new String[]{"ACE_LID", "ACE_CPR"});
     }
 
     /**
@@ -58,16 +72,27 @@ public class RepairInstrumentOrbit implements Variation {
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         HashMap<Mission, ArrayList<Instrument>> instrumentsToRemove = new HashMap();
         for (String name : child.getMissionNames()) {
-            ArrayList<Instrument> remove = new ArrayList<>();
+            ArrayList<Instrument> instrumentsRemove = new ArrayList<>();
             HashMap<Spacecraft, Orbit> missionSpacecraft = child.getMission(name).getSpacecraft();
             for (Spacecraft s : missionSpacecraft.keySet()) {
-                remove.addAll(chemistryInPM(s, missionSpacecraft.get(s)));
-                remove.addAll(passiveInDD(s, missionSpacecraft.get(s)));
-                remove.addAll(slantLowAltitude(s, missionSpacecraft.get(s)));
+                HashMap<String, Instrument> instrumentSet = new HashMap<>();
+                for (Instrument inst : s.getPaylaod()) {
+                    instrumentSet.put(inst.getName(), inst);
+                }
+
+                for (String instName : instrumentSet.keySet()) {
+                    if (map.containsKey(instName)) {
+                        for (String instPairName : map.get(instName)) {
+                            if (instrumentSet.containsKey(instPairName)) {
+                                instrumentsRemove.add(EOSSDatabase.getInstrument(instPairName));
+                            }
+                        }
+                    }
+                }
             }
-            instrumentsToRemove.put(copy.getMission(name), remove);
+            instrumentsToRemove.put(copy.getMission(name), instrumentsRemove);
         }
-        
+
         //repair the architecture
         ArrayList<Mission> candidateMissions = new ArrayList<>(instrumentsToRemove.keySet());
         for (int i = 0; i < ySatellites; i++) {
@@ -75,7 +100,7 @@ public class RepairInstrumentOrbit implements Variation {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMissions.size());
-            Mission m =  candidateMissions.get(missionIndex);
+            Mission m = candidateMissions.get(missionIndex);
             for (int j = 0; j < xInstruments; j++) {
                 ArrayList<Instrument> instruments = instrumentsToRemove.get(m);
                 if (instruments.isEmpty()) {
@@ -90,66 +115,6 @@ public class RepairInstrumentOrbit implements Variation {
             candidateMissions.remove(missionIndex);
         }
         return new Solution[]{copy};
-    }
-
-    /**
-     * This method checks if a given mission carries an atmospheric chemistry
-     * instrument in a non-afternoon orbit.
-     *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * take atmospheric chemistry instruments in the given orbit if it is a
-     * non-afternoon orbit.
-     */
-    private Collection<Instrument> chemistryInPM(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
-        if (!o.getRAAN().equals("PM")) {
-            for (Instrument inst : s.getPaylaod()) {
-                String concept = inst.getProperty("Concept");
-                if (concept.contains("chemistry")) {
-                    out.add(inst);
-                }
-            }
-        }
-        return out;
-    }
-
-    /**
-     * This method checks if a given mission carries an passive, optical
-     * instrument in a dawn-dusk orbit
-     *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * are both passive and optical in a dawn dusk orbit
-     */
-    private Collection<Instrument> passiveInDD(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
-        if (o.getRAAN().equals("DD")) {
-            for (Instrument inst : s.getPaylaod()) {
-                if (inst.getProperty("Illumination").equals("Passive")) {
-                    out.add(inst);
-                }
-            }
-        }
-        return out;
-    }
-
-    /**
-     * This method checks if a given mission carries an instrument that views in
-     * a non-nadir direction and flies in a low altitude orbit (<= 400km)
-     *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * views in a non-nadir direction and flies in a low altitude orbit (<=
-     * 400km)
-     */
-    private Collection<Instrument> slantLowAltitude(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
-        if (o.getAltitude() <= 400.) {
-            for (Instrument inst : s.getPaylaod()) {
-                if (inst.getProperty("Geometry").equals("slant")) {
-                    out.add(inst);
-                }
-            }
-        }
-        return out;
     }
 
     @Override

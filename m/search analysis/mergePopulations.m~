@@ -1,0 +1,42 @@
+function mergePopulations(path)
+
+origin = cd(path);
+
+files = dir('*.dat');
+mergedPopulation = java.util.HashMap;
+for i=1:length(files)
+    fis = java.io.FileInputStream(java.io.File(files{i}.name));
+    ois = java.io.ObjectInputStream(fis);
+    population = ois.readObject;
+    mergedPopulation.putall(population);
+    fis.close;
+    ois.close;
+end
+
+iter = mergedPopulation.iterator;
+popSize = mergedPopulation.size;
+objectives = zeros(popSize,2);
+decisions = zeros(popSize,65);
+wetmass = zeros(popSize,5);
+dutycycle = zeros(popSize,5);
+packingefficiency = zeros(popSize,5);
+synergy = zeros(popSize,5);
+interference = zeros(popSize,5);
+instorb = zerps(popSize, 5);
+nfe = zeros(popSize,1);
+
+i = 1;
+while(iter.hasNext)
+    solution = iter.next;
+    for j=0:solution.getNumberOfDecisions
+        decisions(i,j+1) = solution.getDecision(j);
+    end
+    objectives(i,:) = solution.getObjectives();
+    
+    we
+    
+    nfe(i) = char(solution.getAttribute('NFE'));
+    i = i+1;
+end
+
+cd(origin)

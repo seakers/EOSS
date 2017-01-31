@@ -14,16 +14,17 @@ import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
 
 /**
- * Checks that the power duty cycle of the spacecraft fall within the acceptable
- * bounds. If not one or more random instruments are removed to try to alleviate
- * the situation. User can define whether to change one or multiple spacecraft
+ * Checks that the data rate duty cycle of the spacecraft fall within the
+ * acceptable bounds. If not one or more random instruments are removed to try
+ * to alleviate the situation. User can define whether to change one or multiple
+ * spacecraft.
  *
  * @author nozomihitomi
  */
-public class RepairPowerDutyCycle implements Variation {
-
+public class RepairPackingEfficiency implements Variation {
+    
     /**
-     * The power duty cycle that a spacecraft must be at or higher
+     * The duty cycle that a spacecraft must be at or higher
      */
     private final double threshold;
 
@@ -40,16 +41,16 @@ public class RepairPowerDutyCycle implements Variation {
 
     private final ParallelPRNG pprng;
 
-    public RepairPowerDutyCycle(double threshold, int xInstruments, int ySatellites) {
-        this.threshold = threshold;
+    public RepairPackingEfficiency(double threshold, int xInstruments, int ySatellites) {
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
+        this.threshold = threshold;
     }
 
     /**
      * removes x number of instruments from the payload of y number of satellite
-     * that exceeds the mass threshold
+     * that does not meet the data rate duty cycle threshold
      *
      * @param sltns
      * @return
@@ -62,13 +63,13 @@ public class RepairPowerDutyCycle implements Variation {
         for (String name : child.getMissionNames()) {
             Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
 
-            if (Double.parseDouble(s.getProperty("power duty cycle")) < threshold
+            if (Double.parseDouble(s.getProperty("packingEfficiency")) < threshold
                     && !s.getPaylaod().isEmpty()) {
                 candidateMission.add(child.getMission(name));
             }
         }
         for (int i = 0; i < ySatellites; i++) {
-            if (i > child.getMissionNames().size() || i >= candidateMission.size()) {
+            if (i > copy.getMissionNames().size() || i >= candidateMission.size()) {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());

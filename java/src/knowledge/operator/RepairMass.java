@@ -63,11 +63,11 @@ public class RepairMass implements Variation {
             Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
 
             if (s.getWetMass() > threshold && !s.getPaylaod().isEmpty()) {
-                candidateMission.add(child.getMission(name));
+                candidateMission.add(copy.getMission(name));
             }
         }
         for (int i = 0; i < ySatellites; i++) {
-            if (i > child.getMissionNames().size() || i >= candidateMission.size()) {
+            if (i > copy.getMissionNames().size() || i >= candidateMission.size()) {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());

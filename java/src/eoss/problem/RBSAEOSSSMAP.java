@@ -50,10 +50,16 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
+import knowledge.constraint.AdaptiveConstraintSelection;
+import knowledge.constraint.PopulationConsistency;
 import knowledge.operator.EOSSOperatorCreator;
-import knowledge.operator.RepairDataDutyCycle;
+import knowledge.operator.RandomKnowledgeOperator;
+import knowledge.operator.RepairDutyCycle;
 import knowledge.operator.RepairInstrumentOrbit;
+import knowledge.operator.RepairInterference;
 import knowledge.operator.RepairMass;
+import knowledge.operator.RepairPackingEfficiency;
+import knowledge.operator.RepairSynergy;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import orekit.util.OrekitConfig;
@@ -82,7 +88,7 @@ public class RBSAEOSSSMAP {
      * pool of resources
      */
     private static ExecutorService pool;
-    
+
     /**
      * Executor completion services helps remove completed tasks
      */
@@ -104,7 +110,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "1"; //Mode
+            args[1] = "2"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "30"; //numRuns
         }
@@ -163,7 +169,28 @@ public class RBSAEOSSSMAP {
         EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
 
         //initialize problem
-        Problem problem = null; 
+        Problem problem = null;
+
+        //Random knowledge operator
+        Variation repairMass = new RepairMass(3000.0, 1, 1);
+        Variation repairDC = new RepairDutyCycle(0.8, 1, 1);
+        Variation repairPE = new RepairPackingEfficiency(0.6, 1, 1);
+        Variation repairSynergy = new RepairSynergy(1, 1);
+        Variation repairInter = new RepairInterference(1, 1);
+        Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
+        
+        Variation[] operators = new Variation[]{
+                repairMass, repairDC, repairPE,
+                repairSynergy, repairInter, repairInstOrb};
+        RandomKnowledgeOperator rko = new RandomKnowledgeOperator(numRuns, operators);
+        
+        HashMap<String, Variation> constraintOperatorMap =  new HashMap<>();
+        constraintOperatorMap.put("massViolationSum", repairMass);
+        constraintOperatorMap.put("dcViolationSum", repairDC);
+        constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
+        constraintOperatorMap.put("synergyViolationSum", repairSynergy);
+        constraintOperatorMap.put("interferenceViolationSum", repairInter);
+        constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
 
         switch (mode) {
             case 1: //Use epsilonMOEA Assignment
@@ -171,22 +198,20 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-//                    CompoundVariation var = new CompoundVariation(singlecross, new RepairMass(3000., 1, 1), bitFlip, intergerMutation);
+//                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(rko, singlecross, bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-                    
+
                     problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     initialization = new RandomInitialization(problem, popSize);
                     ChainedComparator comp = new ChainedComparator(new KnowledgeConstraintComparator(), new ParetoObjectiveComparator());
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization,comp);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization, comp);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                 }
                 for (int i = 0; i < numRuns; i++) {
                     try {
                         Algorithm alg = ecs.take().get();
-                        ((InstrumentAssignment2) alg.getProblem()).saveSolutionDB(new File(path + File.separator + "database" + File.separator + "emoea" + System.currentTimeMillis() + "solutions.dat"));
-                        ((InstrumentAssignment2) alg.getProblem()).clearDB();
                     } catch (InterruptedException | ExecutionException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -207,6 +232,10 @@ public class RBSAEOSSSMAP {
 
                         //all other properties use default parameters
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
+                        
+                        /////////
+                        selector = new AdaptiveConstraintSelection(operators);
+                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
                         Population population = new Population();
                         EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
@@ -237,11 +266,11 @@ public class RBSAEOSSSMAP {
                     try {
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
 
-                        ArrayList<Variation> operators = new ArrayList();
+                        ArrayList<Variation> operators2 = new ArrayList();
 
                         //add domain-independent heuristics
                         Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability));
-                        operators.add(SingleCross);
+                        operators2.add(SingleCross);
 
                         //set up OperatorReplacementStrategy
                         EpochTrigger epochTrigger = new EpochTrigger(epochLength);
@@ -254,7 +283,7 @@ public class RBSAEOSSSMAP {
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
-                        INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators);
+                        INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators2);
 
                         Population population = new Population();
                         EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
@@ -293,7 +322,7 @@ public class RBSAEOSSSMAP {
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, gaVariation, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "sched_result", String.valueOf(i)));
                 }
-                 for (int i = 0; i < numRuns; i++) {
+                for (int i = 0; i < numRuns; i++) {
                     try {
                         ecs.take().get();
                     } catch (InterruptedException | ExecutionException ex) {
@@ -314,7 +343,7 @@ public class RBSAEOSSSMAP {
     }
 
     public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode, boolean explanation) {
-        return new InstrumentAssignment2(path, nSpacecraft, mode, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+        return new InstrumentAssignment2(path, nSpacecraft, mode, explanation, true);
     }
 
     public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) {

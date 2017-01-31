@@ -277,6 +277,33 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
         int scIndex = Integer.parseInt(m.getName().split("_")[1]);
         return removeInstrumentFromSpacecraft(instrumentIndex, scIndex);
     }
+    
+    /**
+     * adds the instrument to the orbit
+     *
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
+     * @param scIndex the index of the spacecraft
+     * @return true if removing the instrument to orbit changes the architecture
+     * decision
+     */
+    public boolean addInstrumentToSpacecraft(int instrumentIndex, int scIndex){
+        return DownSelecting.set(instrumentIndex, true, this, downTag + scIndex);
+    }
+    
+    /**
+     * adds the instrument to the orbit
+     *
+     * @param instrumentIndex the index of the instrument as it is in the
+     * EOSSDatabase
+     * @param m to remove the instrument from
+     * @return true if removing the instrument to orbit changes the architecture
+     * decision
+     */
+    public boolean addInstrumentToSpacecraft(int instrumentIndex, Mission m){
+        int scIndex = Integer.parseInt(m.getName().split("_")[1]);
+        return addInstrumentToSpacecraft(instrumentIndex, scIndex);
+    }
 
     public String payloadToString() {
         StringBuilder sb = new StringBuilder();

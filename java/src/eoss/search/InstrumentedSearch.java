@@ -13,7 +13,6 @@ import architecture.io.ResultIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 import org.moeaframework.Instrumenter;
 import org.moeaframework.algorithm.AbstractEvolutionaryAlgorithm;
@@ -66,6 +65,7 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         HashSet<Solution> allSolutions = new HashSet();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
+            initPop.get(i).setAttribute("NFE", 0);
             allSolutions.add( initPop.get(i));
         }
 
@@ -76,12 +76,10 @@ public class InstrumentedSearch implements Callable<Algorithm> {
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());
             }
             instAlgorithm.step();
-        }
-
-        Population allpop = new Population();
-        Iterator<Solution> iter = allSolutions.iterator();
-        while (iter.hasNext()) {
-            allpop.add(iter.next());
+            Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
+            for(int i=1; i<3; i++){
+                allSolutions.add(pop.get(pop.size()-i));
+            }
         }
 
         alg.terminate();
@@ -91,6 +89,7 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
         ResultIO.saveSearchMetrics(instAlgorithm, filename);
         ResultIO.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
+        ResultIO.savePopulation(new Population(allSolutions), filename + "_all");
         ResultIO.saveObjectives(instAlgorithm.getResult(), filename);
 
         if (alg instanceof IAOS) {

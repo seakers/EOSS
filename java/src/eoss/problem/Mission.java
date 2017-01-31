@@ -181,8 +181,14 @@ public class Mission implements Serializable {
         for(Spacecraft s : getSpacecraft().keySet()){
             map.put(s.copy(), getSpacecraft().get(s));
         }
-        return new Mission(this.name, map, this.launchDate, this.eolDate, 
+        Mission copy = new Mission(this.name, map, this.launchDate, this.eolDate, 
                 this.status, this.costProfile.length, this.costProfile[0]);
+        HashMap<Collection<Spacecraft>, LaunchVehicle> lvs = new HashMap<>();
+        for(Collection<Spacecraft> group : launchvehicles.keySet()){
+            lvs.put(group, launchvehicles.get(group));
+        }
+        copy.setLaunchVehicles(lvs);
+        return copy;
     }
 
     /**

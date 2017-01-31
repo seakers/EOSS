@@ -57,11 +57,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         "satellite-launch-mass", "satellite-wet-mass", "solar-array-area",
         "solar-array-mass", "structure-mass#", "thermal-mass#"};
 
-    /**
-     * Solution database to reuse the computed values;
-     */
-    private final HashMap<Solution, double[]> solutionDB;
-
     private final int nSpacecraft;
 
     private final double dcThreshold = 0.6;
@@ -79,20 +74,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy) {
-        this(path, nSpacecraft, reqMode, explanation, withSynergy, null);
-    }
-
-    /**
-     *
-     * @param path
-     * @param nSpacecraft The number of spacecraft to consider
-     * @param reqMode
-     * @param explanation determines whether or not to attach the explanations
-     * @param withSynergy determines whether or not to evaluate the solutions
-     * with synergy rules.
-     */
-    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy, File database) {
+    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy){
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
         super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 4);
 
@@ -109,66 +91,15 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.eval = new ArchitectureEvaluator(path, reqMode, explanation, withSynergy, template);
-
-        //load database of solution if requested.
-        solutionDB = new HashMap<>();
-        if (database != null) {
-            try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(database))) {
-                System.out.println("Loading solution database: " + database.toString());
-                solutionDB.putAll((HashMap<Solution, double[]>) is.readObject());
-            } catch (IOException ex) {
-                Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
     }
 
     @Override
     public void evaluate(Solution sltn) {
-        try {
-            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sltn;
-            arch.setMissions();
-            if (!loadArchitecture(arch)) {
-                evaluateArch(arch);
-            }
-
-            System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
-                    arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
-        } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    /**
-     * Load the solution from the database if it exists and copies computed
-     * values over to give solution.
-     *
-     * @param solution the solution to evaluate
-     * @return true if solution is found in database. Else false;
-     */
-    private boolean loadArchitecture(InstrumentAssignmentArchitecture2 solution) throws JessException {
-        if (solutionDB.containsKey(solution)) {
-            double[] objectives = solutionDB.get(solution);
-            for (int i = 0; i < solution.getNumberOfObjectives(); i++) {
-                solution.setObjective(i, objectives[i]);
-            }
-
-            //compute the auxilary facts
-            ArrayList<Mission> missions = new ArrayList<>();
-            for (String missionName : solution.getMissionNames()) {
-                missions.add(solution.getMission(missionName));
-            }
-            if (missions.isEmpty()) {
-                return true;
-            } else {
-                eval.designSpacecraft(missions);
-                getAuxFacts(solution);
-                return true;
-            }
-        } else {
-            return false;
-        }
+        InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sltn;
+        arch.setMissions();
+        evaluateArch(arch);
+        System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
+                arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
     }
 
     private void evaluateArch(InstrumentAssignmentArchitecture2 arch) {
@@ -187,7 +118,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
-        solutionDB.put(arch, new double[]{arch.getObjective(0), arch.getObjective(1)});
     }
 
     /**
@@ -198,7 +128,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      */
     private void getAuxFacts(InstrumentAssignmentArchitecture2 arch) throws JessException {
         double dcViolationSum = 0;
-        double pdcViolationSum = 0;
         double massViolationSum = 0;
         double packingEfficiencyViolationSum = 0;
         int instrumentOrbitAssingmentViolationSum = 0;
@@ -222,8 +151,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             s.setProperty("data-rate duty cycle", Double.toString(drdc));
 
             // Computes the power duty cycle assuming a limit at 10kW
-            double pdc = 10000.0
-                    / Double.parseDouble(s.getProperty("satellite-BOL-power#"));
+            double pdc = 10000.0 / Double.parseDouble(s.getProperty("satellite-BOL-power#"));
             s.setProperty("power duty cycle", Double.toString(pdc));
 
             double dutycycle = Math.min(drdc, pdc);
@@ -244,6 +172,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                         totalVolume += volume;
                     }
                     double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                    s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
                     //divide any violation by the size of the launch group to not double count violations
                     packingEfficiencyViolationSum += Math.max(0.0, (packingEffThreshold - packingEfficiency) / group.size());
                 }
@@ -274,43 +203,60 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 }
             }
 
+            //synergy and interference violation
+            HashMap<String, Instrument> instrumentSet = new HashMap<>();
+            for (Instrument inst : s.getPaylaod()) {
+                instrumentSet.put(inst.getName(), inst);
+            }
+
+            HashMap<String, String[]> synergyMap = new HashMap();
+            synergyMap.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
+            synergyMap.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
+            synergyMap.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});
+            synergyMap.put("HYSP_TIR", new String[]{"ACE_ORCA", "POSTEPS_IRS"});
+            synergyMap.put("ACE_POL", new String[]{"ACE_ORCA", "DESD_LID"});
+            synergyMap.put("ACE_LID", new String[]{"ACE_ORCA", "CNES_KaRIN", "DESD_LID", "GACM_VIS"});
+            synergyMap.put("POSTEPS_IRS", new String[]{"HYSP_TIR"});
+            synergyMap.put("CNES_KaRIN", new String[]{"ACE_LID"});
+
+            HashMap<String, String[]> interferenceMap = new HashMap();
+            interferenceMap.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
+            interferenceMap.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
+            interferenceMap.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});
+            interferenceMap.put("CLAR_ERB", new String[]{"ACE_LID", "ACE_CPR"});
+            interferenceMap.put("CNES_KaRIN", new String[]{"ACE_CPR"});
+            interferenceMap.put("ACE_POL", new String[]{"ACE_CPR"});
+            interferenceMap.put("ACE_ORCA", new String[]{"ACE_CPR"});
+            interferenceMap.put("GACM_SWIR", new String[]{"ACE_LID", "ACE_CPR"});
+
+            for (String instName : instrumentSet.keySet()) {
+                if (synergyMap.containsKey(instName)) {
+                    for (String instPairName : synergyMap.get(instName)) {
+                        if (!instrumentSet.containsKey(instPairName)) {
+                            synergyViolationSum++;
+                        }
+                    }
+                }
+                if (interferenceMap.containsKey(instName)) {
+                    for (String instPairName : interferenceMap.get(instName)) {
+                        if (!instrumentSet.containsKey(instPairName)) {
+                            interferenceViolationSum++;
+                        }
+                    }
+                }
+            }
+
             arch.setAttribute("constraint", 0.0);
-            arch.setAttribute("dcViolationSum", dcViolationSum);
-            arch.setAttribute("massViolationSum", massViolationSum);
-            arch.setAttribute("packingEfficiencyViolationSum", packingEfficiencyViolationSum);
-            arch.setAttribute("instrumentOrbitAssingmentViolationSum", instrumentOrbitAssingmentViolationSum);
-            arch.setAttribute("synergyViolationSum", massViolationSum);
-            arch.setAttribute("interferenceViolationSum", massViolationSum);
+            arch.setAttribute("dcViolationSum", (double) dcViolationSum);
+            arch.setAttribute("massViolationSum", (double) massViolationSum);
+            arch.setAttribute("packingEfficiencyViolationSum", (double) packingEfficiencyViolationSum);
+            arch.setAttribute("instrumentOrbitAssingmentViolationSum", (double) instrumentOrbitAssingmentViolationSum);
+            arch.setAttribute("synergyViolationSum", (double) synergyViolationSum);
+            arch.setAttribute("interferenceViolationSum", (double) interferenceViolationSum);
+
         }
     }
-
-    /**
-     * Saves the solution database created during the search
-     *
-     * @param file the file in which to save the database
-     * @return true if successfully saved
-     */
-    public boolean saveSolutionDB(File file) {
-        boolean flag = true;
-        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));) {
-            os.writeObject(solutionDB);
-            os.close();
-
-        } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment2.class
-                    .getName()).log(Level.SEVERE, null, ex);
-            flag = false;
-        }
-        return flag;
-    }
-
-    /**
-     * Clears the database to free up memory
-     */
-    public void clearDB() {
-        solutionDB.clear();
-    }
-
+    
     @Override
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture2(

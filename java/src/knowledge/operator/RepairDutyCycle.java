@@ -21,10 +21,10 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public class RepairDataDutyCycle implements Variation {
-
+public class RepairDutyCycle implements Variation {
+    
     /**
-     * The data rate duty cycle that a spacecraft must be at or higher
+     * The duty cycle that a spacecraft must be at or higher
      */
     private final double threshold;
 
@@ -41,11 +41,11 @@ public class RepairDataDutyCycle implements Variation {
 
     private final ParallelPRNG pprng;
 
-    public RepairDataDutyCycle(double threshold, int xInstruments, int ySatellites) {
-        this.threshold = threshold;
+    public RepairDutyCycle(double threshold, int xInstruments, int ySatellites) {
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
+        this.threshold = threshold;
     }
 
     /**
@@ -63,13 +63,13 @@ public class RepairDataDutyCycle implements Variation {
         for (String name : child.getMissionNames()) {
             Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
 
-            if (Double.parseDouble(s.getProperty("data-rate duty cycle")) < threshold
+            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold
                     && !s.getPaylaod().isEmpty()) {
                 candidateMission.add(child.getMission(name));
             }
         }
         for (int i = 0; i < ySatellites; i++) {
-            if (i > child.getMissionNames().size() || i >= candidateMission.size()) {
+            if (i > copy.getMissionNames().size() || i >= candidateMission.size()) {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());
