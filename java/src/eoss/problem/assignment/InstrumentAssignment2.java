@@ -24,11 +24,7 @@ import eoss.problem.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
@@ -59,11 +55,11 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
 
     private final int nSpacecraft;
 
-    private final double dcThreshold = 0.6;
+    private final double dcThreshold = 0.5;
 
     private final double massThreshold = 3000.0; //[kg]
 
-    private final double packingEffThreshold = 0.8; //[kg]
+    private final double packingEffThreshold = 0.4; //[kg]
 
     /**
      *
@@ -144,19 +140,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 s.setProperty(slot, fact.getSlotValue(slot).toString());
             }
 
-            // Computes the data rate duty cycle from the data rate per orbit 
-            // assuming 1 seven minute pass at 500Mbps max
-            double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
-                    * Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
-            s.setProperty("data-rate duty cycle", Double.toString(drdc));
-
-            // Computes the power duty cycle assuming a limit at 10kW
-            double pdc = 10000.0 / Double.parseDouble(s.getProperty("satellite-BOL-power#"));
-            s.setProperty("power duty cycle", Double.toString(pdc));
-
-            double dutycycle = Math.min(drdc, pdc);
-            s.setProperty("duty cycle", Double.toString(dutycycle));
-            dcViolationSum += Math.max(0.0, dcThreshold - dutycycle);
+            dcViolationSum += Math.max(0.0, dcThreshold - Double.parseDouble(s.getProperty("duty cycle")));
 
             massViolationSum += Math.max(0.0, s.getWetMass() - massThreshold);
 

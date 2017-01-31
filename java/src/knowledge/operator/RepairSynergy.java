@@ -69,6 +69,7 @@ public class RepairSynergy implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
+        child.setMissions();
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         HashMap<Mission, ArrayList<Instrument>> instrumentsToAdd = new HashMap();
         for (String name : child.getMissionNames()) {

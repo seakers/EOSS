@@ -110,7 +110,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "2"; //Mode
+            args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "30"; //numRuns
         }
@@ -172,9 +172,9 @@ public class RBSAEOSSSMAP {
         Problem problem = null;
 
         //Random knowledge operator
-        Variation repairMass = new RepairMass(3000.0, 1, 1);
-        Variation repairDC = new RepairDutyCycle(0.8, 1, 1);
-        Variation repairPE = new RepairPackingEfficiency(0.6, 1, 1);
+        Variation repairMass = new RepairMass(path,3000.0, 1, 1);
+        Variation repairDC = new RepairDutyCycle(path,0.5, 1, 1);
+        Variation repairPE = new RepairPackingEfficiency(path,0.4, 1, 1);
         Variation repairSynergy = new RepairSynergy(1, 1);
         Variation repairInter = new RepairInterference(1, 1);
         Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
@@ -182,7 +182,7 @@ public class RBSAEOSSSMAP {
         Variation[] operators = new Variation[]{
                 repairMass, repairDC, repairPE,
                 repairSynergy, repairInter, repairInstOrb};
-        RandomKnowledgeOperator rko = new RandomKnowledgeOperator(numRuns, operators);
+        RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6,operators);
         
         HashMap<String, Variation> constraintOperatorMap =  new HashMap<>();
         constraintOperatorMap.put("massViolationSum", repairMass);
@@ -199,7 +199,7 @@ public class RBSAEOSSSMAP {
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
 //                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-                    CompoundVariation var = new CompoundVariation(rko, singlecross, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
                     Population population = new Population();
                     EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
@@ -226,8 +226,14 @@ public class RBSAEOSSSMAP {
                         ArrayList<Variation> heuristics = new ArrayList();
 
                         //add domain-independent heuristics
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new RepairMass(5000., 1, 1), new BitFlip(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters

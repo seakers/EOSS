@@ -5,7 +5,6 @@
  */
 package knowledge.operator;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import org.moeaframework.core.FrameworkException;
 import org.moeaframework.core.ParallelPRNG;
@@ -69,8 +68,7 @@ public class RandomKnowledgeOperator extends CompoundVariation {
         }
         Permutation order = new Permutation(operators.size());
         order.randomize();
-        int numOperations = 0;
-        for (int i = 0; i < operators.size(); i++) {
+        for (int i = 0; i < numberOperators; i++) {
             Variation operator = operators.get(order.get(i));
             if (pprng.nextDouble() <= probabilities.get(operator)) {
                 if (result.length == operator.getArity()) {
@@ -82,12 +80,6 @@ public class RandomKnowledgeOperator extends CompoundVariation {
                 } else {
                     throw new FrameworkException("invalid number of parents");
                 }
-                numOperations++;
-
-                //check to see if need to stop
-                if (numberOperators == numOperations) {
-                    break;
-                }
             }
         }
         return result;
@@ -95,7 +87,7 @@ public class RandomKnowledgeOperator extends CompoundVariation {
 
     @Override
     public int getArity() {
-        return 2;
+        return 1;
     }
     
     

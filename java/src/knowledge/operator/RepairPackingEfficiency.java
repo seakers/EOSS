@@ -5,10 +5,19 @@
  */
 package knowledge.operator;
 
+import eoss.problem.EOSSDatabase;
+import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
 import eoss.problem.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
+import eoss.problem.evaluation.ArchitectureEvaluator;
+import eoss.problem.evaluation.RequirementMode;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
@@ -22,7 +31,7 @@ import org.moeaframework.core.Variation;
  * @author nozomihitomi
  */
 public class RepairPackingEfficiency implements Variation {
-    
+
     /**
      * The duty cycle that a spacecraft must be at or higher
      */
@@ -39,9 +48,15 @@ public class RepairPackingEfficiency implements Variation {
      */
     private final int ySatellites;
 
+    /**
+     * Eval used to design spacecraft
+     */
+    private final ArchitectureEvaluator eval;
+
     private final ParallelPRNG pprng;
 
-    public RepairPackingEfficiency(double threshold, int xInstruments, int ySatellites) {
+    public RepairPackingEfficiency(String path, double threshold, int xInstruments, int ySatellites) {
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
@@ -58,28 +73,61 @@ public class RepairPackingEfficiency implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
+        child.setMissions();
+        ArrayList<Mission> missions = new ArrayList();
+        for (String name : child.getMissionNames()) {
+            missions.add(child.getMission(name));
+        }
+        try {
+            eval.designSpacecraft(missions);
+        } catch (JessException ex) {
+            Logger.getLogger(RepairDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
+
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
+        for (Mission m : missions) {
+            Spacecraft s = m.getSpacecraft().keySet().iterator().next();
 
-            if (Double.parseDouble(s.getProperty("packingEfficiency")) < threshold
-                    && !s.getPaylaod().isEmpty()) {
-                candidateMission.add(child.getMission(name));
+            //compute packing efficiency
+            for (Collection<Spacecraft> group : lvSelection.keySet()) {
+                if (group.contains(s)) {
+                    double totalVolume = 0;
+                    for (Spacecraft sTemp : group) {
+                        double volume = 1.0;
+                        for (double d : sTemp.getDimensions()) {
+                            volume *= d;
+                        }
+                        totalVolume += volume;
+                    }
+                    double packingEfficiency = totalVolume / lvSelection.get(group).getVolume();
+
+                    if (packingEfficiency < threshold && !s.getPaylaod().isEmpty()) {
+                        candidateMission.add(m);
+                    }
+                }
             }
         }
+
         for (int i = 0; i < ySatellites; i++) {
             if (i > copy.getMissionNames().size() || i >= candidateMission.size()) {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());
-            Mission m =  candidateMission.get(missionIndex);
+            Mission m = candidateMission.get(missionIndex);
             for (int j = 0; j < xInstruments; j++) {
-                ArrayList<Integer> instruments = copy.getInstrumentsInSpacecraft(m);
-                if (instruments.isEmpty()) {
+                if (copy.getInstrumentsInSpacecraft(m).size() == EOSSDatabase.getNumberOfInstruments()) {
+                    //cannot add any more instruments
                     break;
                 } else {
-                    copy.removeInstrumentFromSpacecraft(instruments.get(pprng.nextInt(instruments.size())), m);
+                    while (true) {
+                        //try adding instruments until spacecraft is full or there is a change
+                        if (copy.addInstrumentToSpacecraft(
+                                pprng.nextInt(EOSSDatabase.getNumberOfInstruments()), m)) {
+                            break;
+                        }
+                    }
                 }
             }
             candidateMission.remove(missionIndex);

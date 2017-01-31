@@ -8,7 +8,12 @@ package knowledge.operator;
 import eoss.problem.Mission;
 import eoss.problem.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
+import eoss.problem.evaluation.ArchitectureEvaluator;
+import eoss.problem.evaluation.RequirementMode;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
@@ -22,7 +27,7 @@ import org.moeaframework.core.Variation;
  * @author nozomihitomi
  */
 public class RepairDutyCycle implements Variation {
-    
+
     /**
      * The duty cycle that a spacecraft must be at or higher
      */
@@ -39,9 +44,15 @@ public class RepairDutyCycle implements Variation {
      */
     private final int ySatellites;
 
+    /**
+     * Eval used to design spacecraft
+     */
+    private final ArchitectureEvaluator eval;
+
     private final ParallelPRNG pprng;
 
-    public RepairDutyCycle(double threshold, int xInstruments, int ySatellites) {
+    public RepairDutyCycle(String path, double threshold, int xInstruments, int ySatellites) {
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
@@ -58,14 +69,23 @@ public class RepairDutyCycle implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
+        child.setMissions();
+        ArrayList<Mission> missions = new ArrayList();
+        for (String name : child.getMissionNames()) {
+            missions.add(child.getMission(name));
+        }
+        try {
+            eval.designSpacecraft(missions);
+        } catch (JessException ex) {
+            Logger.getLogger(RepairDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
-
-            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold
-                    && !s.getPaylaod().isEmpty()) {
-                candidateMission.add(child.getMission(name));
+        for (Mission m : missions) {
+            Spacecraft s = m.getSpacecraft().keySet().iterator().next();
+            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold && !s.getPaylaod().isEmpty()) {
+                candidateMission.add(m);
             }
         }
         for (int i = 0; i < ySatellites; i++) {
@@ -73,7 +93,7 @@ public class RepairDutyCycle implements Variation {
                 break;
             }
             int missionIndex = pprng.nextInt(candidateMission.size());
-            Mission m =  candidateMission.get(missionIndex);
+            Mission m = candidateMission.get(missionIndex);
             for (int j = 0; j < xInstruments; j++) {
                 ArrayList<Integer> instruments = copy.getInstrumentsInSpacecraft(m);
                 if (instruments.isEmpty()) {

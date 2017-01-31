@@ -1,43 +1,50 @@
-function mergePopulations(path)
+function mergePopulations(jarpath,filepath)
 
 
 try
-    EOSS_init(path);
-    origin = cd(path);
-    files = dir('*.dat');
-    mergedPopulation = java.util.HashMap;
+    EOSS_init(jarpath);
+    origin = cd(filepath);
+    files = dir('*_all.pop');
+    mergedPopulation = org.moeaframework.core.Population;
     for i=1:length(files)
-        fis = java.io.FileInputStream(java.io.File(files(i).name));
-        ois = java.io.ObjectInputStream(fis);
-        population = ois.readObject;
-        mergedPopulation.putAll(population);
-        fis.close;
-        ois.close;
+        mergedPopulation.addAll(architecture.io.ResultIO.loadPopulation(files(i).name));
     end
     
     iter = mergedPopulation.iterator;
     popSize = mergedPopulation.size;
     objectives = zeros(popSize,2);
     decisions = zeros(popSize,65);
-    mass = zeros(popSize,1);
-    dutycycle = zeros(popSize,1);
-    packingefficiency = zeros(popSize,1);
+    mass = zeros(popSize,5);
+    dutycycle = zeros(popSize,5);
+    packingefficiency = zeros(popSize,5);
     synergy = zeros(popSize,1);
     interference = zeros(popSize,1);
-    instorb = zerps(popSize, 1);
+    instorb = zeros(popSize, 1);
     nfe = zeros(popSize,1);
     
     i = 1;
     while(iter.hasNext)
         solution = iter.next;
-        for j=0:solution.getNumberOfDecisions
-            decisions(i,j+1) = solution.getDecision(j);
+        for j=0:solution.getNumberOfVariables-1
+            try
+                decisions(i,j+1) = solution.getVariable(j).get(0);
+            catch
+                decisions(i,j+1) = solution.getVariable(j).getValue();
+            end
         end
         objectives(i,:) = solution.getObjectives();
         
-        mass(i) = solution.getAttribute('massViolationSum');
-        dutycycle(i) = solution.getAttribute('dcViolationSum');
-        packingefficiency(i) = solution.getAttribute('packingEfficiencyViolationSum');
+        missionNameIterator = solution.getMissionNames.iterator;
+        count = 1;
+        while(missionNameIterator.hasNext)
+            mission = solution.getMission(missionNameIterator.next);
+            spacecraft = mission.getSpacecraft.keySet.iterator.next;
+            mass(i,count) = spacecraft.getWetMass;
+            dutycycle(i,count) = str2double(spacecraft.getProperty('duty cycle'));
+            packingefficiency(i,count) = str2double(spacecraft.getProperty('packingEfficiency'));
+            count = count + 1;
+        end
+        
         synergy(i) = solution.getAttribute('synergyViolationSum');
         interference(i) = solution.getAttribute('interferenceViolationSum');
         instorb(i) = solution.getAttribute('instrumentOrbitAssingmentViolationSum');
@@ -48,11 +55,13 @@ try
     
 catch me
     cd(origin)
-    EOSS_end(path);
+    EOSS_end(jarpath);
     disp(me.message);
 end
 cd(origin)
-EOSS_end(path);
+EOSS_end(jarpath);
+
+clear iter missionNameIterator solution mergedPopulation mission spacecraft
 
 save data.mat
 

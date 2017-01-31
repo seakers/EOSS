@@ -8,7 +8,12 @@ package knowledge.operator;
 import eoss.problem.Mission;
 import eoss.problem.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
+import eoss.problem.evaluation.ArchitectureEvaluator;
+import eoss.problem.evaluation.RequirementMode;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
@@ -37,10 +42,16 @@ public class RepairMass implements Variation {
      * The number of satellites to modify
      */
     private final int ySatellites;
+    
+    /**
+     * Eval used to design spacecraft
+     */
+    private final ArchitectureEvaluator eval;
 
     private final ParallelPRNG pprng;
 
-    public RepairMass(double threshold, int xInstruments, int ySatellites) {
+    public RepairMass(String path, double threshold, int xInstruments, int ySatellites) {
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
         this.threshold = threshold;
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
@@ -57,13 +68,24 @@ public class RepairMass implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
+        child.setMissions();
+        ArrayList<Mission> missions = new ArrayList();
+        for (String name : child.getMissionNames()) {
+            missions.add(child.getMission(name));
+        }
+        try {
+            eval.designSpacecraft(missions);
+        } catch (JessException ex) {
+            Logger.getLogger(RepairDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            Spacecraft s = child.getMission(name).getSpacecraft().keySet().iterator().next();
+        for (Mission m : missions) {
+            Spacecraft s = m.getSpacecraft().keySet().iterator().next();
 
             if (s.getWetMass() > threshold && !s.getPaylaod().isEmpty()) {
-                candidateMission.add(copy.getMission(name));
+                candidateMission.add(m);
             }
         }
         for (int i = 0; i < ySatellites; i++) {

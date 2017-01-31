@@ -384,7 +384,7 @@ public class ArchitectureEvaluator {
                 }
                 double launchCost = lvSelection.get(group).getCost() / ((double) group.size());
                 FuzzyValue fcost = new FuzzyValue("Cost", new Interval("delta", launchCost, 10.0), "FY04$M");
-                
+
                 //modify relevant mission fact
                 for (int i = 0; i < facts.size(); i++) {
                     String name = facts.get(i).getSlotValue("Name").toString().split(":")[0];
@@ -496,6 +496,20 @@ public class ArchitectureEvaluator {
                         dbDims[j] = Double.parseDouble(dims[j]);
                     }
                     s.setDimensions(dbDims);
+                    
+                    // Computes the data rate duty cycle from the data rate per orbit 
+                    // assuming 1 seven minute pass at 500Mbps max
+                    double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
+                            * f.getSlotValue("sat-data-rate-per-orbit#").floatValue(r.getGlobalContext());
+                    s.setProperty("data-rate duty cycle", Double.toString(drdc));
+
+                    // Computes the power duty cycle assuming a limit at 10kW
+                    double pdc = 10000.0 / f.getSlotValue("satellite-BOL-power#").floatValue(r.getGlobalContext());
+                    s.setProperty("power duty cycle", Double.toString(pdc));
+
+                    double dutycycle = Math.min(drdc, pdc);
+                    s.setProperty("duty cycle", Double.toString(dutycycle));
+
                     missionFacts.remove(i);
                     break;
                 }
