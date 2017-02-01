@@ -203,12 +203,12 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-//                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
-                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
+//                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
 
                     initialization = new RandomInitialization(problem, popSize);
                     ChainedComparator comp = new ChainedComparator(new KnowledgeConstraintComparator(), new ParetoObjectiveComparator());
-                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization, comp);
+                    Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                     break;
 
