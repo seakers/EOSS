@@ -66,7 +66,7 @@ public class PopulationConsistency extends AbstractPopulationContribution {
                     consistentCount++;
                 }
             }
-            double probability = Math.min((double)consistentCount / (double)population.size(), 0.03);
+            double probability = Math.max((double)consistentCount / (double)population.size(), 0.03);
             out.put(constraintOperatorMap.get(constraint), new Credit(iteration, probability));
         }
         return out;

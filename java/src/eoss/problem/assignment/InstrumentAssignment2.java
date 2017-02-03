@@ -230,12 +230,12 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 }
             }
 
-            double constraint = 6 - dcViolationSum/dcThreshold - 
-                    massThreshold/massViolationSum - 
-                    packingEfficiencyViolationSum/packingEffThreshold - 
-                    instrumentOrbitAssingmentViolationSum/36. -
-                    synergyViolationSum/10. - 
-                    interferenceViolationSum/10.;
+            double constraint = Math.max(0.0, (1 - dcViolationSum/dcThreshold) + 
+                    (1 - massThreshold/massViolationSum) +
+                    (1 - packingEfficiencyViolationSum/packingEffThreshold) + 
+                    instrumentOrbitAssingmentViolationSum/36. +
+                    synergyViolationSum/10. +
+                    interferenceViolationSum/10.);
             arch.setAttribute("constraint", constraint);
             arch.setAttribute("dcViolationSum", (double) dcViolationSum);
             arch.setAttribute("massViolationSum", (double) massViolationSum);

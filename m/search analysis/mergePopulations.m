@@ -18,6 +18,7 @@ try
     dutycycle = zeros(popSize,5);
     packingefficiency = zeros(popSize,5);
     synergy = zeros(popSize,1);
+    constraint = zeros(popSize,1);
     interference = zeros(popSize,1);
     instorb = zeros(popSize, 1);
     nfe = zeros(popSize,1);
@@ -45,6 +46,7 @@ try
             count = count + 1;
         end
         
+        synergy(i) = solution.getAttribute('synergyViolationSum');
         synergy(i) = solution.getAttribute('synergyViolationSum');
         interference(i) = solution.getAttribute('interferenceViolationSum');
         instorb(i) = solution.getAttribute('instrumentOrbitAssingmentViolationSum');
