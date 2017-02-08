@@ -5,6 +5,7 @@
  */
 package knowledge.operator;
 
+import java.util.Collection;
 import java.util.HashMap;
 import org.moeaframework.core.FrameworkException;
 import org.moeaframework.core.ParallelPRNG;
@@ -58,6 +59,10 @@ public class RandomKnowledgeOperator extends CompoundVariation {
 
     public void updateProbability(Variation variation, double probability) {
         probabilities.replace(variation, probability);
+    }
+    
+    public Collection<Variation> getOperators(){
+        return operators;
     }
 
     @Override

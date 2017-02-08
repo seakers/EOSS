@@ -5,8 +5,8 @@ function [ops, credits] = readAndPlotOneCreditFile()
 %operator
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/';
-respath = strcat(path,'result/AIAA SciTech/5000eval_learning_withSinglecross');
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/IDETC 2017/';
+respath = strcat(path,'emoea_constraint_adaptive');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -15,15 +15,17 @@ for i=1:length(files)
     expData = java.util.HashMap;
     fid = fopen(files(i).name,'r');
     while(feof(fid)==0)
-        raw_iteration = strsplit(fgetl(fid),',');
+        line = fgetl(fid);
+        [~, endIndex] = regexp(line,'iteration,');
+        raw_iteration = strsplit(line(endIndex+2:end),',');
         %need to split out the operator name
         line = fgetl(fid);
-        [startIndex, endIndex] = regexp(line,'(EOSSOperator|OnePointCrossover).*BitFlip');
-        raw_credits = strsplit(line(endIndex+1:end),',');
+        [startIndex, endIndex] = regexp(line,'[A-z\+]+');
+        raw_credits = strsplit(line(endIndex+2:end),',');
         op_data = zeros(length(raw_iteration)-1,2);
-        for j=2:length(raw_credits)
-            op_data(j-1,1)=str2double(raw_iteration{j}); %iteration
-            op_data(j-1,2)=str2double(raw_credits{j}); %credit
+        for j=1:length(raw_credits)
+            op_data(j,1)=str2double(raw_iteration{j}); %iteration
+            op_data(j,2)=str2double(raw_credits{j}); %credit
         end
         %sometimes there is 0 iteration selection which is not valid
         op_data(~any(op_data(:,1),2),:)=[];
@@ -33,126 +35,87 @@ for i=1:length(files)
     allcredits{i} = expData;
 end
 
+%get operator names 
+iter = expData.keySet.iterator;
+ops = cell(expData.size,1);
+i = 1;
+while(iter.hasNext)
+    ops{i} = iter.next;
+    i = i + 1;
+end
+numOps = length(ops);
+
 %plot
 nepochs = 50;
 maxEval = 5000;
 epochLength = maxEval/nepochs;
-all_epoch_credit_singlePoint = zeros(nepochs, length(files)); %keeps track of the epoch credits from the single point crossover 
-all_epoch_select_singlePoint = zeros(nepochs, length(files)); %keeps track of the epoch selection count for the single point crossover 
-all_epoch_credit_learned_ops = zeros(nepochs, length(files)); %keeps track of the epoch credits from the learned operators
-all_epoch_select_learned_ops = zeros(nepochs, length(files)); %keeps track of the epoch selection count for the single point crossover 
+all_epoch_credit = zeros(expData.keySet.size, nepochs, length(files)); %keeps track of the epoch credits from the operators
+all_epoch_select = zeros(expData.keySet.size, nepochs, length(files)); %keeps track of the epoch selection count for the operators
 
 for i=1:length(files)
-    op_num = 1;
-    %collect all the raw data from all operators into one history
-    raw_data = zeros(maxEval, allcredits{i}.keySet.size-1);
-    iter = allcredits{i}.keySet.iterator;
-    while (iter.hasNext)
-        op = iter.next;
-        if(strcmp(op,'OnePointCrossover+BitFlip'))
-            continue;
-        end
-        hist = allcredits{i}.get(op);
-        if(size(hist,2)==1)
-            hist = hist';
-        end
-        raw_data(hist(1:end,1)+1, 1) = hist(1:end,1);
-        raw_data(hist(1:end,1)+1, op_num+1) = hist(1:end,2);
-    end
-    raw_data(~any(raw_data(:,1),2),:)=[];
-    %add up all the credits from all the learned operators
-    sumCredits = [raw_data(:,1),sum(raw_data(:,2:end),2)./4];
-    
-    %find the credits earned just by single point crossover
-    single_point = allcredits{i}.get('OnePointCrossover+BitFlip');
-    
-    %sepearates out credits into their respective epochs
-    for j=1:nepochs
-        %First do the one point crossover
-        %find indices that lie within epoch
-        ind1 = epochLength*(j-1)<single_point(:,1);
-        ind2 = single_point(:,1)<epochLength*j;
-        epoch = single_point(and(ind1,ind2),:);
-        if(~isempty(epoch(:,1))) %if it is empty then operator was not selected in the epoch
-            all_epoch_credit_singlePoint(j,i)=mean( epoch(:,2));
-            all_epoch_select_singlePoint(j,i) = length(unique(epoch(:,1)));
-        end
-        
-        %Next do the learned operators
-        %find indices that lie within epoch
-        ind1 = epochLength*(j-1)<sumCredits(:,1);
-        ind2 = sumCredits(:,1)<epochLength*j;
-        epoch = sumCredits(and(ind1,ind2),:);
-        if(~isempty(epoch(:,1))) %if it is empty then operator was not selected in the epoch
-            all_epoch_credit_learned_ops(j,i)=mean( epoch(:,2));
-            all_epoch_select_learned_ops(j,i) = length(unique(epoch(:,1)));
-        end
+    for k = 1:numOps
+        hist = allcredits{i}.get(ops{k});
+        %sepearates out credits into their respective epochs
+        for j=1:nepochs
+            %find indices that lie within epoch
+            ind1 = epochLength*(j-1)<hist(:,1);
+            ind2 = hist(:,1)<epochLength*j;
+            epoch = hist(and(ind1,ind2),:);
+            if(~isempty(epoch(:,1))) %if it is empty then operator was not selected in the epoch
+                all_epoch_credit(k, j, i)=mean( epoch(:,2));
+                all_epoch_select(k, j, i) = length(unique(epoch(:,1)));
+            end
+        end 
     end
 end
 
-figure(1)
-X = [1:nepochs,fliplr(1:nepochs)];
-stddev = std(all_epoch_credit_singlePoint,0,2);
-mean_cred = mean(all_epoch_credit_singlePoint,2);
-Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
-Y(Y<0) = 0; %correct for negative values
-fill(X,Y,'b','EdgeColor','none');
-alpha(0.15)
-hold on
-stddev = std(all_epoch_credit_learned_ops,0,2);
-mean_cred = mean(all_epoch_credit_learned_ops,2);
-Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
-Y(Y<0) = 0; %correct for negative values
-fill(X,Y,'r','EdgeColor','none');
-alpha(0.15)
 
-h = plot(1:nepochs,mean(all_epoch_credit_singlePoint,2),'b',1:nepochs,mean(all_epoch_credit_learned_ops,2),'r','LineWidth',2);
-%plot vertical lines for learning stages
-plot([1000,1000]/epochLength,[0,.4],':k')
-plot([2000,2000]/epochLength,[0,.4],':k')
-plot([3000,3000]/epochLength,[0,.4],':k')
-plot([4000,4000]/epochLength,[0,.4],':k')
+colors = {'b','r','k','c','g','m','y'};
+
+figure(1)
+handles = zeros(numOps,1);
+for i=1:numOps
+    X = [1:nepochs,fliplr(1:nepochs)];
+    stddev = std(squeeze(all_epoch_credit(i,:,:)),0,2);
+    mean_cred = mean(squeeze(all_epoch_credit(i,:,:)),2);
+    Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
+    Y(Y<0) = 0; %correct for negative values
+    fill(X,Y,colors{i},'EdgeColor','none');
+    alpha(0.15)
+    hold on
+    handles(i) = plot(1:nepochs,mean(squeeze(all_epoch_credit(i,:,:)),2),colors{i}, 'LineWidth',2);
+end
 hold off
 set(gca,'FontSize',16);
 xlabel('Epoch')
 ylabel('Credit earned')
-legend(h, 'Single point crossover','Represetative knowledge-dependent operator');
+legend(handles, ops);
 
 figure(2)
 %normalize the selection to make it a probability
-concat_select = [all_epoch_select_singlePoint, all_epoch_select_learned_ops];
+concat_select = zeros(nepochs, length(files) * numOps);
+for i=1:numOps
+    concat_select(:,(i-1) * length(files) + 1:i*length(files)) = squeeze(all_epoch_select(i,:,:));
+end
 mins = repmat(min(concat_select(2:end,:),[],2),1,length(files));
 maxs = repmat(max(concat_select(2:end,:),[],2),1,length(files));
-all_epoch_select_singlePoint_norm = (all_epoch_select_singlePoint(2:end,:)-mins)./(maxs-mins);
-all_epoch_select_learned_ops_norm = (all_epoch_select_learned_ops(2:end,:)-mins)./(maxs-mins);
-% summation = mean(all_epoch_select_singlePoint,2) + mean(all_epoch_select_learned_ops,2);
-X = [2:nepochs,fliplr(2:nepochs)];
-stddev_sel = std(all_epoch_select_singlePoint_norm,0,2);
-mean_sel = mean(all_epoch_select_singlePoint_norm,2);
-Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
-Y(Y<0) = 0; %correct for negative values
-Y(Y>1) = 1; %correct for >1 values
-fill(X,Y,'b','EdgeColor','none');
-alpha(0.15)
-hold on
-stddev_sel = std(all_epoch_select_learned_ops_norm/4,0,2);
-mean_sel = mean(all_epoch_select_learned_ops_norm/4,2);
-Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
-Y(Y<0) = 0; %correct for negative values
-fill(X,Y,'r','EdgeColor','none');
-alpha(0.15)
 
-h = plot(2:nepochs,mean(all_epoch_select_singlePoint_norm,2),'b',...
-    2:nepochs,mean(all_epoch_select_learned_ops_norm/4,2),'r','LineWidth',2);
-
-%plot vertical lines for learning stages
-plot([1000,1000]/epochLength,[0,1.0],':k')
-plot([2000,2000]/epochLength,[0,1.0],':k')
-plot([3000,3000]/epochLength,[0,1.0],':k')
-plot([4000,4000]/epochLength,[0,1.0],':k')
+for i=1:numOps
+    all_epoch_select_norm = (squeeze(all_epoch_select(i,2:end,:))-mins)./(maxs-mins);
+    X = [2:nepochs,fliplr(2:nepochs)];
+    stddev_sel = std(all_epoch_select_norm,0,2);
+    mean_sel = mean(all_epoch_select_norm,2);
+    Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
+    Y(Y<0) = 0; %correct for negative values
+    Y(Y>1) = 1; %correct for >1 values
+    fill(X,Y,colors{i},'EdgeColor','none');
+    alpha(0.15)
+    hold on
+    handles(i) = plot(2:nepochs,mean(all_epoch_select_norm,2),colors{i}, 'LineWidth',2);
+end
 xlabel('Epoch')
 ylabel('Selection frequency')
-legend(h, 'Single point crossover','Represetative knowledge-dependent operator');
+legend(handles, ops);
 hold off
 set(gca,'FontSize',16);
 %save files

@@ -34,7 +34,7 @@ public class KnowledgeDisjunctionOperator implements Variation{
         constraints.add("synergyViolationSum");
         constraints.add("interferenceViolationSum");
     }
-
+    
     @Override
     public int getArity() {
         return 1;

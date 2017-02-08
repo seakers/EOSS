@@ -24,6 +24,7 @@ try
     nfe = zeros(popSize,1);
     
     i = 1;
+    h = waitbar(0, 'Processing solutions...');
     while(iter.hasNext)
         solution = iter.next;
         for j=0:solution.getNumberOfVariables-1
@@ -46,6 +47,7 @@ try
             count = count + 1;
         end
         
+        constraint(i) = solution.getAttribute('constraint');
         synergy(i) = solution.getAttribute('synergyViolationSum');
         synergy(i) = solution.getAttribute('synergyViolationSum');
         interference(i) = solution.getAttribute('interferenceViolationSum');
@@ -53,9 +55,12 @@ try
         
         nfe(i) = char(solution.getAttribute('NFE'));
         i = i+1;
+        waitbar(i/popSize, h);
     end
+    close(h)
     
 catch me
+    fprintf(me.message)
     cd(origin)
     EOSS_end(jarpath);
     disp(me.message);

@@ -233,14 +233,14 @@ public class RBSAEOSSSMAP {
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                         /////////
-                        selector = new AdaptiveConstraintSelection(operators);
+                        selector = new AdaptiveConstraintSelection(rko, new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), rko, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
                         creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
                         initialization = new RandomInitialization(problem, popSize);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
-
+                        hemoea.setName("constraint_adaptive");
                         ecs.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i)));
 
                     } catch (IOException ex) {

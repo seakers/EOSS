@@ -7,7 +7,6 @@ package knowledge.constraint;
 
 import aos.creditassigment.Credit;
 import aos.nextoperator.AbstractOperatorSelector;
-import java.util.Arrays;
 import knowledge.operator.RandomKnowledgeOperator;
 import org.moeaframework.core.Variation;
 
@@ -18,15 +17,21 @@ import org.moeaframework.core.Variation;
 public class AdaptiveConstraintSelection extends AbstractOperatorSelector {
     
     private final RandomKnowledgeOperator rko;
+    
+    /**
+     * This is should be a compound variation operator containing rko 
+     */
+    private final Variation var;
 
-    public AdaptiveConstraintSelection(Variation[] operators) {
-        super(Arrays.asList(operators));
-        this.rko = new RandomKnowledgeOperator(operators.length, operators);
+    public AdaptiveConstraintSelection(RandomKnowledgeOperator rko, Variation var) {
+        super(rko.getOperators());
+        this.var = var;
+        this.rko = rko;
     }
 
     @Override
     public Variation nextOperator() {
-        return rko;
+        return var;
     }
 
     @Override

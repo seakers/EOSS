@@ -140,9 +140,9 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 s.setProperty(slot, fact.getSlotValue(slot).toString());
             }
 
-            dcViolationSum += Math.max(0.0, dcThreshold - Double.parseDouble(s.getProperty("duty cycle")));
+            dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle")))/dcThreshold);
 
-            massViolationSum += Math.max(0.0, s.getWetMass() - massThreshold);
+            massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold)/s.getWetMass());
 
             //compute the packing efficiency
             for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
@@ -158,7 +158,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
                     s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
                     //divide any violation by the size of the launch group to not double count violations
-                    packingEfficiencyViolationSum += Math.max(0.0, (packingEffThreshold - packingEfficiency) / group.size());
+                    packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency)/packingEffThreshold) / group.size());
                 }
             }
 
@@ -230,9 +230,9 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 }
             }
 
-            double constraint = Math.max(0.0, (1 - dcViolationSum/dcThreshold) + 
-                    (1 - massThreshold/massViolationSum) +
-                    (1 - packingEfficiencyViolationSum/packingEffThreshold) + 
+            double constraint = (1./5.)*(dcViolationSum + 
+                    massViolationSum +
+                    packingEfficiencyViolationSum + 
                     instrumentOrbitAssingmentViolationSum/36. +
                     synergyViolationSum/10. +
                     interferenceViolationSum/10.);
