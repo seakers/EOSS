@@ -20,7 +20,7 @@ import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
 import java.io.File;
@@ -66,11 +66,10 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      * @param path
      * @param nSpacecraft The number of spacecraft to consider
      * @param reqMode
-     * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean explanation, boolean withSynergy){
+    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean withSynergy){
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
         super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 4);
 
@@ -86,7 +85,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
-        this.eval = new ArchitectureEvaluator(path, reqMode, explanation, withSynergy, template);
+        this.eval = new ArchitectureEvaluator(path, reqMode, withSynergy, template);
     }
 
     @Override
@@ -165,7 +164,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             //check poor assignment of instrument to orbit
             Orbit o = mission.getSpacecraft().get(s);
             if (!o.getRAAN().equals("PM")) {
-                for (Instrument inst : s.getPaylaod()) {
+                for (Instrument inst : s.getPayload()) {
                     String concept = inst.getProperty("Concept");
                     if (concept.contains("chemistry")) {
                         instrumentOrbitAssingmentViolationSum++;
@@ -173,14 +172,14 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 }
             }
             if (o.getRAAN().equals("DD")) {
-                for (Instrument inst : s.getPaylaod()) {
+                for (Instrument inst : s.getPayload()) {
                     if (inst.getProperty("Illumination").equals("Passive")) {
                         instrumentOrbitAssingmentViolationSum++;
                     }
                 }
             }
             if (o.getAltitude() <= 400.) {
-                for (Instrument inst : s.getPaylaod()) {
+                for (Instrument inst : s.getPayload()) {
                     if (inst.getProperty("Geometry").equals("slant")) {
                         instrumentOrbitAssingmentViolationSum++;
                     }
@@ -189,7 +188,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
 
             //synergy and interference violation
             HashMap<String, Instrument> instrumentSet = new HashMap<>();
-            for (Instrument inst : s.getPaylaod()) {
+            for (Instrument inst : s.getPayload()) {
                 instrumentSet.put(inst.getName(), inst);
             }
 

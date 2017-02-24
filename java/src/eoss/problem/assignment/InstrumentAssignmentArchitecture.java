@@ -13,7 +13,7 @@ import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;

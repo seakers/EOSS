@@ -111,7 +111,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
             args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
-            args[3] = "30"; //numRuns
+            args[3] = "1"; //numRuns
         }
 
         System.out.println("Path set to " + args[0]);
@@ -170,32 +170,32 @@ public class RBSAEOSSSMAP {
         for (int i = 0; i < numRuns; i++) {
 
             //initialize problem
-            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
+            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
 
             //initialize population structure for algorithm
             Population population = new Population();
             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
             //Random knowledge operator
-            Variation repairMass = new RepairMass(path, 3000.0, 1, 1);
-            Variation repairDC = new RepairDutyCycle(path, 0.5, 1, 1);
-            Variation repairPE = new RepairPackingEfficiency(path, 0.4, 1, 1);
-            Variation repairSynergy = new RepairSynergy(1, 1);
-            Variation repairInter = new RepairInterference(1, 1);
-            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
+//            Variation repairMass = new RepairMass(path, 3000.0, 1, 1);
+//            Variation repairDC = new RepairDutyCycle(path, 0.5, 1, 1);
+//            Variation repairPE = new RepairPackingEfficiency(path, 0.4, 1, 1);
+//            Variation repairSynergy = new RepairSynergy(1, 1);
+//            Variation repairInter = new RepairInterference(1, 1);
+//            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
 
-            Variation[] operators = new Variation[]{
-                repairMass, repairDC, repairPE,
-                repairSynergy, repairInter, repairInstOrb};
-            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
+//            Variation[] operators = new Variation[]{
+//                repairMass, repairDC, repairPE,
+//                repairSynergy, repairInter, repairInstOrb};
+//            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
 
             HashMap<String, Variation> constraintOperatorMap = new HashMap<>();
-            constraintOperatorMap.put("massViolationSum", repairMass);
-            constraintOperatorMap.put("dcViolationSum", repairDC);
-            constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
-            constraintOperatorMap.put("synergyViolationSum", repairSynergy);
-            constraintOperatorMap.put("interferenceViolationSum", repairInter);
-            constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
+//            constraintOperatorMap.put("massViolationSum", repairMass);
+//            constraintOperatorMap.put("dcViolationSum", repairDC);
+//            constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
+//            constraintOperatorMap.put("synergyViolationSum", repairSynergy);
+//            constraintOperatorMap.put("interferenceViolationSum", repairInter);
+//            constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
 
             switch (mode) {
                 case 1: //Use epsilonMOEA Assignment
@@ -214,18 +214,17 @@ public class RBSAEOSSSMAP {
 
                 case 2://AOS search Assignment
                     try {
-                        problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
                         ArrayList<Variation> heuristics = new ArrayList();
 
                         //add domain-independent heuristics
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
 
                         properties.setDouble("pmin", 0.03);
 
@@ -233,7 +232,7 @@ public class RBSAEOSSSMAP {
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                         /////////
-                        selector = new AdaptiveConstraintSelection(rko, new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), rko, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        selector = new AdaptiveConstraintSelection(rko, new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), rko, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
                         creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
                         initialization = new RandomInitialization(problem, popSize);
@@ -248,7 +247,6 @@ public class RBSAEOSSSMAP {
                     }
                     break;
                 case 3://innovization search Assignment
-                    problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE, false);
                     String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
                     try {
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
@@ -301,12 +299,12 @@ public class RBSAEOSSSMAP {
         pool.shutdown();
     }
 
-    public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode, boolean explanation) {
-        return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, explanation, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+    public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode) {
+        return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
 
-    public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode, boolean explanation) {
-        return new InstrumentAssignment2(path, nSpacecraft, mode, explanation, true);
+    public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode) {
+        return new InstrumentAssignment2(path, nSpacecraft, mode, true);
     }
 
     public static MissionScheduling getSchedulingProblem(String path, RequirementMode mode) {

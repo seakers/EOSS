@@ -15,9 +15,11 @@ import eoss.problem.Instrument;
 import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.problem.Orbits;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture;
+import eoss.spacecraft.SpacecraftDesigner;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,11 +55,6 @@ public class ArchitectureEvaluator {
     private QueryBuilder qb;
 
     /**
-     * Flag to save the explanations
-     */
-    private final boolean explanation;
-
-    /**
      * Flag to set performance evaluation with synergies
      */
     private final boolean withSynergy;
@@ -69,7 +66,9 @@ public class ArchitectureEvaluator {
 
     private final RequirementMode reqMode;
 
-    public ArchitectureEvaluator(String path, RequirementMode reqMode, boolean explanation, boolean withSynergy, ValueTree valueTree) {
+    private final SpacecraftDesigner scDesigner;
+
+    public ArchitectureEvaluator(String path, RequirementMode reqMode, boolean withSynergy, ValueTree valueTree) {
         try {
             ArchitectureEvaluatorParams.getInstance(path);
         } catch (IOException ex) {
@@ -79,24 +78,13 @@ public class ArchitectureEvaluator {
         }
 
         this.reqMode = reqMode;
-        this.explanation = explanation;
         this.withSynergy = withSynergy;
         this.valueTree = valueTree;
         this.r = new Rete();
         this.qb = new QueryBuilder(r);
         JessInitializer ji = new JessInitializer();
         ji.initializeJess(reqMode, r, qb);
-    }
-
-    /**
-     * Option to renew the rete engine to clear our working memory and initial
-     * facts
-     */
-    public void renew() {
-        this.r = new Rete();
-        this.qb = new QueryBuilder(r);
-        JessInitializer ji = new JessInitializer();
-        ji.initializeJess(reqMode, r, qb);
+        this.scDesigner = new SpacecraftDesigner();
     }
 
     /**
@@ -110,7 +98,7 @@ public class ArchitectureEvaluator {
                 HashMap<Spacecraft, Orbit> spacecraftSet = mis.getSpacecraft();
                 for (Spacecraft spacecraft : spacecraftSet.keySet()) {
                     Orbit orbit = spacecraftSet.get(spacecraft);
-                    if (spacecraft.getPaylaod().size() > 0) {
+                    if (spacecraft.getPayload().size() > 0) {
                         String payload = "";
                         double payloadMass = 0;
                         double characteristicPower = 0;
@@ -121,7 +109,7 @@ public class ArchitectureEvaluator {
                         payloadDimensions.add(2, 0.0); //max z dimension
                         String fliesIn = mis.getName() + ":" + orbit;
                         String call = "(assert (MANIFEST::Mission (Name " + fliesIn + ") ";
-                        for (Instrument inst : spacecraft.getPaylaod()) {
+                        for (Instrument inst : spacecraft.getPayload()) {
                             payload = payload + " " + inst.getName();
                             payloadMass += Double.parseDouble(inst.getProperty("mass#"));
                             characteristicPower += Double.parseDouble(inst.getProperty("characteristic-power#"));
@@ -155,8 +143,9 @@ public class ArchitectureEvaluator {
                         call += "(payload-power# " + String.valueOf(characteristicPower) + ")";
                         call += "(payload-peak-power# " + String.valueOf(characteristicPower) + ")";
                         call += "(payload-data-rate# " + String.valueOf(dataRate) + ")";
-                        double perOrbit = (dataRate * 1.2 * orbit.getPeriod()) / (1024 * 8); //(GByte/orbit) 20% overhead
+                        double perOrbit = (dataRate * 1.2 * Orbits.period(orbit)) / (1024 * 8); //(GByte/orbit) 20% overhead
                         call += "(payload-dimensions# " + String.valueOf(payloadDimensions.get(0)) + " " + String.valueOf(payloadDimensions.get(1)) + " " + String.valueOf(payloadDimensions.get(2)) + ")";
+                        spacecraft.setProperty("sat-data-rate-per-orbit#", String.valueOf(perOrbit));
                         call += "(sat-data-rate-per-orbit# " + String.valueOf(perOrbit) + ")";
                         call += "(num-of-sats-per-plane# " + String.valueOf(1) + ")))"; //should get rid of this attribute
                         call += "(assert (SYNERGY::cross-registered-instruments "
@@ -316,50 +305,6 @@ public class ArchitectureEvaluator {
         return tree;
     }
 
-    private void aggregate_performance_score_facts(InstrumentAssignmentArchitecture arch) {
-        ArrayList subobj_scores = new ArrayList();
-        ArrayList obj_scores = new ArrayList();
-        ArrayList panel_scores = new ArrayList();
-        double science = 0.0;
-        FuzzyValue fuzzy_science = null;
-        Explanation explanations = new Explanation();
-        TreeMap<String, Double> tm = new TreeMap<String, Double>();
-        try {
-            ArrayList<Fact> vals = qb.makeQuery("AGGREGATION::VALUE");
-            Fact val = vals.get(0);
-            science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
-            if (reqMode.equals(RequirementMode.FUZZYATTRIBUTE)) {
-                fuzzy_science = (FuzzyValue) val.getSlotValue("fuzzy-value").javaObjectValue(r.getGlobalContext());
-            }
-            panel_scores = jessList2ArrayList(val.getSlotValue("sh-scores").listValue(r.getGlobalContext()));
-
-            ArrayList<Fact> subobj_facts = qb.makeQuery("AGGREGATION::SUBOBJECTIVE");
-            for (int n = 0; n < subobj_facts.size(); n++) {
-                Fact f = subobj_facts.get(n);
-                String subobj = f.getSlotValue("id").stringValue(r.getGlobalContext());
-                Double subobj_score = f.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
-                Double current_subobj_score = tm.get(subobj);
-                if (current_subobj_score != null && subobj_score > current_subobj_score || current_subobj_score == null) {
-                    tm.put(subobj, subobj_score);
-                }
-                explanations.put(subobj, qb.makeQuery("AGGREGATION::SUBOBJECTIVE (id " + subobj + ")"));
-            }
-            for (Iterator<String> name = tm.keySet().iterator(); name.hasNext();) {
-                subobj_scores.add(tm.get(name.next()));
-            }
-            //TO DO: obj_score and subobj_scores.
-        } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (reqMode.equals(RequirementMode.FUZZYATTRIBUTE)) {
-            arch.setAttribute("fuzzyScience", fuzzy_science);
-        }
-        if (explanation) {
-            arch.setAttribute("scienceExplanation", explanations);
-            arch.setAttribute("measurement", qb.makeQuery("REQUIREMENTS::Measurement"));
-        }
-    }
-
     /**
      * Resets the working memory and computes the cost. The working memory is
      * not cleared after computation, so facts can be accessed after evaluation
@@ -371,163 +316,46 @@ public class ArchitectureEvaluator {
     public double cost(Collection<Mission> missions) throws JessException {
         designSpacecraft(missions);
 
+        double cost = 0.0;
+        
         //compute launch cost and set values into facts
         HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
         ArrayList<Fact> facts = qb.makeQuery("MANIFEST::Mission");
         for (Collection<Spacecraft> group : lvSelection.keySet()) {
             LaunchVehicle lv = lvSelection.get(group);
             for (Mission m : missions) {
+                double launchCost = lvSelection.get(group).getCost() / ((double) group.size());
                 for (Spacecraft s : group) {
                     if (m.getSpacecraft().containsKey(s)) {
                         m.getLaunchVehicles().put(group, lv);
-                    }
-                }
-                double launchCost = lvSelection.get(group).getCost() / ((double) group.size());
-                FuzzyValue fcost = new FuzzyValue("Cost", new Interval("delta", launchCost, 10.0), "FY04$M");
-
-                //modify relevant mission fact
-                for (int i = 0; i < facts.size(); i++) {
-                    String name = facts.get(i).getSlotValue("Name").toString().split(":")[0];
-                    if (name.equalsIgnoreCase(m.getName())) {
-                        r.modify(facts.get(i), "launch-cost#", new Value(launchCost, RU.FLOAT));
-                        r.modify(facts.get(i), "launch-cost", new Value(fcost));
-                        r.modify(facts.get(i), "launch-vehicle", new Value(lv.getName(), RU.STRING));
-                        facts.remove(i);
+                        cost += CostModel.lifeCycleCost(s, launchCost, launchCost, 1);
                     }
                 }
             }
         }
-
-        if (!facts.isEmpty()) {
-            throw new IllegalStateException("One of the mission facts didn't get assigned any launch vehicles");
-        }
-
-        switch (reqMode) {
-            case CRISPATTRIBUTE:
-                r.setFocus("COST-ESTIMATION");
-                r.run();
-                break;
-            case CRISPCASE:
-                r.setFocus("COST-ESTIMATION");
-                r.run();
-                break;
-            case FUZZYATTRIBUTE:
-                r.setFocus("FUZZY-COST-ESTIMATION0"); //applies NICM cost model to all instruments without computed costs
-                r.run();
-                r.setFocus("FUZZY-COST-ESTIMATION");
-                r.run();
-                break;
-            case FUZZYCASE:
-                r.setFocus("FUZZY-COST-ESTIMATION0"); //applies NICM cost model to all instruments without computed costs
-                r.run();
-                r.setFocus("FUZZY-COST-ESTIMATION");
-                r.run();
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("Unknown requirements mode %s", reqMode));
-        }
-
-        double cost = 0.0;
-        ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
-        for (Fact mission : missionFacts) {
-            cost = cost + mission.getSlotValue("lifecycle-cost#").floatValue(r.getGlobalContext());
-        }
+        
         return cost;
     }
 
     public void designSpacecraft(Collection<Mission> missions) throws JessException {
-        r.eval("(reset)");
-
-        assertMissions(missions);
-
-        r.eval("(focus MANIFEST)");
-        r.run();
-
-        r.eval("(focus PRELIM-MASS-BUDGET)");
-        r.run();
-
-        ArrayList<Fact> missionFacts = qb.makeQuery("MANIFEST::Mission");
-        Double[] oldmasses = new Double[missionFacts.size()];
-        for (int i = 0; i < missionFacts.size(); i++) {
-            oldmasses[i] = missionFacts.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
-        }
-        Double[] diffs = new Double[missionFacts.size()];
-        double tolerance = 10 * missionFacts.size();
-        boolean converged = false;
-        while (!converged) {
-            r.eval("(focus CLEAN1)");
-            r.run();
-
-            r.eval("(focus MASS-BUDGET)");
-            r.run();
-
-            r.eval("(focus CLEAN2)");
-            r.run();
-
-            r.eval("(focus UPDATE-MASS-BUDGET)");
-            r.run();
-
-            Double[] drymasses = new Double[missionFacts.size()];
-            double sumdiff = 0.0;
-            double summasses = 0.0;
-            missionFacts = qb.makeQuery("MANIFEST::Mission");
-            for (int i = 0; i < missionFacts.size(); i++) {
-                drymasses[i] = missionFacts.get(i).getSlotValue("satellite-dry-mass").floatValue(r.getGlobalContext());
-                diffs[i] = Math.abs(drymasses[i] - oldmasses[i]);
-                sumdiff = sumdiff + diffs[i];
-                summasses = summasses + drymasses[i];
-            }
-            converged = sumdiff < tolerance || summasses == 0;
-            oldmasses = drymasses;
-        }
-
-        //record the wetmass into the missions
+        //design the spacecraft within each misison
         for (Mission m : missions) {
-            for (int i = 0; i < missionFacts.size(); i++) {
-                Fact f = missionFacts.get(i);
-                String name = f.getSlotValue("Name").toString().split(":")[0];
-                if (name.equalsIgnoreCase(m.getName())) {
-                    //TODO need to generatlize to multiple spacecraft case
-                    Spacecraft s = m.getSpacecraft().keySet().iterator().next();
-                    s.setWetMass(f.getSlotValue("satellite-wet-mass").floatValue(r.getGlobalContext()));
-                    String[] dims = f.getSlotValue("satellite-dimensions").toString().split(" ");
-                    double[] dbDims = new double[3];
-                    for (int j = 0; j < 3; j++) {
-                        dbDims[j] = Double.parseDouble(dims[j]);
-                    }
-                    s.setDimensions(dbDims);
-                    
-                    // Computes the data rate duty cycle from the data rate per orbit 
-                    // assuming 1 seven minute pass at 500Mbps max
-                    double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
-                            * f.getSlotValue("sat-data-rate-per-orbit#").floatValue(r.getGlobalContext());
-                    s.setProperty("data-rate duty cycle", Double.toString(drdc));
+            for (Spacecraft s : m.getSpacecraft().keySet()) {
+                scDesigner.designSpacecraft(s, m.getSpacecraft().get(s), m.getLifetime());
 
-                    // Computes the power duty cycle assuming a limit at 10kW
-                    double pdc = 10000.0 / f.getSlotValue("satellite-BOL-power#").floatValue(r.getGlobalContext());
-                    s.setProperty("power duty cycle", Double.toString(pdc));
+                // assuming 1 seven minute pass at 500Mbps max
+                double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
+                        * Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
+                s.setProperty("data-rate duty cycle", Double.toString(drdc));
 
-                    double dutycycle = Math.min(drdc, pdc);
-                    s.setProperty("duty cycle", Double.toString(dutycycle));
+                // Computes the power duty cycle assuming a limit at 10kW
+                double pdc = 10000.0 / s.getEPS().getPowerBOL();
+                s.setProperty("power duty cycle", Double.toString(pdc));
 
-                    missionFacts.remove(i);
-                    break;
-                }
+                double dutycycle = Math.min(drdc, pdc);
+                s.setProperty("duty cycle", Double.toString(dutycycle));
             }
         }
-    }
-
-    private ArrayList jessList2ArrayList(ValueVector vv) {
-        ArrayList al = new ArrayList();
-        try {
-            for (int i = 0; i < vv.size(); i++) {
-                al.add(vv.get(i).stringValue(r.getGlobalContext()));
-            }
-        } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-            al = null;
-        }
-        return al;
     }
 
     /**

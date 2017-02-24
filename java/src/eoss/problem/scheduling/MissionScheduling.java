@@ -14,7 +14,7 @@ import eoss.problem.Measurement;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Panel;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
 import java.io.BufferedReader;
@@ -149,7 +149,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
         ValueTree template = ValueAggregationBuilder.build(new File(path + File.separator + "config" + File.separator + "panels.xml"));
 
         //create architecture evaluator
-        this.eval = new ArchitectureEvaluator(path, reqMode, false, true, template);
+        this.eval = new ArchitectureEvaluator(path, reqMode, true, template);
         
         //load the existing missions and the measurements they take
         String xlsPath = path + File.separator + "xls" + File.separator;

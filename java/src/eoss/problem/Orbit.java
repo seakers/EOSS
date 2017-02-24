@@ -6,36 +6,36 @@
 package eoss.problem;
 
 import java.io.Serializable;
-import org.hipparchus.util.FastMath;
 import org.orekit.utils.Constants;
 
 /**
  *
  * @author nozomihitomi
  */
-public class Orbit implements Serializable{
+public class Orbit implements Serializable {
+
     private static final long serialVersionUID = 586121136979683837L;
 
     /**
      * semimajor axis in meters
      */
     private final double semimajorAxis;
-    
+
     /**
      * Altitude in meters
      */
     private final double altitude;
-    
+
     /**
      * Inclination in degrees
      */
     private final String inclination;
-    
+
     /**
      * RAAN in degrees
      */
     private final String RAAN;
-    
+
     /**
      * Mean anomaly in degrees
      */
@@ -53,12 +53,11 @@ public class Orbit implements Serializable{
 
     private final String name;
 
-    private final double period;
-
     /**
      * Type of orbit (e.g. SSO, LEO)
      */
     private final OrbitType type;
+
 
     /**
      *
@@ -81,16 +80,10 @@ public class Orbit implements Serializable{
         this.eccentricity = eccentricity;
         this.argPeri = argPeri;
         this.altitude = semimajorAxis - Constants.WGS84_EARTH_EQUATORIAL_RADIUS;
-        this.period = 2*FastMath.PI*FastMath.sqrt(FastMath.pow(semimajorAxis, 3.)/Constants.WGS84_EARTH_MU);
     }
-    
 
     public String getName() {
         return name;
-    }
-
-    public double getPeriod() {
-        return period;
     }
 
     public double getSemimajorAxis() {
@@ -119,7 +112,7 @@ public class Orbit implements Serializable{
 
     /**
      * Returns the altitude of this orbit in km
-     * @return 
+     * @return
      */
     public double getAltitude() {
         return altitude / 1000;
@@ -204,16 +197,4 @@ public class Orbit implements Serializable{
         GEO; //geostationary orbit
     }
 
-    /**
-     * Computes the inclination in degrees of a satellite in a sunsynchronous
-     * orbit. Assumes circular orbit
-     *
-     * @param semimajorAxis in m
-     * @return
-     */
-    private double getSSOInclination(double semimajorAxis) {
-        double kh = 10.10949;
-        double cos_i = Math.pow(this.semimajorAxis / Constants.WGS84_EARTH_EQUATORIAL_RADIUS, 3.5) / (-kh);
-        return 180. * Math.acos(cos_i) / Math.PI;
-    }
 }

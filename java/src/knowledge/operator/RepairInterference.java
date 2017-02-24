@@ -9,7 +9,7 @@ import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,7 +77,7 @@ public class RepairInterference implements Variation {
             HashMap<Spacecraft, Orbit> missionSpacecraft = child.getMission(name).getSpacecraft();
             for (Spacecraft s : missionSpacecraft.keySet()) {
                 HashMap<String, Instrument> instrumentSet = new HashMap<>();
-                for (Instrument inst : s.getPaylaod()) {
+                for (Instrument inst : s.getPayload()) {
                     instrumentSet.put(inst.getName(), inst);
                 }
 

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package eoss.problem;
+package eoss.spacecraft;
 
 import java.util.Objects;
 

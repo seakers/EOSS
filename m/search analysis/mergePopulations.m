@@ -53,7 +53,7 @@ try
         interference(i) = solution.getAttribute('interferenceViolationSum');
         instorb(i) = solution.getAttribute('instrumentOrbitAssingmentViolationSum');
         
-        nfe(i) = char(solution.getAttribute('NFE'));
+        nfe(i) = solution.getAttribute('NFE');
         i = i+1;
         waitbar(i/popSize, h);
     end

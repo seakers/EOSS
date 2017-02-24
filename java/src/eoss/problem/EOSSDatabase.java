@@ -5,6 +5,7 @@
  */
 package eoss.problem;
 
+import eoss.spacecraft.Bus;
 import eoss.problem.evaluation.ArchitectureEvaluatorParams;
 import eoss.problem.evaluation.JessInitializer;
 import java.io.File;

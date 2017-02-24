@@ -6,7 +6,7 @@
 package knowledge.operator;
 
 import eoss.problem.Mission;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.evaluation.RequirementMode;
@@ -52,7 +52,7 @@ public class RepairDutyCycle implements Variation {
     private final ParallelPRNG pprng;
 
     public RepairDutyCycle(String path, double threshold, int xInstruments, int ySatellites) {
-        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, true, null);
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
@@ -84,7 +84,7 @@ public class RepairDutyCycle implements Variation {
         ArrayList<Mission> candidateMission = new ArrayList();
         for (Mission m : missions) {
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
-            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold && !s.getPaylaod().isEmpty()) {
+            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold && !s.getPayload().isEmpty()) {
                 candidateMission.add(m);
             }
         }

@@ -9,7 +9,7 @@ import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,7 +104,7 @@ public class RepairInstrumentOrbit implements Variation {
     private Collection<Instrument> chemistryInPM(Spacecraft s, Orbit o) {
         ArrayList<Instrument> out = new ArrayList<>();
         if (!o.getRAAN().equals("PM")) {
-            for (Instrument inst : s.getPaylaod()) {
+            for (Instrument inst : s.getPayload()) {
                 String concept = inst.getProperty("Concept");
                 if (concept.contains("chemistry")) {
                     out.add(inst);
@@ -124,7 +124,7 @@ public class RepairInstrumentOrbit implements Variation {
     private Collection<Instrument> passiveInDD(Spacecraft s, Orbit o) {
         ArrayList<Instrument> out = new ArrayList<>();
         if (o.getRAAN().equals("DD")) {
-            for (Instrument inst : s.getPaylaod()) {
+            for (Instrument inst : s.getPayload()) {
                 if (inst.getProperty("Illumination").equals("Passive")) {
                     out.add(inst);
                 }
@@ -144,7 +144,7 @@ public class RepairInstrumentOrbit implements Variation {
     private Collection<Instrument> slantLowAltitude(Spacecraft s, Orbit o) {
         ArrayList<Instrument> out = new ArrayList<>();
         if (o.getAltitude() <= 400.) {
-            for (Instrument inst : s.getPaylaod()) {
+            for (Instrument inst : s.getPayload()) {
                 if (inst.getProperty("Geometry").equals("slant")) {
                     out.add(inst);
                 }

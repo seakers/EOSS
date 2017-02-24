@@ -6,7 +6,7 @@
 package knowledge.operator;
 
 import eoss.problem.Mission;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.evaluation.RequirementMode;
@@ -51,7 +51,7 @@ public class RepairMass implements Variation {
     private final ParallelPRNG pprng;
 
     public RepairMass(String path, double threshold, int xInstruments, int ySatellites) {
-        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, true, null);
         this.threshold = threshold;
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
@@ -84,7 +84,7 @@ public class RepairMass implements Variation {
         for (Mission m : missions) {
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
 
-            if (s.getWetMass() > threshold && !s.getPaylaod().isEmpty()) {
+            if (s.getWetMass() > threshold && !s.getPayload().isEmpty()) {
                 candidateMission.add(m);
             }
         }

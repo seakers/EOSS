@@ -8,7 +8,7 @@ package knowledge.operator;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.evaluation.RequirementMode;
@@ -56,7 +56,7 @@ public class RepairPackingEfficiency implements Variation {
     private final ParallelPRNG pprng;
 
     public RepairPackingEfficiency(String path, double threshold, int xInstruments, int ySatellites) {
-        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, false, true, null);
+        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, true, null);
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
@@ -103,7 +103,7 @@ public class RepairPackingEfficiency implements Variation {
                     }
                     double packingEfficiency = totalVolume / lvSelection.get(group).getVolume();
 
-                    if (packingEfficiency < threshold && !s.getPaylaod().isEmpty()) {
+                    if (packingEfficiency < threshold && !s.getPayload().isEmpty()) {
                         candidateMission.add(m);
                     }
                 }

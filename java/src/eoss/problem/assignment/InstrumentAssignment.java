@@ -20,7 +20,7 @@ import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
 import eoss.problem.Orbit;
-import eoss.problem.Spacecraft;
+import eoss.spacecraft.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
 import java.io.File;
@@ -69,12 +69,11 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param path
      * @param reqMode
      * @param altnertivesForNumberOfSatellites
-     * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode,  int[] altnertivesForNumberOfSatellites, boolean explanation, boolean withSynergy) {
-        this(path, reqMode, altnertivesForNumberOfSatellites, explanation, withSynergy, null);
+    public InstrumentAssignment(String path, RequirementMode reqMode,  int[] altnertivesForNumberOfSatellites, boolean withSynergy) {
+        this(path, reqMode, altnertivesForNumberOfSatellites, withSynergy, null);
     }
 
     /**
@@ -82,11 +81,10 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param path
      * @param reqMode
      * @param altnertivesForNumberOfSatellites
-     * @param explanation determines whether or not to attach the explanations
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean explanation, boolean withSynergy, File database) {
+    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites,  boolean withSynergy, File database) {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
 
@@ -101,7 +99,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         } catch (ParserConfigurationException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
-        this.eval = new ArchitectureEvaluator(path, reqMode, explanation, withSynergy, template);
+        this.eval = new ArchitectureEvaluator(path, reqMode, withSynergy, template);
         
         //load database of solution if requested.
         solutionDB = new HashMap<>();

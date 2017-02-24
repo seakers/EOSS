@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/IDETC 2017/';
-respath = strcat(path,'emoea_constraint_adaptive');
+respath = strcat(path,'emoea_operator_aos');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -43,10 +43,12 @@ while(iter.hasNext)
     ops{i} = iter.next;
     i = i + 1;
 end
+ops = sort(ops);
 numOps = length(ops);
 
 %plot
 nepochs = 50;
+
 maxEval = 5000;
 epochLength = maxEval/nepochs;
 all_epoch_credit = zeros(expData.keySet.size, nepochs, length(files)); %keeps track of the epoch credits from the operators
@@ -62,7 +64,7 @@ for i=1:length(files)
             ind2 = hist(:,1)<epochLength*j;
             epoch = hist(and(ind1,ind2),:);
             if(~isempty(epoch(:,1))) %if it is empty then operator was not selected in the epoch
-                all_epoch_credit(k, j, i)=mean( epoch(:,2));
+                all_epoch_credit(k, j, i) = mean(epoch(:,2));
                 all_epoch_select(k, j, i) = length(unique(epoch(:,1)));
             end
         end 
@@ -70,10 +72,17 @@ for i=1:length(files)
 end
 
 
-colors = {'b','r','k','c','g','m','y'};
+ colors = {
+    [0         0.4470    0.7410]
+    [0.8500    0.3250    0.0980]
+    [0.9290    0.6940    0.1250]
+    [0.4940    0.1840    0.5560]
+    [0.4660    0.6740    0.1880]
+    [0.3010    0.7450    0.9330]
+    [0.6350    0.0780    0.1840]};
 
 figure(1)
-handles = zeros(numOps,1);
+handles = [];
 for i=1:numOps
     X = [1:nepochs,fliplr(1:nepochs)];
     stddev = std(squeeze(all_epoch_credit(i,:,:)),0,2);
@@ -83,7 +92,7 @@ for i=1:numOps
     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
-    handles(i) = plot(1:nepochs,mean(squeeze(all_epoch_credit(i,:,:)),2),colors{i}, 'LineWidth',2);
+    handles = [handles plot(1:nepochs,mean(squeeze(all_epoch_credit(i,:,:)),2),'Color',colors{i}, 'LineWidth',2)];
 end
 hold off
 set(gca,'FontSize',16);
@@ -92,6 +101,7 @@ ylabel('Credit earned')
 legend(handles, ops);
 
 figure(2)
+handles = [];
 %normalize the selection to make it a probability
 concat_select = zeros(nepochs, length(files) * numOps);
 for i=1:numOps
@@ -111,7 +121,7 @@ for i=1:numOps
     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
-    handles(i) = plot(2:nepochs,mean(all_epoch_select_norm,2),colors{i}, 'LineWidth',2);
+    handles = [handles, plot(2:nepochs,mean(all_epoch_select_norm,2),'Color',colors{i}, 'LineWidth',2)];
 end
 xlabel('Epoch')
 ylabel('Selection frequency')

@@ -4,6 +4,7 @@
  */
 package eoss.problem;
 
+import eoss.spacecraft.Spacecraft;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
