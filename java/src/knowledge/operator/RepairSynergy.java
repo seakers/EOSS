@@ -7,10 +7,11 @@ package knowledge.operator;
 
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
+import eoss.problem.Orbit;
 import eoss.spacecraft.Spacecraft;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * This operator adds an instrument from another spacecraft if there is a missed
@@ -57,14 +58,14 @@ public class RepairSynergy extends InstrumentSwap {
     }
 
     @Override
-    protected Collection<Instrument> checkThisSpacecraft(Spacecraft s) {
-        ArrayList<Instrument> out = new ArrayList<>();
+    protected Collection<Instrument> checkThisSpacecraft(Spacecraft s, Orbit o) {
+        HashSet<Instrument> out = new HashSet<>();
         //check for potential synergies
         for (Instrument inst : s.getPayload()) {
             if (map.containsKey(inst)) {
                 for (Instrument synergyPair : map.get(inst)) {
                     if (!s.getPayload().contains(synergyPair)) {
-                        out.add(inst);
+                        out.add(synergyPair);
                     }
                 }
             }
@@ -73,7 +74,7 @@ public class RepairSynergy extends InstrumentSwap {
     }
 
     @Override
-    protected boolean checkOtherSpacecraft(Spacecraft s, Instrument inst) {
+    protected boolean checkOtherSpacecraft(Spacecraft s, Orbit o, Instrument inst) {
         return s.getPayload().contains(inst);
     }
 

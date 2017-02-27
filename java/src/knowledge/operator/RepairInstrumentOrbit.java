@@ -5,157 +5,83 @@
  */
 package knowledge.operator;
 
-import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
-import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.spacecraft.Spacecraft;
-import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import org.moeaframework.core.ParallelPRNG;
-import org.moeaframework.core.Solution;
-import org.moeaframework.core.Variation;
+import java.util.HashSet;
 
 /**
- * This operator removes instruments if they are not well suited at the orbit
- * they are assigned to
+ * This operator moves an instruments from one spacecraft to another if the
+ * instruments are not well suited at the orbit they are assigned to
  *
  * @author nozomihitomi
  */
-public class RepairInstrumentOrbit implements Variation {
+public class RepairInstrumentOrbit extends InstrumentSwap {
 
-    /**
-     * The number of instruments to remove from each satellite that does not
-     * meet the threshold
-     */
-    private final int xInstruments;
-
-    /**
-     * The number of satellites to modify
-     */
-    private final int ySatellites;
-
-    private final ParallelPRNG pprng;
-
-    public RepairInstrumentOrbit(int xInstruments, int ySatellites) {
-        this.xInstruments = xInstruments;
-        this.ySatellites = ySatellites;
-        this.pprng = new ParallelPRNG();
+    public RepairInstrumentOrbit(int nChange) {
+        super(nChange);
     }
 
-    /**
-     * removes x number of instruments from the payload of y number of satellite
-     * that are not supposed to be in a certain orbit
-     *
-     * @param sltns
-     * @return
-     */
     @Override
-    public Solution[] evolve(Solution[] sltns) {
-        InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
-        child.setMissions();
-        InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
-        HashMap<Mission, ArrayList<Instrument>> instrumentsToRemove = new HashMap();
-        for (String name : child.getMissionNames()) {
-            ArrayList<Instrument> remove = new ArrayList<>();
-            HashMap<Spacecraft, Orbit> missionSpacecraft = child.getMission(name).getSpacecraft();
-            for (Spacecraft s : missionSpacecraft.keySet()) {
-                remove.addAll(chemistryInPM(s, missionSpacecraft.get(s)));
-                remove.addAll(passiveInDD(s, missionSpacecraft.get(s)));
-                remove.addAll(slantLowAltitude(s, missionSpacecraft.get(s)));
+    protected Collection<Instrument> checkThisSpacecraft(Spacecraft s, Orbit o) {
+        HashSet<Instrument> remove = new HashSet<>();
+        for (Instrument inst : s.getPayload()) {
+            if(chemistryInPM(inst, o) || passiveInDD(inst, o) || slantLowAltitude(inst, o)){
+                remove.add(inst);
             }
-            instrumentsToRemove.put(copy.getMission(name), remove);
         }
-        
-        //repair the architecture
-        ArrayList<Mission> candidateMissions = new ArrayList<>(instrumentsToRemove.keySet());
-        for (int i = 0; i < ySatellites; i++) {
-            if (i > copy.getMissionNames().size() || i >= candidateMissions.size()) {
-                break;
-            }
-            int missionIndex = pprng.nextInt(candidateMissions.size());
-            Mission m =  candidateMissions.get(missionIndex);
-            for (int j = 0; j < xInstruments; j++) {
-                ArrayList<Instrument> instruments = instrumentsToRemove.get(m);
-                if (instruments.isEmpty()) {
-                    break;
-                } else {
-                    int instIndex = pprng.nextInt(instruments.size());
-                    Instrument inst = instruments.get(instIndex);
-                    copy.removeInstrumentFromSpacecraft(EOSSDatabase.findInstrumentIndex(inst), m);
-                    instruments.remove(instIndex);
-                }
-            }
-            candidateMissions.remove(missionIndex);
-        }
-        return new Solution[]{copy};
+        return remove;
+    }
+
+    @Override
+    protected boolean checkOtherSpacecraft(Spacecraft s, Orbit o, Instrument inst) {
+        return chemistryInPM(inst, o) || passiveInDD(inst, o) || slantLowAltitude(inst, o);
+    }
+
+    @Override
+    protected boolean addToCurrentSpacecraft() {
+        //incompatible instruments should be removed from the antecedent spacecraft
+        return false;
     }
 
     /**
-     * This method checks if a given mission carries an atmospheric chemistry
+     * This method checks if a given instrument is an atmospheric chemistry
      * instrument in a non-afternoon orbit.
      *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * take atmospheric chemistry instruments in the given orbit if it is a
-     * non-afternoon orbit.
+     * @return true if the instruments take atmospheric chemistry instruments
+     * and the given orbit is a non-afternoon orbit.
      */
-    private Collection<Instrument> chemistryInPM(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
+    private boolean chemistryInPM(Instrument inst, Orbit o) {
         if (!o.getRAAN().equals("PM")) {
-            for (Instrument inst : s.getPayload()) {
-                String concept = inst.getProperty("Concept");
-                if (concept.contains("chemistry")) {
-                    out.add(inst);
-                }
+            String concept = inst.getProperty("Concept");
+            if (concept.contains("chemistry")) {
+                return true;
             }
         }
-        return out;
+        return false;
     }
 
     /**
      * This method checks if a given mission carries an passive, optical
      * instrument in a dawn-dusk orbit
      *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * are both passive and optical in a dawn dusk orbit
+     * @return true if instrument is passive and optical and orbit is a dawn
+     * dusk orbit
      */
-    private Collection<Instrument> passiveInDD(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
-        if (o.getRAAN().equals("DD")) {
-            for (Instrument inst : s.getPayload()) {
-                if (inst.getProperty("Illumination").equals("Passive")) {
-                    out.add(inst);
-                }
-            }
-        }
-        return out;
+    private boolean passiveInDD(Instrument inst, Orbit o) {
+        return o.getRAAN().equals("DD") && inst.getProperty("Illumination").equals("Passive");
     }
 
     /**
      * This method checks if a given mission carries an instrument that views in
      * a non-nadir direction and flies in a low altitude orbit (<= 400km)
      *
-     * @return a collection of instruments hosted by the given spacecraft that
-     * views in a non-nadir direction and flies in a low altitude orbit (<=
-     * 400km)
+     * @return ture if instrument views in a non-nadir direction and flies in a
+     * low altitude orbit (<= 400km)
      */
-    private Collection<Instrument> slantLowAltitude(Spacecraft s, Orbit o) {
-        ArrayList<Instrument> out = new ArrayList<>();
-        if (o.getAltitude() <= 400.) {
-            for (Instrument inst : s.getPayload()) {
-                if (inst.getProperty("Geometry").equals("slant")) {
-                    out.add(inst);
-                }
-            }
-        }
-        return out;
-    }
-
-    @Override
-    public int getArity() {
-        return 1;
+    private boolean slantLowAltitude(Instrument inst, Orbit o) {
+        return o.getAltitude() <= 400. && inst.getProperty("Geometry").equals("slant");
     }
 
 }

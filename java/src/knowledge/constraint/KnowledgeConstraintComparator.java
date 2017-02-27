@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eoss.problem.assignment;
+package knowledge.constraint;
 
 import java.io.Serializable;
 import org.moeaframework.core.Solution;

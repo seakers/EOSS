@@ -8,6 +8,7 @@ package knowledge.operator;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
+import eoss.problem.Orbit;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.spacecraft.Spacecraft;
 import java.util.ArrayList;
@@ -49,12 +50,12 @@ public abstract class InstrumentSwap implements Variation {
         for (String name : copy.getMissionNames()) {
             Mission mi = copy.getMission(name);
             for (Spacecraft si : mi.getSpacecraft().keySet()) {
-                for (Instrument inst : checkThisSpacecraft(si)) {
+                for (Instrument inst : checkThisSpacecraft(si, mi.getSpacecraft().get(si))) {
                     //search for a satellite in the architecture with missing instrument
                     for (String namej : copy.getMissionNames()) {
                         Mission mj = copy.getMission(namej);
                         for (Spacecraft sj : mj.getSpacecraft().keySet()) {
-                            if (!si.equals(sj) && checkOtherSpacecraft(sj, inst)) {
+                            if (!si.equals(sj) && checkOtherSpacecraft(sj, mj.getSpacecraft().get(sj), inst)) {
                                 if (addToCurrentSpacecraft()) {
                                     moves.add(new SwapMove(mi, mj, inst));
                                 } else {
@@ -67,44 +68,61 @@ public abstract class InstrumentSwap implements Variation {
             }
         }
 
-        if (moves.isEmpty()) {
-            return new Solution[]{copy};
-        }
-
         //repair the architecture
         Collections.shuffle(moves);
-        for (int i = 0;
-                i < nChanges;
-                i++) {
+        int i = 0;
+        int changes = 0;
+
+        while (i < moves.size() && changes < nChanges) {
             SwapMove swap = moves.get(i);
             int instInd = EOSSDatabase.findInstrumentIndex(swap.getInst());
-            copy.addInstrumentToSpacecraft(instInd, swap.getAdd());
-            copy.removeInstrumentFromSpacecraft(instInd, swap.getRemove());
+            if (addToCurrentSpacecraft()) {
+                //if other spacecraft still has the instrument to remove then add it to the original spacecraft
+                if (copy.removeInstrumentFromSpacecraft(instInd, swap.getRemove())) {
+                    if (!copy.addInstrumentToSpacecraft(instInd, swap.getAdd())) {
+                        //since the swap wasn't successful, return the instrument to the other spacecraft
+                        copy.addInstrumentToSpacecraft(instInd, swap.getRemove());
+                    }
+                    changes++;
+                }
+            } else {
+                //if other spacecraft still can accept the instrument to add then remove it from the original spacecraft
+                if (copy.addInstrumentToSpacecraft(instInd, swap.getAdd())) {
+                    if (!copy.removeInstrumentFromSpacecraft(instInd, swap.getRemove())) {
+                        //since the swap wasn't successful, remove the instrument that was added to the other spacecraft
+                        copy.removeInstrumentFromSpacecraft(instInd, swap.getAdd());
+                    }
+                    changes++;
+                }
+            }
+            i++;
         }
         return new Solution[]{copy
         };
     }
 
     /**
-     * Checks the given spacecraft for instruments that can be added or removed
-     * (must be either or) to improve the spacecraft
+     * Checks the given spacecraft in the given orbit for instruments that can
+     * be added or removed (must be either or) to improve the spacecraft
      *
-     * @param s
+     * @param s the spacecraft
+     * @param o the orbit occupied by the given spacecraft
      * @return the list of instruments to be added or removed from the
      * spacecraft that will improve the performance/cost of the spacecraft or
      * architecture
      */
-    protected abstract Collection<Instrument> checkThisSpacecraft(Spacecraft s);
+    protected abstract Collection<Instrument> checkThisSpacecraft(Spacecraft s, Orbit o);
 
     /**
      * Checks the other spacecraft if the given instrument is present or absent
      *
      * @param s the other spacecraft
+     * @param o the orbit occupied by the other spacecraft
      * @param inst the instrument to swap
      * @return true if the other spacecraft is a candidate for an instrument
      * swap. else false.
      */
-    protected abstract boolean checkOtherSpacecraft(Spacecraft s, Instrument inst);
+    protected abstract boolean checkOtherSpacecraft(Spacecraft s, Orbit o, Instrument inst);
 
     /**
      * When comparing the current spacecraft with other spacecraft, this method

@@ -15,7 +15,7 @@ import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignment2;
-import eoss.problem.assignment.KnowledgeConstraintComparator;
+import knowledge.constraint.KnowledgeConstraintComparator;
 import eoss.problem.evaluation.RequirementMode;
 import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
@@ -50,6 +50,7 @@ import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import knowledge.constraint.AdaptiveConstraintSelection;
+import knowledge.constraint.EpsilonKnoweldgeConstraintComparator;
 import knowledge.constraint.PopulationConsistency;
 import knowledge.operator.EOSSOperatorCreator;
 import knowledge.operator.RandomKnowledgeOperator;
@@ -174,15 +175,17 @@ public class RBSAEOSSSMAP {
 
             //initialize population structure for algorithm
             Population population = new Population();
+            KnowledgeConstraintComparator kcc = new KnowledgeConstraintComparator();
+            EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, kcc);
             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
             //Random knowledge operator
             Variation repairMass = new RepairMass(3000.0, 1, 1);
             Variation repairDC = new RepairDutyCycle(0.5, 1, 1);
             Variation repairPE = new RepairPackingEfficiency(0.4, 1, 1);
-            Variation repairSynergy = new RepairSynergy(Integer.MAX_VALUE);
-            Variation repairInter = new RepairInterference(Integer.MAX_VALUE);
-            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
+            Variation repairSynergy = new RepairSynergy(1);
+            Variation repairInter = new RepairInterference(1);
+            Variation repairInstOrb = new RepairInstrumentOrbit(1);
 
 //            Variation[] operators = new Variation[]{
 //                repairMass, repairDC, repairPE,
@@ -203,11 +206,11 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, repairSynergy, repairInter, bitFlip, intergerMutation);
 //                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
 
                     initialization = new RandomInitialization(problem, popSize);
-                    ChainedComparator comp = new ChainedComparator(new KnowledgeConstraintComparator(), new ParetoObjectiveComparator());
+                    ChainedComparator comp = new ChainedComparator(kcc, new ParetoObjectiveComparator());
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                     break;
@@ -219,12 +222,12 @@ public class RBSAEOSSSMAP {
 
                         //add domain-independent heuristics
                         heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-//                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        heuristics.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
 
                         properties.setDouble("pmin", 0.03);
 

@@ -5,10 +5,7 @@
  */
 package eoss.problem.evaluation;
 
-import architecture.util.FuzzyValue;
-import architecture.util.Interval;
 import architecture.util.ValueTree;
-import eoss.explanation.Explanation;
 import eoss.jess.QueryBuilder;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
@@ -18,7 +15,6 @@ import eoss.problem.Orbit;
 import eoss.problem.Orbits;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignment;
-import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.spacecraft.SpacecraftDesigner;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,15 +23,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jess.Fact;
 import jess.JessException;
-import jess.RU;
 import jess.Rete;
-import jess.Value;
-import jess.ValueVector;
 
 /**
  * Evaluates an architecture based on the missions

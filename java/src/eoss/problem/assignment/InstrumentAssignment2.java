@@ -62,6 +62,16 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     private final double packingEffThreshold = 0.4; //[kg]
 
     /**
+     * synergistic instrument pairs
+     */
+    private final HashMap<Instrument, Instrument[]> synergyMap;
+
+    /**
+     * Interfering instrument pairs
+     */
+    private final HashMap<Instrument, Instrument[]> interferenceMap;
+
+    /**
      *
      * @param path
      * @param nSpacecraft The number of spacecraft to consider
@@ -69,7 +79,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean withSynergy){
+    public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean withSynergy) {
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
         super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 4);
 
@@ -86,6 +96,50 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.eval = new ArchitectureEvaluator(path, reqMode, withSynergy, template);
+
+        //synergistic instrument pairs
+        HashMap<String, String[]> synergyNameMap = new HashMap();
+        synergyNameMap.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
+        synergyNameMap.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
+        synergyNameMap.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});
+        synergyNameMap.put("HYSP_TIR", new String[]{"ACE_ORCA", "POSTEPS_IRS"});
+        synergyNameMap.put("ACE_POL", new String[]{"ACE_ORCA", "DESD_LID"});
+        synergyNameMap.put("ACE_LID", new String[]{"ACE_ORCA", "CNES_KaRIN", "DESD_LID", "GACM_VIS"});
+        synergyNameMap.put("POSTEPS_IRS", new String[]{"HYSP_TIR"});
+        synergyNameMap.put("CNES_KaRIN", new String[]{"ACE_LID"});
+
+        //get names into instrument objects
+        this.synergyMap = new HashMap<>();
+        for (String instNameKey : synergyNameMap.keySet()) {
+            Instrument[] instArray = new Instrument[synergyNameMap.get(instNameKey).length];
+            int count = 0;
+            for (String instNameValue : synergyNameMap.get(instNameKey)) {
+                instArray[count] = EOSSDatabase.getInstrument(instNameValue);
+                count++;
+            }
+            this.synergyMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
+        }
+
+        HashMap<String, String[]> interferenceNameMap = new HashMap();
+        interferenceNameMap.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
+        interferenceNameMap.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
+        interferenceNameMap.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});
+        interferenceNameMap.put("CLAR_ERB", new String[]{"ACE_LID", "ACE_CPR"});
+        interferenceNameMap.put("CNES_KaRIN", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("ACE_POL", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("ACE_ORCA", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("GACM_SWIR", new String[]{"ACE_LID", "ACE_CPR"});
+        //get names into instrument objects
+        this.interferenceMap = new HashMap<>();
+        for (String instNameKey : interferenceNameMap.keySet()) {
+            Instrument[] instArray = new Instrument[interferenceNameMap.get(instNameKey).length];
+            int count = 0;
+            for (String instNameValue : interferenceNameMap.get(instNameKey)) {
+                instArray[count] = EOSSDatabase.getInstrument(instNameValue);
+                count++;
+            }
+            this.interferenceMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
+        }
     }
 
     @Override
@@ -139,9 +193,9 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 s.setProperty(slot, fact.getSlotValue(slot).toString());
             }
 
-            dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle")))/dcThreshold);
+            dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
 
-            massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold)/s.getWetMass());
+            massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
 
             //compute the packing efficiency
             for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
@@ -157,7 +211,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
                     s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
                     //divide any violation by the size of the launch group to not double count violations
-                    packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency)/packingEffThreshold) / group.size());
+                    packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
                 }
             }
 
@@ -186,55 +240,46 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 }
             }
 
-            //synergy and interference violation
-            HashMap<String, Instrument> instrumentSet = new HashMap<>();
+            //check other spacecraft for missed opportunities to add synergy or remove interferencess
             for (Instrument inst : s.getPayload()) {
-                instrumentSet.put(inst.getName(), inst);
-            }
-
-            HashMap<String, String[]> synergyMap = new HashMap();
-            synergyMap.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
-            synergyMap.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
-            synergyMap.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});
-            synergyMap.put("HYSP_TIR", new String[]{"ACE_ORCA", "POSTEPS_IRS"});
-            synergyMap.put("ACE_POL", new String[]{"ACE_ORCA", "DESD_LID"});
-            synergyMap.put("ACE_LID", new String[]{"ACE_ORCA", "CNES_KaRIN", "DESD_LID", "GACM_VIS"});
-            synergyMap.put("POSTEPS_IRS", new String[]{"HYSP_TIR"});
-            synergyMap.put("CNES_KaRIN", new String[]{"ACE_LID"});
-
-            HashMap<String, String[]> interferenceMap = new HashMap();
-            interferenceMap.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
-            interferenceMap.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
-            interferenceMap.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});
-            interferenceMap.put("CLAR_ERB", new String[]{"ACE_LID", "ACE_CPR"});
-            interferenceMap.put("CNES_KaRIN", new String[]{"ACE_CPR"});
-            interferenceMap.put("ACE_POL", new String[]{"ACE_CPR"});
-            interferenceMap.put("ACE_ORCA", new String[]{"ACE_CPR"});
-            interferenceMap.put("GACM_SWIR", new String[]{"ACE_LID", "ACE_CPR"});
-
-            for (String instName : instrumentSet.keySet()) {
-                if (synergyMap.containsKey(instName)) {
-                    for (String instPairName : synergyMap.get(instName)) {
-                        if (!instrumentSet.containsKey(instPairName)) {
-                            synergyViolationSum++;
+                //check synergies
+                if (synergyMap.containsKey(inst)) {
+                    for (Instrument instPair : synergyMap.get(inst)) {
+                        if (!s.getPayload().contains(instPair)) {
+                            for (String otherMissionName : arch.getMissionNames()) {
+                                Mission otherMission = arch.getMission(otherMissionName);
+                                for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                    if (otherSpacecraft.getPayload().contains(instPair)) {
+                                        synergyViolationSum++;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                if (interferenceMap.containsKey(instName)) {
-                    for (String instPairName : interferenceMap.get(instName)) {
-                        if (!instrumentSet.containsKey(instPairName)) {
-                            interferenceViolationSum++;
+                //check interferences
+                if (interferenceMap.containsKey(inst)) {
+                    for (Instrument instPair : interferenceMap.get(inst)) {
+                        if (s.getPayload().contains(instPair)) {
+                            for (String otherMissionName : arch.getMissionNames()) {
+                                Mission otherMission = arch.getMission(otherMissionName);
+                                for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                    if (!otherSpacecraft.getPayload().contains(instPair)) {
+                                        interferenceViolationSum++;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            double constraint = (1./5.)*(dcViolationSum + 
-                    massViolationSum +
-                    packingEfficiencyViolationSum + 
-                    instrumentOrbitAssingmentViolationSum/36. +
-                    synergyViolationSum/10. +
-                    interferenceViolationSum/10.);
+            double constraint = (1. / 5.) * (dcViolationSum
+                    + massViolationSum
+                    + packingEfficiencyViolationSum
+                    + instrumentOrbitAssingmentViolationSum / 36.
+                    + synergyViolationSum / 10.
+                    + interferenceViolationSum / 10.);
             arch.setAttribute("constraint", constraint);
             arch.setAttribute("dcViolationSum", (double) dcViolationSum);
             arch.setAttribute("massViolationSum", (double) massViolationSum);
@@ -245,7 +290,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
 
         }
     }
-    
+
     @Override
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture2(
