@@ -18,7 +18,7 @@ import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScalesFactory;
 
 /**
- *
+ * A mission is a set of spacecraft and their assigned orbits
  * @author nozomihitomi
  */
 public class Mission implements Serializable {

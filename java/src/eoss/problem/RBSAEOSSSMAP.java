@@ -177,12 +177,12 @@ public class RBSAEOSSSMAP {
             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
 
             //Random knowledge operator
-//            Variation repairMass = new RepairMass(path, 3000.0, 1, 1);
-//            Variation repairDC = new RepairDutyCycle(path, 0.5, 1, 1);
-//            Variation repairPE = new RepairPackingEfficiency(path, 0.4, 1, 1);
-//            Variation repairSynergy = new RepairSynergy(1, 1);
-//            Variation repairInter = new RepairInterference(1, 1);
-//            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
+            Variation repairMass = new RepairMass(3000.0, 1, 1);
+            Variation repairDC = new RepairDutyCycle(0.5, 1, 1);
+            Variation repairPE = new RepairPackingEfficiency(0.4, 1, 1);
+            Variation repairSynergy = new RepairSynergy(Integer.MAX_VALUE);
+            Variation repairInter = new RepairInterference(Integer.MAX_VALUE);
+            Variation repairInstOrb = new RepairInstrumentOrbit(1, 1);
 
 //            Variation[] operators = new Variation[]{
 //                repairMass, repairDC, repairPE,

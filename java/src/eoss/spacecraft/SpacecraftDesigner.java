@@ -6,6 +6,7 @@
 package eoss.spacecraft;
 
 import eoss.problem.Instrument;
+import eoss.problem.Mission;
 import eoss.problem.Orbit;
 import eoss.problem.Orbits;
 import java.util.ArrayList;
@@ -45,6 +46,25 @@ public class SpacecraftDesigner {
         this.thermF = new ThermalFactory();
     }
 
+    /**
+     * Designs the spacecraft within the given mission
+     *
+     * @param m
+     */
+    public void designSpacecraft(Mission m) {
+        for (Spacecraft s : m.getSpacecraft().keySet()) {
+            designSpacecraft(s, m.getSpacecraft().get(s), m.getLifetime());
+        }
+    }
+
+    /**
+     * Designs the spacecraft given the intended orbit and the lifetime of the
+     * spacecraft
+     *
+     * @param s spacecraft to design
+     * @param o orbit intended for the spacecraft
+     * @param lifetime lifetime of the mission
+     */
     public void designSpacecraft(Spacecraft s, Orbit o, double lifetime) {
         //preliminary estimate
         //Estimate the dry mass of the bus as a linear function of the payload mass.
@@ -147,7 +167,7 @@ public class SpacecraftDesigner {
                 instFact.append("))");
                 r.eval(instFact.toString());
             }
-            missFact.append("(instruments " ).append(payload.toString()).append(")");
+            missFact.append("(instruments ").append(payload.toString()).append(")");
             missFact.append("(launch-date ").append(launchDate).append(")");
             missFact.append("(lifetime ").append(lifetime).append(")");
             missFact.append("(select-orbit no) ").append(o.toJessSlots());

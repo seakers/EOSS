@@ -8,12 +8,8 @@ package knowledge.operator;
 import eoss.problem.Mission;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
-import eoss.problem.evaluation.ArchitectureEvaluator;
-import eoss.problem.evaluation.RequirementMode;
+import eoss.spacecraft.SpacecraftDesigner;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
@@ -44,14 +40,14 @@ public class RepairMass implements Variation {
     private final int ySatellites;
     
     /**
-     * Eval used to design spacecraft
+     * Designs the spacecraft
      */
-    private final ArchitectureEvaluator eval;
+    private final SpacecraftDesigner scDesigner;
 
     private final ParallelPRNG pprng;
 
-    public RepairMass(String path, double threshold, int xInstruments, int ySatellites) {
-        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, true, null);
+    public RepairMass(double threshold, int xInstruments, int ySatellites) {
+        this.scDesigner = new SpacecraftDesigner();
         this.threshold = threshold;
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
@@ -73,17 +69,12 @@ public class RepairMass implements Variation {
         for (String name : child.getMissionNames()) {
             missions.add(child.getMission(name));
         }
-        try {
-            eval.designSpacecraft(missions);
-        } catch (JessException ex) {
-            Logger.getLogger(RepairDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
-        }
         
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
         for (Mission m : missions) {
+            scDesigner.designSpacecraft(m);
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
-
             if (s.getWetMass() > threshold && !s.getPayload().isEmpty()) {
                 candidateMission.add(m);
             }

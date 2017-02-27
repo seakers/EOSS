@@ -10,14 +10,10 @@ import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
-import eoss.problem.evaluation.ArchitectureEvaluator;
-import eoss.problem.evaluation.RequirementMode;
+import eoss.spacecraft.SpacecraftDesigner;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import jess.JessException;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
@@ -47,16 +43,17 @@ public class RepairPackingEfficiency implements Variation {
      * The number of satellites to modify
      */
     private final int ySatellites;
-
+    
     /**
-     * Eval used to design spacecraft
+     * Designs the spacecraft
      */
-    private final ArchitectureEvaluator eval;
+    private final SpacecraftDesigner scDesigner;
+
 
     private final ParallelPRNG pprng;
 
-    public RepairPackingEfficiency(String path, double threshold, int xInstruments, int ySatellites) {
-        this.eval = new ArchitectureEvaluator(path, RequirementMode.FUZZYCASE, true, null);
+    public RepairPackingEfficiency(double threshold, int xInstruments, int ySatellites) {
+        this.scDesigner = new SpacecraftDesigner();
         this.xInstruments = xInstruments;
         this.ySatellites = ySatellites;
         this.pprng = new ParallelPRNG();
@@ -78,16 +75,12 @@ public class RepairPackingEfficiency implements Variation {
         for (String name : child.getMissionNames()) {
             missions.add(child.getMission(name));
         }
-        try {
-            eval.designSpacecraft(missions);
-        } catch (JessException ex) {
-            Logger.getLogger(RepairDutyCycle.class.getName()).log(Level.SEVERE, null, ex);
-        }
         HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
 
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         ArrayList<Mission> candidateMission = new ArrayList();
         for (Mission m : missions) {
+            scDesigner.designSpacecraft(m);
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
 
             //compute packing efficiency
