@@ -78,7 +78,9 @@ public class InstrumentedSearch implements Callable<Algorithm> {
             instAlgorithm.step();
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
             for(int i=1; i<3; i++){
-                allSolutions.add(pop.get(pop.size()-i));
+                Solution s = pop.get(pop.size() - i);
+                s.setAttribute("NFE", instAlgorithm.getNumberOfEvaluations());
+                allSolutions.add(s);
             }
         }
 
