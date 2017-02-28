@@ -75,6 +75,11 @@ public class Spacecraft implements Serializable {
      * Properties pertaining to this spacecraft
      */
     private final HashMap<String, String> properties;
+    
+    /**
+     * Data rate
+     */
+    private final double dataRate;
 
     public Spacecraft(String name, Collection<Instrument> payload) {
         this.name = name;
@@ -83,15 +88,18 @@ public class Spacecraft implements Serializable {
 
         double peakpower = 0.;
         double avgpower = 0.;
-        double payloadMass = 0.;
+        double mass = 0.;
+        double datarate = 0;
         for (Instrument inst : payload) {
-            payloadMass += Double.parseDouble(inst.getProperty("mass#"));
+            mass += Double.parseDouble(inst.getProperty("mass#"));
             peakpower += Double.parseDouble(inst.getProperty("characteristic-power#"));
             avgpower += Double.parseDouble(inst.getProperty("characteristic-power#"));
+            datarate += Double.parseDouble(inst.getProperty("average-data-rate#"));
         }
-        this.payloadMass = payloadMass;
+        this.payloadMass = mass;
         this.payloadPeakPower = peakpower;
         this.payloadAvgPower = avgpower;
+        this.dataRate = datarate;
         
         this.bus = new HashMap<>();
         bus.put("adcs",adcs);
@@ -195,6 +203,14 @@ public class Spacecraft implements Serializable {
      */
     public double getLaunchMass() {
         return getWetMass() + adapter.getMass();
+    }
+
+    /**
+     * Gets the average data rate of the payload
+     * @return 
+     */
+    public double getDataRate() {
+        return dataRate;
     }
 
     /**
