@@ -21,7 +21,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public abstract class InstrumentSwap implements Variation {
+public abstract class AbstractInstrumentSwap implements Variation {
 
     /**
      * The number of changes to make to the architecture
@@ -37,7 +37,7 @@ public abstract class InstrumentSwap implements Variation {
      *
      * @param nChanges
      */
-    public InstrumentSwap(int nChanges) {
+    public AbstractInstrumentSwap(int nChanges) {
         this.nChanges = nChanges;
         this.moves = new ArrayList<>();
     }
@@ -45,10 +45,9 @@ public abstract class InstrumentSwap implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
-        child.setMissions();
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
-        for (String name : copy.getMissionNames()) {
-            Mission mi = copy.getMission(name);
+        copy.setMissions();
+        for (Mission mi : copy.getMissions()) {
             for (Spacecraft si : mi.getSpacecraft().keySet()) {
                 for (Instrument inst : checkThisSpacecraft(si, mi.getSpacecraft().get(si))) {
                     //search for a satellite in the architecture with missing instrument

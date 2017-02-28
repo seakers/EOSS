@@ -17,7 +17,7 @@ import java.util.HashSet;
  *
  * @author nozomihitomi
  */
-public class RepairInstrumentOrbit extends InstrumentSwap {
+public class RepairInstrumentOrbit extends AbstractInstrumentSwap {
 
     public RepairInstrumentOrbit(int nChange) {
         super(nChange);

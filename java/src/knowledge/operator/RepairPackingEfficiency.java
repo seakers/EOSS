@@ -70,17 +70,15 @@ public class RepairPackingEfficiency implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
-        child.setMissions();
-        ArrayList<Mission> missions = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            missions.add(child.getMission(name));
-        }
-        HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
-
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
+        copy.setMissions();
+        for (Mission mission : copy.getMissions()) {
+            scDesigner.designSpacecraft(mission);
+        }
+        HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(copy.getMissions());
+        
         ArrayList<Mission> candidateMission = new ArrayList();
-        for (Mission m : missions) {
-            scDesigner.designSpacecraft(m);
+        for (Mission m : copy.getMissions()) {
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
 
             //compute packing efficiency

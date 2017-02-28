@@ -64,15 +64,11 @@ public class RepairMass implements Variation {
     @Override
     public Solution[] evolve(Solution[] sltns) {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
-        child.setMissions();
-        ArrayList<Mission> missions = new ArrayList();
-        for (String name : child.getMissionNames()) {
-            missions.add(child.getMission(name));
-        }
-        
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
+        copy.setMissions();
+        
         ArrayList<Mission> candidateMission = new ArrayList();
-        for (Mission m : missions) {
+        for (Mission m : copy.getMissions()) {
             scDesigner.designSpacecraft(m);
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
             if (s.getWetMass() > threshold && !s.getPayload().isEmpty()) {

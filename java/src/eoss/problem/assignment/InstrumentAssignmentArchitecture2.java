@@ -337,6 +337,14 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
     public Mission getMission(String name) {
         return missions.get(name);
     }
+    
+    /**
+     * Gets the missions within this architecture
+     * @return the missions within this architecture
+     */
+    public Collection<Mission> getMissions(){
+        return missions.values();
+    }
 
     /**
      * Sets the mission field represented by this architecture. Resets any
