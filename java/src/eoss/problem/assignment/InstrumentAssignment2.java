@@ -39,19 +39,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
 
     private final ArchitectureEvaluator eval;
 
-    /**
-     * the slot names to record from the MANIFEST::MISSION facts
-     */
-    private final String[] auxFacts = new String[]{"ADCS-mass#",
-        "avionics-mass#", "delta-V", "delta-V-deorbit", "depth-of-discharge",
-        "EPS-mass#", "fraction-sunlight", "moments-of-inertia",
-        "payload-data-rate#", "payload-dimensions#", "payload-mass#",
-        "payload-peak-power#", "payload-power#", "propellant-ADCS",
-        "propellant-injection", "propellant-mass-ADCS", "sat-data-rate-per-orbit#",
-        "satellite-BOL-power#", "satellite-dimensions", "satellite-dry-mass",
-        "satellite-launch-mass", "satellite-wet-mass", "solar-array-area",
-        "solar-array-mass", "structure-mass#", "thermal-mass#"};
-
     private final int nSpacecraft;
 
     private final double dcThreshold = 0.5;
@@ -182,8 +169,11 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         int synergyViolationSum = 0;
         int interferenceViolationSum = 0;
 
+        int numSpacecraft = 0;
         for (Mission mission : arch.getMissions()) {
             for (Spacecraft s : mission.getSpacecraft().keySet()) {
+                numSpacecraft++;
+                
                 dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
                 massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
 
@@ -264,16 +254,20 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     }
                 }
             }
-            interferenceViolationSum /= 36.0;
-            synergyViolationSum /= 10.0;
-            interferenceViolationSum /= 10.0;
+            
+            //normalize the violations
+            dcViolationSum /= numSpacecraft;
+            massViolationSum /= numSpacecraft;
+            packingEfficiencyViolationSum /= numSpacecraft;
+            interferenceViolationSum /= (36.0 * numSpacecraft);
+            synergyViolationSum /= (10.0 * numSpacecraft);
+            interferenceViolationSum /= (10.0 * numSpacecraft);
 
-            double constraint = (1. / 6.) * (dcViolationSum
-                    + massViolationSum
+            double constraint = (dcViolationSum + massViolationSum
                     + packingEfficiencyViolationSum
                     + instrumentOrbitAssingmentViolationSum
-                    + synergyViolationSum
-                    + interferenceViolationSum);
+                    + synergyViolationSum + interferenceViolationSum)
+                    / (6.);
             arch.setAttribute("constraint", constraint);
             arch.setAttribute("dcViolationSum", (double) dcViolationSum);
             arch.setAttribute("massViolationSum", (double) massViolationSum);

@@ -332,18 +332,6 @@ public class ArchitectureEvaluator {
         for (Mission m : missions) {
             for (Spacecraft s : m.getSpacecraft().keySet()) {
                 scDesigner.designSpacecraft(s, m.getSpacecraft().get(s), m.getLifetime());
-
-                // assuming 1 seven minute pass at 500Mbps max
-                double drdc = (1. * 7. * 60. * 500. * (1. / 8192.))
-                        * Double.parseDouble(s.getProperty("sat-data-rate-per-orbit#"));
-                s.setProperty("data-rate duty cycle", Double.toString(drdc));
-
-                // Computes the power duty cycle assuming a limit at 10kW
-                double pdc = 10000.0 / s.getEPS().getPowerBOL();
-                s.setProperty("power duty cycle", Double.toString(pdc));
-
-                double dutycycle = Math.min(drdc, pdc);
-                s.setProperty("duty cycle", Double.toString(dutycycle));
             }
         }
     }
