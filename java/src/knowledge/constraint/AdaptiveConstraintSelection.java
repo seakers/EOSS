@@ -7,7 +7,8 @@ package knowledge.constraint;
 
 import aos.creditassigment.Credit;
 import aos.nextoperator.AbstractOperatorSelector;
-import knowledge.operator.RandomKnowledgeOperator;
+import java.util.Arrays;
+import java.util.HashMap;
 import org.moeaframework.core.Variation;
 
 /**
@@ -15,18 +16,25 @@ import org.moeaframework.core.Variation;
  * @author nozomihitomi
  */
 public class AdaptiveConstraintSelection extends AbstractOperatorSelector {
-    
-    private final RandomKnowledgeOperator rko;
-    
+
+    private final KnowledgeStochasticRanking ksr;
+
     /**
-     * This is should be a compound variation operator containing rko 
+     * This is the variation operator to be used
      */
     private final Variation var;
 
-    public AdaptiveConstraintSelection(RandomKnowledgeOperator rko, Variation var) {
-        super(rko.getOperators());
+    /**
+     * Maps which operators are responsible for each constraint. The operators
+     * in the map are placeholders for constraints
+     */
+    private final HashMap<Variation, String> operatorConstraintMap;
+
+    public AdaptiveConstraintSelection(KnowledgeStochasticRanking ksr, HashMap<Variation, String> operatorConstraintMap, Variation var) {
+        super(Arrays.asList(new Variation[]{var}));
         this.var = var;
-        this.rko = rko;
+        this.ksr = ksr;
+        this.operatorConstraintMap = operatorConstraintMap;
     }
 
     @Override
@@ -36,6 +44,6 @@ public class AdaptiveConstraintSelection extends AbstractOperatorSelector {
 
     @Override
     public void update(Credit credit, Variation vrtn) {
-        rko.updateProbability(vrtn, credit.getValue());
+        ksr.updateProbability(operatorConstraintMap.get(vrtn), credit.getValue());
     }
 }

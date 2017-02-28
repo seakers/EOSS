@@ -26,21 +26,21 @@ public class PopulationConsistency extends AbstractPopulationContribution {
     /**
      * Maps which operators are responsible for each constraint
      */
-    private final HashMap<String, Variation> constraintOperatorMap;
+    private final HashMap<Variation, String> operatorConstraintMap;
 
     /**
      * Constructor to specify how to update the probability of applying each
      * operator based on the consistency of solutions in a population to a
      * constraint
      *
-     * @param constraintOperatorMap
+     * @param operatorConstraintMap
      */
-    public PopulationConsistency(HashMap<String, Variation> constraintOperatorMap) {
+    public PopulationConsistency(HashMap<Variation, String> operatorConstraintMap) {
         super();
         this.operatesOn = CreditDefinedOn.POPULATION;
         this.fitType = CreditFitnessFunctionType.Do;
         this.inputType = CreditFunctionInputType.CS;
-        this.constraintOperatorMap = constraintOperatorMap;
+        this.operatorConstraintMap = operatorConstraintMap;
     }
 
     @Override
@@ -59,15 +59,15 @@ public class PopulationConsistency extends AbstractPopulationContribution {
     @Override
     public HashMap<Variation, Credit> compute(Population population, Collection<Variation> operators, int iteration) {
         HashMap<Variation, Credit> out = new HashMap();
-        for (String constraint : constraintOperatorMap.keySet()) {
+        for (Variation op : operatorConstraintMap.keySet()) {
             int consistentCount = 0;
             for (Solution s : population) {
-                if((double)s.getAttribute(constraint) == 0){
+                if((double)s.getAttribute(operatorConstraintMap.get(op)) == 0){
                     consistentCount++;
                 }
             }
             double probability = Math.max((double)consistentCount / (double)population.size(), 0.03);
-            out.put(constraintOperatorMap.get(constraint), new Credit(iteration, probability));
+            out.put(op, new Credit(iteration, probability));
         }
         return out;
     }

@@ -15,7 +15,6 @@ import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignment2;
-import knowledge.constraint.KnowledgeConstraintComparator;
 import eoss.problem.evaluation.RequirementMode;
 import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
@@ -36,6 +35,7 @@ import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -48,12 +48,12 @@ import jess.JessException;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
-import jxl.read.biff.BiffException;
-import knowledge.constraint.AdaptiveConstraintSelection;
+import jxl.read.biff.BiffException;import knowledge.constraint.AdaptiveConstraintSelection;
+;
 import knowledge.constraint.EpsilonKnoweldgeConstraintComparator;
 import knowledge.constraint.PopulationConsistency;
 import knowledge.operator.EOSSOperatorCreator;
-import knowledge.operator.RandomKnowledgeOperator;
+import knowledge.constraint.KnowledgeStochasticRanking;
 import knowledge.operator.RepairDutyCycle;
 import knowledge.operator.RepairInstrumentOrbit;
 import knowledge.operator.RepairInterference;
@@ -110,7 +110,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "1"; //Mode
+            args[1] = "2"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -135,7 +135,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 10;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -170,15 +170,6 @@ public class RBSAEOSSSMAP {
 
         for (int i = 0; i < numRuns; i++) {
 
-            //initialize problem
-            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
-
-            //initialize population structure for algorithm
-            Population population = new Population();
-            KnowledgeConstraintComparator kcc = new KnowledgeConstraintComparator();
-            EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, kcc);
-            EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
-
             //Random knowledge operator
             Variation repairMass = new RepairMass(3000.0, 1, 1);
             Variation repairDC = new RepairDutyCycle(0.5, 1, 1);
@@ -192,13 +183,22 @@ public class RBSAEOSSSMAP {
 //                repairSynergy, repairInter, repairInstOrb};
 //            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
 
-            HashMap<String, Variation> constraintOperatorMap = new HashMap<>();
-//            constraintOperatorMap.put("massViolationSum", repairMass);
-//            constraintOperatorMap.put("dcViolationSum", repairDC);
-//            constraintOperatorMap.put("packingEfficiencyViolationSum", repairPE);
-//            constraintOperatorMap.put("synergyViolationSum", repairSynergy);
-//            constraintOperatorMap.put("interferenceViolationSum", repairInter);
-//            constraintOperatorMap.put("instrumentOrbitAssingmentViolationSum", repairInstOrb);
+            HashMap<Variation, String> constraintOperatorMap = new HashMap<>();
+            constraintOperatorMap.put(repairMass, "massViolationSum");
+            constraintOperatorMap.put(repairDC, "dcViolationSum");
+            constraintOperatorMap.put(repairPE, "packingEfficiencyViolationSum");
+            constraintOperatorMap.put(repairSynergy, "synergyViolationSum");
+            constraintOperatorMap.put(repairInter, "interferenceViolationSum");
+            constraintOperatorMap.put(repairInstOrb, "instrumentOrbitAssingmentViolationSum");
+
+            //initialize problem
+            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
+
+            //initialize population structure for algorithm
+            Population population = new Population();
+            KnowledgeStochasticRanking ksr = new KnowledgeStochasticRanking(constraintOperatorMap.size(), constraintOperatorMap.values());
+            EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, ksr);
+            EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epskcc);
 
             switch (mode) {
                 case 1: //Use epsilonMOEA Assignment
@@ -210,7 +210,7 @@ public class RBSAEOSSSMAP {
 //                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
 
                     initialization = new RandomInitialization(problem, popSize);
-                    ChainedComparator comp = new ChainedComparator(kcc, new ParetoObjectiveComparator());
+                    ChainedComparator comp = new ChainedComparator(ksr, new ParetoObjectiveComparator());
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                     break;
@@ -235,7 +235,9 @@ public class RBSAEOSSSMAP {
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, heuristics);
 
                         /////////
-//                        selector = new AdaptiveConstraintSelection(rko, new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), rko, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        selector = new AdaptiveConstraintSelection(ksr, constraintOperatorMap,
+                                new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
+                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
                         creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
                         initialization = new RandomInitialization(problem, popSize);

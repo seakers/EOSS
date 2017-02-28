@@ -19,16 +19,16 @@ public class EpsilonKnoweldgeConstraintComparator extends EpsilonBoxDominanceCom
     /**
      * The aggregate constraint comparator.
      */
-    private final KnowledgeConstraintComparator comparator;
+    private final KnowledgeStochasticRanking comparator;
 
-    public EpsilonKnoweldgeConstraintComparator(double epsilon, KnowledgeConstraintComparator kcc) {
+    public EpsilonKnoweldgeConstraintComparator(double epsilon, KnowledgeStochasticRanking ksr) {
         super(epsilon);
-        this.comparator = kcc;
+        this.comparator = ksr;
     }
 
-    public EpsilonKnoweldgeConstraintComparator(double[] epsilons, KnowledgeConstraintComparator kcc) {
+    public EpsilonKnoweldgeConstraintComparator(double[] epsilons, KnowledgeStochasticRanking ksr) {
         super(epsilons);
-        this.comparator = kcc;
+        this.comparator = ksr;
     }
 
     @Override

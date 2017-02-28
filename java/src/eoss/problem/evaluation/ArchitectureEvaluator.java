@@ -312,7 +312,6 @@ public class ArchitectureEvaluator {
         
         //compute launch cost and set values into facts
         HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(missions);
-        ArrayList<Fact> facts = qb.makeQuery("MANIFEST::Mission");
         for (Collection<Spacecraft> group : lvSelection.keySet()) {
             LaunchVehicle lv = lvSelection.get(group);
             for (Mission m : missions) {
@@ -320,12 +319,11 @@ public class ArchitectureEvaluator {
                 for (Spacecraft s : group) {
                     if (m.getSpacecraft().containsKey(s)) {
                         m.getLaunchVehicles().put(group, lv);
-                        cost += CostModel.lifeCycleCost(s, launchCost, launchCost, 1);
+                        cost += CostModel.lifeCycleCost(s, m.getLifetime(), launchCost, 1);
                     }
                 }
             }
         }
-        
         return cost;
     }
 

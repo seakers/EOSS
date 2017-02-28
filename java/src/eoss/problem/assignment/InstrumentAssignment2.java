@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jess.Fact;
 import jess.JessException;
 import org.moeaframework.core.Solution;
 import org.moeaframework.problem.AbstractProblem;
@@ -183,89 +182,81 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         int synergyViolationSum = 0;
         int interferenceViolationSum = 0;
 
-        Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
-        for (Fact fact : missionFacts) {
-            String name = fact.getSlotValue("Name").toString().split(":")[0];
-            Mission mission = arch.getMission(name);
-            //assumes each mission only has one spacecraft
-            Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
-            for (String slot : auxFacts) {
-                s.setProperty(slot, fact.getSlotValue(slot).toString());
-            }
+        for (Mission mission : arch.getMissions()) {
+            for (Spacecraft s : mission.getSpacecraft().keySet()) {
+                dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
+                massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
 
-            dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
-
-            massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
-
-            //compute the packing efficiency
-            for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
-                if (group.contains(s)) {
-                    double totalVolume = 0;
-                    for (Spacecraft sTemp : group) {
-                        double volume = 1.0;
-                        for (double d : sTemp.getDimensions()) {
-                            volume *= d;
+                //compute the packing efficiency
+                for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
+                    if (group.contains(s)) {
+                        double totalVolume = 0;
+                        for (Spacecraft sTemp : group) {
+                            double volume = 1.0;
+                            for (double d : sTemp.getDimensions()) {
+                                volume *= d;
+                            }
+                            totalVolume += volume;
                         }
-                        totalVolume += volume;
+                        double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                        s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
+                        //divide any violation by the size of the launch group to not double count violations
+                        packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
                     }
-                    double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
-                    s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
-                    //divide any violation by the size of the launch group to not double count violations
-                    packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
                 }
-            }
 
-            //check poor assignment of instrument to orbit
-            Orbit o = mission.getSpacecraft().get(s);
-            if (!o.getRAAN().equals("PM")) {
-                for (Instrument inst : s.getPayload()) {
-                    String concept = inst.getProperty("Concept");
-                    if (concept.contains("chemistry")) {
-                        instrumentOrbitAssingmentViolationSum++;
+                //check poor assignment of instrument to orbit
+                Orbit o = mission.getSpacecraft().get(s);
+                if (!o.getRAAN().equals("PM")) {
+                    for (Instrument inst : s.getPayload()) {
+                        String concept = inst.getProperty("Concept");
+                        if (concept.contains("chemistry")) {
+                            instrumentOrbitAssingmentViolationSum++;
+                        }
                     }
                 }
-            }
-            if (o.getRAAN().equals("DD")) {
-                for (Instrument inst : s.getPayload()) {
-                    if (inst.getProperty("Illumination").equals("Passive")) {
-                        instrumentOrbitAssingmentViolationSum++;
+                if (o.getRAAN().equals("DD")) {
+                    for (Instrument inst : s.getPayload()) {
+                        if (inst.getProperty("Illumination").equals("Passive")) {
+                            instrumentOrbitAssingmentViolationSum++;
+                        }
                     }
                 }
-            }
-            if (o.getAltitude() <= 400.) {
-                for (Instrument inst : s.getPayload()) {
-                    if (inst.getProperty("Geometry").equals("slant")) {
-                        instrumentOrbitAssingmentViolationSum++;
+                if (o.getAltitude() <= 400.) {
+                    for (Instrument inst : s.getPayload()) {
+                        if (inst.getProperty("Geometry").equals("slant")) {
+                            instrumentOrbitAssingmentViolationSum++;
+                        }
                     }
                 }
-            }
 
-            //check other spacecraft for missed opportunities to add synergy or remove interferencess
-            for (Instrument inst : s.getPayload()) {
-                //check synergies
-                if (synergyMap.containsKey(inst)) {
-                    for (Instrument instPair : synergyMap.get(inst)) {
-                        if (!s.getPayload().contains(instPair)) {
-                            for (String otherMissionName : arch.getMissionNames()) {
-                                Mission otherMission = arch.getMission(otherMissionName);
-                                for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
-                                    if (otherSpacecraft.getPayload().contains(instPair)) {
-                                        synergyViolationSum++;
+                //check other spacecraft for missed opportunities to add synergy or remove interferencess
+                for (Instrument inst : s.getPayload()) {
+                    //check synergies
+                    if (synergyMap.containsKey(inst)) {
+                        for (Instrument instPair : synergyMap.get(inst)) {
+                            if (!s.getPayload().contains(instPair)) {
+                                for (String otherMissionName : arch.getMissionNames()) {
+                                    Mission otherMission = arch.getMission(otherMissionName);
+                                    for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                        if (otherSpacecraft.getPayload().contains(instPair)) {
+                                            synergyViolationSum++;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                //check interferences
-                if (interferenceMap.containsKey(inst)) {
-                    for (Instrument instPair : interferenceMap.get(inst)) {
-                        if (s.getPayload().contains(instPair)) {
-                            for (String otherMissionName : arch.getMissionNames()) {
-                                Mission otherMission = arch.getMission(otherMissionName);
-                                for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
-                                    if (!otherSpacecraft.getPayload().contains(instPair)) {
-                                        interferenceViolationSum++;
+                    //check interferences
+                    if (interferenceMap.containsKey(inst)) {
+                        for (Instrument instPair : interferenceMap.get(inst)) {
+                            if (s.getPayload().contains(instPair)) {
+                                for (String otherMissionName : arch.getMissionNames()) {
+                                    Mission otherMission = arch.getMission(otherMissionName);
+                                    for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                        if (!otherSpacecraft.getPayload().contains(instPair)) {
+                                            interferenceViolationSum++;
+                                        }
                                     }
                                 }
                             }
@@ -273,13 +264,16 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     }
                 }
             }
+            interferenceViolationSum /= 36.0;
+            synergyViolationSum /= 10.0;
+            interferenceViolationSum /= 10.0;
 
-            double constraint = (1. / 5.) * (dcViolationSum
+            double constraint = (1. / 6.) * (dcViolationSum
                     + massViolationSum
                     + packingEfficiencyViolationSum
-                    + instrumentOrbitAssingmentViolationSum / 36.
-                    + synergyViolationSum / 10.
-                    + interferenceViolationSum / 10.);
+                    + instrumentOrbitAssingmentViolationSum
+                    + synergyViolationSum
+                    + interferenceViolationSum);
             arch.setAttribute("constraint", constraint);
             arch.setAttribute("dcViolationSum", (double) dcViolationSum);
             arch.setAttribute("massViolationSum", (double) massViolationSum);
@@ -287,7 +281,6 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             arch.setAttribute("instrumentOrbitAssingmentViolationSum", (double) instrumentOrbitAssingmentViolationSum);
             arch.setAttribute("synergyViolationSum", (double) synergyViolationSum);
             arch.setAttribute("interferenceViolationSum", (double) interferenceViolationSum);
-
         }
     }
 
