@@ -29,13 +29,16 @@ import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 import eoss.search.InnovizationSearch;
 import eoss.search.InstrumentedSearch;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -48,8 +51,8 @@ import jess.JessException;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
-import jxl.read.biff.BiffException;import knowledge.constraint.AdaptiveConstraintSelection;
-;
+import jxl.read.biff.BiffException;
+import knowledge.constraint.AdaptiveConstraintSelection;
 import knowledge.constraint.EpsilonKnoweldgeConstraintComparator;
 import knowledge.constraint.PopulationConsistency;
 import knowledge.operator.EOSSOperatorCreator;
@@ -100,8 +103,9 @@ public class RBSAEOSSSMAP {
      * initialize.
      *
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         //PATH
         if (args.length == 0) {
@@ -122,6 +126,9 @@ public class RBSAEOSSSMAP {
 
         String path = args[0];
 
+        //record the current class java file to save the parameters for future reference
+        quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"),"java","src","eoss","problem","RBSAEOSSSMAP.java"})),
+                new File(String.join(File.separator,new String[]{path,"result","RBSAEOSSSMAP.java"})));
         int mode = Integer.parseInt(args[1]);
         int numCPU = Integer.parseInt(args[2]);
         int numRuns = Integer.parseInt(args[3]);
@@ -135,7 +142,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 10;
+        int popSize = 100;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -182,7 +189,6 @@ public class RBSAEOSSSMAP {
 //                repairMass, repairDC, repairPE,
 //                repairSynergy, repairInter, repairInstOrb};
 //            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
-
             HashMap<Variation, String> constraintOperatorMap = new HashMap<>();
             constraintOperatorMap.put(repairMass, "massViolationSum");
             constraintOperatorMap.put(repairDC, "dcViolationSum");
@@ -199,6 +205,7 @@ public class RBSAEOSSSMAP {
             KnowledgeStochasticRanking ksr = new KnowledgeStochasticRanking(constraintOperatorMap.size(), constraintOperatorMap.values());
             EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, ksr);
             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epskcc);
+            ChainedComparator comp = new ChainedComparator(ksr, new ParetoObjectiveComparator());
 
             switch (mode) {
                 case 1: //Use epsilonMOEA Assignment
@@ -206,11 +213,9 @@ public class RBSAEOSSSMAP {
                     singlecross = new OnePointCrossover(crossoverProbability);
                     bitFlip = new BitFlip(mutationProbability);
                     intergerMutation = new IntegerUM(mutationProbability);
-                    CompoundVariation var = new CompoundVariation(singlecross, repairSynergy, repairInter, bitFlip, intergerMutation);
-//                    CompoundVariation var = new CompoundVariation(singlecross, rko, bitFlip, intergerMutation);
+                    CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
 
                     initialization = new RandomInitialization(problem, popSize);
-                    ChainedComparator comp = new ChainedComparator(ksr, new ParetoObjectiveComparator());
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                     break;
@@ -379,6 +384,31 @@ public class RBSAEOSSSMAP {
             Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
         } catch (BiffException ex) {
             Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * Creates a copy of this class by reading it and saves it at the specified
+     * path so that it can be referenced back when you need to know what
+     * settings were used for a run
+     *
+     * @param infile the java file to save
+     * @param outfile the location to save the java file
+     * @throws java.io.IOException
+     */
+    public static void quine(File infile, File outfile) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(infile))) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(outfile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    bw.write(line);
+                    bw.newLine();
+                }
+            } catch (IOException ex) {
+                throw ex;
+            }
+        } catch (IOException ex) {
+            throw ex;
         }
     }
 }

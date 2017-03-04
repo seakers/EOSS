@@ -1,5 +1,0 @@
-// (mode,arg,orb,inst)/support/lift
-(0,0,A,4,2,0)(0,0,A,6,4,3)(0,0,A,9,5,3)/0.13247863247863248/4.0// separate3[ACE_CPR, ACE_LID, ACE_ORCA] , separate3[DESD_LID, ACE_CPR, CLAR_ERB] , separate3[HYSP_TIR, DESD_SAR, CLAR_ERB]
-(0,0,A,9,3)(0,0,A,4,2,0)(0,0,A,6,4,3)/0.13247863247863248/4.0// separate2[HYSP_TIR, CLAR_ERB] , separate3[ACE_CPR, ACE_LID, ACE_ORCA] , separate3[DESD_LID, ACE_CPR, CLAR_ERB]
-(0,0,A,6,4)(0,0,A,8,4,2)(0,0,A,9,4,3)/0.12606837606837606/4.0// separate2[DESD_LID, ACE_CPR] , separate3[GACM_SWIR, ACE_CPR, ACE_LID] , separate3[HYSP_TIR, ACE_CPR, CLAR_ERB]
-(0,0,A,6,4)(0,0,A,5,2,0)(0,0,A,8,4,2)/0.13034188034188035/4.0// separate2[DESD_LID, ACE_CPR] , separate3[DESD_SAR, ACE_LID, ACE_ORCA] , separate3[GACM_SWIR, ACE_CPR, ACE_LID]
