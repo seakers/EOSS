@@ -6,7 +6,9 @@
 package knowledge.constraint;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import org.moeaframework.core.ParallelPRNG;
 import org.moeaframework.core.Solution;
@@ -82,7 +84,9 @@ public class KnowledgeStochasticRanking implements DominanceComparator,
         double constraint1 = 0;
         double constraint2 = 0;
         int numApplied = 0;
-        for (String str : probabilities.keySet()) {
+        ArrayList<String> constraints = new ArrayList(probabilities.keySet());
+        Collections.shuffle(constraints);
+        for (String str : constraints) {
             if (numApplied >= numberConstraints) {
                 break;
             }
