@@ -165,15 +165,15 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         double dcViolationSum = 0;
         double massViolationSum = 0;
         double packingEfficiencyViolationSum = 0;
-        int instrumentOrbitAssingmentViolationSum = 0;
-        int synergyViolationSum = 0;
-        int interferenceViolationSum = 0;
+        double instrumentOrbitAssingmentViolationSum = 0;
+        double synergyViolationSum = 0;
+        double interferenceViolationSum = 0;
 
         int numSpacecraft = 0;
         for (Mission mission : arch.getMissions()) {
             for (Spacecraft s : mission.getSpacecraft().keySet()) {
                 numSpacecraft++;
-                
+
                 dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
                 massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
 
@@ -254,28 +254,28 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     }
                 }
             }
-            
-            //normalize the violations
-            dcViolationSum /= numSpacecraft;
-            massViolationSum /= numSpacecraft;
-            packingEfficiencyViolationSum /= numSpacecraft;
-            interferenceViolationSum /= (36.0 * numSpacecraft);
-            synergyViolationSum /= (10.0 * numSpacecraft);
-            interferenceViolationSum /= (10.0 * numSpacecraft);
-
-            double constraint = (dcViolationSum + massViolationSum
-                    + packingEfficiencyViolationSum
-                    + instrumentOrbitAssingmentViolationSum
-                    + synergyViolationSum + interferenceViolationSum)
-                    / (6.);
-            arch.setAttribute("constraint", constraint);
-            arch.setAttribute("dcViolationSum", (double) dcViolationSum);
-            arch.setAttribute("massViolationSum", (double) massViolationSum);
-            arch.setAttribute("packingEfficiencyViolationSum", (double) packingEfficiencyViolationSum);
-            arch.setAttribute("instrumentOrbitAssingmentViolationSum", (double) instrumentOrbitAssingmentViolationSum);
-            arch.setAttribute("synergyViolationSum", (double) synergyViolationSum);
-            arch.setAttribute("interferenceViolationSum", (double) interferenceViolationSum);
         }
+
+        //normalize the violations
+        dcViolationSum /= numSpacecraft;
+        massViolationSum /= numSpacecraft;
+        packingEfficiencyViolationSum /= numSpacecraft;
+        instrumentOrbitAssingmentViolationSum /= (36.0 * numSpacecraft);
+        synergyViolationSum /= (10.0 * numSpacecraft);
+        interferenceViolationSum /= (10.0 * numSpacecraft);
+
+        double constraint = (dcViolationSum + massViolationSum
+                + packingEfficiencyViolationSum
+                + instrumentOrbitAssingmentViolationSum
+                + synergyViolationSum + interferenceViolationSum)
+                / (6.);
+        arch.setAttribute("constraint", constraint);
+        arch.setAttribute("dcViolationSum", dcViolationSum);
+        arch.setAttribute("massViolationSum", massViolationSum);
+        arch.setAttribute("packingEfficiencyViolationSum", packingEfficiencyViolationSum);
+        arch.setAttribute("instrumentOrbitAssingmentViolationSum", instrumentOrbitAssingmentViolationSum);
+        arch.setAttribute("synergyViolationSum", synergyViolationSum);
+        arch.setAttribute("interferenceViolationSum", interferenceViolationSum);
     }
 
     @Override
