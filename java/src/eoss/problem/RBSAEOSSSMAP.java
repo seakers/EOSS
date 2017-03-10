@@ -154,9 +154,7 @@ public class RBSAEOSSSMAP {
         Initialization initialization;
 
         //setup for epsilon MOEA
-        DominanceComparator comparator = new ParetoDominanceComparator();
         double[] epsilonDouble = new double[]{0.001, 0.001};
-        final TournamentSelection selection = new TournamentSelection(2, comparator);
 
         //setup for innovization
         int epochLength = 1000; //for learning rate
@@ -199,13 +197,15 @@ public class RBSAEOSSSMAP {
 
             //initialize problem
             Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
+            initialization = new RandomInitialization(problem, popSize);
 
             //initialize population structure for algorithm
             Population population = new Population();
             KnowledgeStochasticRanking ksr = new KnowledgeStochasticRanking(constraintOperatorMap.size(), constraintOperatorMap.values());
             EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, ksr);
             EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epskcc);
-            ChainedComparator comp = new ChainedComparator(ksr, new ParetoObjectiveComparator());
+            ChainedComparator comp = new ChainedComparator(new ParetoObjectiveComparator());
+            TournamentSelection selection = new TournamentSelection(2, comp);
 
             switch (mode) {
                 case 1: //Use epsilonMOEA Assignment
@@ -215,7 +215,6 @@ public class RBSAEOSSSMAP {
                     intergerMutation = new IntegerUM(mutationProbability);
                     CompoundVariation var = new CompoundVariation(singlecross, bitFlip, intergerMutation);
 
-                    initialization = new RandomInitialization(problem, popSize);
                     Algorithm eMOEA = new EpsilonMOEA(problem, population, archive, selection, var, initialization);
                     ecs.submit(new InstrumentedSearch(eMOEA, properties, path + File.separator + "result", "emoea" + String.valueOf(i)));
                     break;
@@ -244,8 +243,6 @@ public class RBSAEOSSSMAP {
                                 new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
                                         new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
                         creditAssignment = new PopulationConsistency(constraintOperatorMap);
-
-                        initialization = new RandomInitialization(problem, popSize);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
@@ -279,8 +276,6 @@ public class RBSAEOSSSMAP {
 
                         //all other properties use default parameters
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators2);
-
-                        initialization = new RandomInitialization(problem, popSize);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);
