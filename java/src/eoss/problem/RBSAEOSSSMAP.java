@@ -52,11 +52,18 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
-import knowledge.constraint.AdaptiveConstraintSelection;
+import knowledge.constraint.AdaptiveConstraintHandler;
+import knowledge.constraint.AdaptiveConstraintSelector;
 import knowledge.constraint.EpsilonKnoweldgeConstraintComparator;
 import knowledge.constraint.PopulationConsistency;
 import knowledge.operator.EOSSOperatorCreator;
 import knowledge.constraint.KnowledgeStochasticRanking;
+import knowledge.constraint.operator.DutyCycleConstraint;
+import knowledge.constraint.operator.InstrumentOrbitConstraint;
+import knowledge.constraint.operator.InterferenceConstraint;
+import knowledge.constraint.operator.MassConstraint;
+import knowledge.constraint.operator.PackingEfficiencyConstraint;
+import knowledge.constraint.operator.SynergyConstraint;
 import knowledge.operator.RepairDutyCycle;
 import knowledge.operator.RepairInstrumentOrbit;
 import knowledge.operator.RepairInterference;
@@ -70,7 +77,6 @@ import org.moeaframework.algorithm.EpsilonMOEA;
 import org.moeaframework.core.EpsilonBoxDominanceArchive;
 import org.moeaframework.core.Population;
 import org.moeaframework.core.comparator.ChainedComparator;
-import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.comparator.ParetoObjectiveComparator;
 import org.moeaframework.core.operator.CompoundVariation;
 import org.moeaframework.core.operator.RandomInitialization;
@@ -188,12 +194,12 @@ public class RBSAEOSSSMAP {
 //                repairSynergy, repairInter, repairInstOrb};
 //            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
             HashMap<Variation, String> constraintOperatorMap = new HashMap<>();
-            constraintOperatorMap.put(repairMass, "massViolationSum");
-            constraintOperatorMap.put(repairDC, "dcViolationSum");
-            constraintOperatorMap.put(repairPE, "packingEfficiencyViolationSum");
-            constraintOperatorMap.put(repairSynergy, "synergyViolationSum");
-            constraintOperatorMap.put(repairInter, "interferenceViolationSum");
-            constraintOperatorMap.put(repairInstOrb, "instrumentOrbitAssingmentViolationSum");
+            constraintOperatorMap.put(new MassConstraint(), "massViolationSum");
+            constraintOperatorMap.put(new DutyCycleConstraint(), "dcViolationSum");
+            constraintOperatorMap.put(new PackingEfficiencyConstraint(), "packingEfficiencyViolationSum");
+            constraintOperatorMap.put(new SynergyConstraint(), "synergyViolationSum");
+            constraintOperatorMap.put(new InterferenceConstraint(), "interferenceViolationSum");
+            constraintOperatorMap.put(new InstrumentOrbitConstraint(), "instrumentOrbitAssingmentViolationSum");
 
             //initialize problem
             Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
@@ -238,11 +244,14 @@ public class RBSAEOSSSMAP {
                         //all other properties use default parameters
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators);
 
+                        ////////
+                        selector = new AdaptiveConstraintSelector(ksr, constraintOperatorMap,0.8, 0.8, 0.03);
+                        
                         /////////
-                        selector = new AdaptiveConstraintSelection(ksr, constraintOperatorMap,
-                                new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
-                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
+//                        selector = new AdaptiveConstraintHandler(ksr, constraintOperatorMap,
+//                                new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
+//                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+//                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);

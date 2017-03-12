@@ -15,7 +15,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public class AdaptiveConstraintSelection extends AbstractOperatorSelector {
+public class AdaptiveConstraintHandler extends AbstractOperatorSelector {
 
     private final KnowledgeStochasticRanking ksr;
 
@@ -30,7 +30,7 @@ public class AdaptiveConstraintSelection extends AbstractOperatorSelector {
      */
     private final HashMap<Variation, String> operatorConstraintMap;
 
-    public AdaptiveConstraintSelection(KnowledgeStochasticRanking ksr, HashMap<Variation, String> operatorConstraintMap, Variation var) {
+    public AdaptiveConstraintHandler(KnowledgeStochasticRanking ksr, HashMap<Variation, String> operatorConstraintMap, Variation var) {
         super(Arrays.asList(new Variation[]{var}));
         this.var = var;
         this.ksr = ksr;

@@ -37,7 +37,7 @@ public class PopulationConsistency extends AbstractPopulationContribution {
      */
     public PopulationConsistency(HashMap<Variation, String> operatorConstraintMap) {
         super();
-        this.operatesOn = CreditDefinedOn.POPULATION;
+        this.operatesOn = CreditDefinedOn.ARCHIVE;
         this.fitType = CreditFitnessFunctionType.Do;
         this.inputType = CreditFunctionInputType.CS;
         this.operatorConstraintMap = operatorConstraintMap;
@@ -45,7 +45,7 @@ public class PopulationConsistency extends AbstractPopulationContribution {
 
     @Override
     public String toString() {
-        return "AdapativeConstraint";
+        return "ArchiveConsistency";
     }
 
     /**
