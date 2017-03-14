@@ -21,7 +21,7 @@ import org.moeaframework.core.Variation;
  *
  * @author Nozomi
  */
-public class PopulationConsistency extends AbstractPopulationContribution {
+public class ArchiveConsistency extends AbstractPopulationContribution {
 
     /**
      * Maps which operators are responsible for each constraint
@@ -35,7 +35,7 @@ public class PopulationConsistency extends AbstractPopulationContribution {
      *
      * @param operatorConstraintMap
      */
-    public PopulationConsistency(HashMap<Variation, String> operatorConstraintMap) {
+    public ArchiveConsistency(HashMap<Variation, String> operatorConstraintMap) {
         super();
         this.operatesOn = CreditDefinedOn.ARCHIVE;
         this.fitType = CreditFitnessFunctionType.Do;
