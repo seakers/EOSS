@@ -31,6 +31,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.math3.exception.MathArithmeticException;
 import org.xml.sax.SAXException;
 
 /**
@@ -46,23 +47,37 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
 
     private final ArchitectureEvaluator eval;
 
+    private final double dcThreshold = 0.5;
+
+    private final double massThreshold = 3000.0; //[kg]
+
+    private final double packingEffThreshold = 0.4; //[kg]
+
     /**
-     * the slot names to record from the MANIFEST::MISSION facts
+     * synergistic instrument pairs
      */
-    private final String[] auxFacts = new String[]{"ADCS-mass#",
-        "avionics-mass#", "delta-V", "delta-V-deorbit", "depth-of-discharge",
-        "EPS-mass#", "fraction-sunlight", "moments-of-inertia",
-        "payload-data-rate#", "payload-dimensions#", "payload-mass#",
-        "payload-peak-power#", "payload-power#", "propellant-ADCS",
-        "propellant-injection", "propellant-mass-ADCS", "sat-data-rate-per-orbit#",
-        "satellite-BOL-power#", "satellite-dimensions", "satellite-dry-mass",
-        "satellite-launch-mass", "satellite-wet-mass", "solar-array-area",
-        "solar-array-mass", "structure-mass#", "thermal-mass#"};
+    private final HashMap<Instrument, Instrument[]> synergyMap;
+
+    /**
+     * Interfering instrument pairs
+     */
+    private final HashMap<Instrument, Instrument[]> interferenceMap;
 
     /**
      * Solution database to reuse the computed values;
      */
     private final HashMap<Solution, double[]> solutionDB;
+
+    /**
+     * Constructor for the problem. Assumes that only one satellite can occupy
+     * each candidate orbit
+     *
+     * @param path
+     * @param reqMode
+     */
+    public InstrumentAssignment(String path, RequirementMode reqMode) {
+        this(path, reqMode, new int[]{1}, true, null);
+    }
 
     /**
      *
@@ -72,7 +87,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode,  int[] altnertivesForNumberOfSatellites, boolean withSynergy) {
+    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean withSynergy) {
         this(path, reqMode, altnertivesForNumberOfSatellites, withSynergy, null);
     }
 
@@ -84,23 +99,66 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param withSynergy determines whether or not to evaluate the solutions
      * with synergy rules.
      */
-    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites,  boolean withSynergy, File database) {
+    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean withSynergy, File database) {
         //2 decisions for Choosing and Assigning Patterns
         super(2, 2);
 
-        this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
         ValueTree template = null;
         try {
             template = ValueAggregationBuilder.build(new File(path + File.separator + "config" + File.separator + "panels.xml"));
         } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InstrumentAssignment2.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.eval = new ArchitectureEvaluator(path, reqMode, withSynergy, template);
-        
+
+        //synergistic instrument pairs
+        HashMap<String, String[]> synergyNameMap = new HashMap();
+        synergyNameMap.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
+        synergyNameMap.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
+        synergyNameMap.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});
+        synergyNameMap.put("HYSP_TIR", new String[]{"ACE_ORCA", "POSTEPS_IRS"});
+        synergyNameMap.put("ACE_POL", new String[]{"ACE_ORCA", "DESD_LID"});
+        synergyNameMap.put("ACE_LID", new String[]{"ACE_ORCA", "CNES_KaRIN", "DESD_LID", "GACM_VIS"});
+        synergyNameMap.put("POSTEPS_IRS", new String[]{"HYSP_TIR"});
+        synergyNameMap.put("CNES_KaRIN", new String[]{"ACE_LID"});
+
+        //get names into instrument objects
+        this.synergyMap = new HashMap<>();
+        for (String instNameKey : synergyNameMap.keySet()) {
+            Instrument[] instArray = new Instrument[synergyNameMap.get(instNameKey).length];
+            int count = 0;
+            for (String instNameValue : synergyNameMap.get(instNameKey)) {
+                instArray[count] = EOSSDatabase.getInstrument(instNameValue);
+                count++;
+            }
+            this.synergyMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
+        }
+
+        HashMap<String, String[]> interferenceNameMap = new HashMap();
+        interferenceNameMap.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
+        interferenceNameMap.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
+        interferenceNameMap.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});
+        interferenceNameMap.put("CLAR_ERB", new String[]{"ACE_LID", "ACE_CPR"});
+        interferenceNameMap.put("CNES_KaRIN", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("ACE_POL", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("ACE_ORCA", new String[]{"ACE_CPR"});
+        interferenceNameMap.put("GACM_SWIR", new String[]{"ACE_LID", "ACE_CPR"});
+        //get names into instrument objects
+        this.interferenceMap = new HashMap<>();
+        for (String instNameKey : interferenceNameMap.keySet()) {
+            Instrument[] instArray = new Instrument[interferenceNameMap.get(instNameKey).length];
+            int count = 0;
+            for (String instNameValue : interferenceNameMap.get(instNameKey)) {
+                instArray[count] = EOSSDatabase.getInstrument(instNameValue);
+                count++;
+            }
+            this.interferenceMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
+        }
+
         //load database of solution if requested.
         solutionDB = new HashMap<>();
         if (database != null) {
@@ -113,24 +171,8 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
                 Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-    }
 
-    /**
-     * Gets the instruments for this problem
-     *
-     * @return the instruments for this problem
-     */
-    public Collection<Instrument> getInstruments() {
-        return EOSSDatabase.getInstruments();
-    }
-
-    /**
-     * Gets the orbits for this problem
-     *
-     * @return the orbits for this problem
-     */
-    public Collection<Orbit> getOrbits() {
-        return EOSSDatabase.getOrbits();
+        this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
     }
 
     @Override
@@ -200,22 +242,132 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     }
 
     /**
-     * record auxiliary information
+     * record auxiliary information and check constraints
      *
      * @param arch
      * @throws JessException
      */
     private void getAuxFacts(InstrumentAssignmentArchitecture arch) throws JessException {
-        Collection<Fact> missionFacts = eval.makeQuery("MANIFEST::Mission");
-        for (Fact fact : missionFacts) {
-            String name = fact.getSlotValue("Name").toString();
-            Mission mission = arch.getMission(name);
-            //assumes each mission only has one spacecraft
-            Spacecraft s = mission.getSpacecraft().keySet().iterator().next();
-            for (String slot : auxFacts) {
-                s.setProperty(slot, fact.getSlotValue(slot).toString());
+        double dcViolationSum = 0;
+        double massViolationSum = 0;
+        double packingEfficiencyViolationSum = 0;
+        double instrumentOrbitAssignmentViolationSum = 0;
+        double synergyViolationSum = 0;
+        double interferenceViolationSum = 0;
+
+        int numSpacecraft = 0;
+        for (Mission mission : arch.getMissions()) {
+            for (Spacecraft s : mission.getSpacecraft().keySet()) {
+                numSpacecraft++;
+
+                Orbit injectionOrbit = mission.getSpacecraft().get(s);
+
+                dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
+                massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
+
+                //compute the packing efficiency
+                for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
+                    if (group.contains(s)) {
+                        double totalVolume = 0;
+                        double totalMass = 0;
+                        for (Spacecraft sTemp : group) {
+                            double volume = 1.0;
+                            for (double d : sTemp.getDimensions()) {
+                                volume *= d;
+                            }
+                            totalVolume += volume;
+                            totalMass += sTemp.getLaunchMass();
+                        }
+                        double volumeEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                        double massEfficiency = totalMass / mission.getLaunchVehicles().get(group).getMassBudget(injectionOrbit);
+                        double packingEfficiency = Math.max(volumeEfficiency, massEfficiency);
+                        s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
+                        //divide any violation by the size of the launch group to not double count violations
+                        packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
+                    }
+                }
+
+                //check poor assignment of instrument to orbit
+                Orbit o = mission.getSpacecraft().get(s);
+                if (!o.getRAAN().equals("PM")) {
+                    for (Instrument inst : s.getPayload()) {
+                        String concept = inst.getProperty("Concept");
+                        if (concept.contains("chemistry")) {
+                            instrumentOrbitAssignmentViolationSum++;
+                        }
+                    }
+                }
+                if (o.getRAAN().equals("DD")) {
+                    for (Instrument inst : s.getPayload()) {
+                        if (inst.getProperty("Illumination").equals("Passive")) {
+                            instrumentOrbitAssignmentViolationSum++;
+                        }
+                    }
+                }
+                if (o.getAltitude() <= 400.) {
+                    for (Instrument inst : s.getPayload()) {
+                        if (inst.getProperty("Geometry").equals("slant")) {
+                            instrumentOrbitAssignmentViolationSum++;
+                        }
+                    }
+                }
+
+                //check other spacecraft for missed opportunities to add synergy or remove interferencess
+                for (Instrument inst : s.getPayload()) {
+                    //check synergies
+                    if (synergyMap.containsKey(inst)) {
+                        for (Instrument instPair : synergyMap.get(inst)) {
+                            if (!s.getPayload().contains(instPair)) {
+                                for (String otherMissionName : arch.getMissionNames()) {
+                                    Mission otherMission = arch.getMission(otherMissionName);
+                                    for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                        if (otherSpacecraft.getPayload().contains(instPair)) {
+                                            synergyViolationSum++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //check interferences
+                    if (interferenceMap.containsKey(inst)) {
+                        for (Instrument instPair : interferenceMap.get(inst)) {
+                            if (s.getPayload().contains(instPair)) {
+                                for (String otherMissionName : arch.getMissionNames()) {
+                                    Mission otherMission = arch.getMission(otherMissionName);
+                                    for (Spacecraft otherSpacecraft : otherMission.getSpacecraft().keySet()) {
+                                        if (!otherSpacecraft.getPayload().contains(instPair)) {
+                                            interferenceViolationSum++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        //normalize the violations
+        dcViolationSum /= numSpacecraft;
+        massViolationSum /= numSpacecraft;
+        packingEfficiencyViolationSum /= numSpacecraft;
+        instrumentOrbitAssignmentViolationSum /= (36.0 * numSpacecraft);
+        synergyViolationSum /= (10.0 * numSpacecraft);
+        interferenceViolationSum /= (10.0 * numSpacecraft);
+
+        double constraint = (dcViolationSum + massViolationSum
+                + packingEfficiencyViolationSum
+                + instrumentOrbitAssignmentViolationSum
+                + synergyViolationSum + interferenceViolationSum)
+                / (6.);
+        arch.setAttribute("constraint", constraint);
+        arch.setAttribute("dcViolationSum", dcViolationSum);
+        arch.setAttribute("massViolationSum", massViolationSum);
+        arch.setAttribute("packingEfficiencyViolationSum", packingEfficiencyViolationSum);
+        arch.setAttribute("instrumentOrbitAssignmentViolationSum", instrumentOrbitAssignmentViolationSum);
+        arch.setAttribute("synergyViolationSum", synergyViolationSum);
+        arch.setAttribute("interferenceViolationSum", interferenceViolationSum);
     }
 
     /**
@@ -240,6 +392,5 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture(altnertivesForNumberOfSatellites, EOSSDatabase.getNumberOfInstruments(), EOSSDatabase.getNumberOfOrbits(), 2);
     }
-
 
 }

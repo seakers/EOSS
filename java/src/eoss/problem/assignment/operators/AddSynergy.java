@@ -18,7 +18,6 @@ import java.util.TreeSet;
 import org.moeaframework.core.ParallelPRNG;
 import rbsa.eoss.Interaction;
 import rbsa.eoss.NDSM;
-import rbsa.eoss.Nto1pair;
 
 /**
  * This domain specific heuristic see if there is a missed opportunity for

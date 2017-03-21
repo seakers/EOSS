@@ -18,6 +18,9 @@ import eoss.problem.assignment.InstrumentAssignment2;
 import eoss.problem.evaluation.RequirementMode;
 import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
+
+import knowledge.constraint.*;
+import knowledge.constraint.operator.AOSConstraintConsistency;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.Initialization;
 import org.moeaframework.core.Problem;
@@ -38,6 +41,7 @@ import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -51,18 +55,7 @@ import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
-import knowledge.constraint.AdaptiveConstraintHandler;
-import knowledge.constraint.AdaptiveConstraintSelector;
-import knowledge.constraint.EpsilonKnoweldgeConstraintComparator;
-import knowledge.constraint.ArchiveConsistency;
 import knowledge.operator.EOSSOperatorCreator;
-import knowledge.constraint.KnowledgeStochasticRanking;
-import knowledge.constraint.operator.DutyCycleConstraint;
-import knowledge.constraint.operator.InstrumentOrbitConstraint;
-import knowledge.constraint.operator.InterferenceConstraint;
-import knowledge.constraint.operator.MassConstraint;
-import knowledge.constraint.operator.PackingEfficiencyConstraint;
-import knowledge.constraint.operator.SynergyConstraint;
 import knowledge.operator.RepairDutyCycle;
 import knowledge.operator.RepairInstrumentOrbit;
 import knowledge.operator.RepairInterference;
@@ -192,13 +185,16 @@ public class RBSAEOSSSMAP {
 //                repairMass, repairDC, repairPE,
 //                repairSynergy, repairInter, repairInstOrb};
 //            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
+
             HashMap<Variation, String> constraintOperatorMap = new HashMap<>();
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new MassConstraint()), "massViolationSum");
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new DutyCycleConstraint()), "dcViolationSum");
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new PackingEfficiencyConstraint()), "packingEfficiencyViolationSum");
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new SynergyConstraint()), "synergyViolationSum");
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new InterferenceConstraint()), "interferenceViolationSum");
-            constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability), new InstrumentOrbitConstraint()), "instrumentOrbitAssingmentViolationSum");
+            constraintOperatorMap.put(repairMass, "massViolationSum");
+            constraintOperatorMap.put(repairDC, "dcViolationSum");
+            constraintOperatorMap.put(repairPE, "packingEfficiencyViolationSum");
+            constraintOperatorMap.put(repairSynergy, "synergyViolationSum");
+            constraintOperatorMap.put(repairInter, "interferenceViolationSum");
+            constraintOperatorMap.put(repairInstOrb, "instrumentOrbitAssignmentViolationSum");
+
+            HashSet<String> constraints = new HashSet(constraintOperatorMap.values());
 
             //initialize problem
             Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
@@ -208,8 +204,8 @@ public class RBSAEOSSSMAP {
             Population population = new Population();
             KnowledgeStochasticRanking ksr = new KnowledgeStochasticRanking(constraintOperatorMap.size(), constraintOperatorMap.values());
             EpsilonKnoweldgeConstraintComparator epskcc = new EpsilonKnoweldgeConstraintComparator(epsilonDouble, ksr);
-            EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epskcc);
-            ChainedComparator comp = new ChainedComparator(ksr, new ParetoObjectiveComparator());
+            EpsilonBoxDominanceArchive archive = new EpsilonBoxDominanceArchive(epsilonDouble);
+            ChainedComparator comp = new ChainedComparator(new ParetoObjectiveComparator());
             TournamentSelection selection = new TournamentSelection(2, comp);
 
             switch (mode) {
@@ -231,12 +227,12 @@ public class RBSAEOSSSMAP {
 
                         //add domain-independent heuristics
                         operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairMass, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairDC, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairPE, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairSynergy, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInter, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
-                        operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), repairInstOrb, new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
+                        operators.add(repairMass);
+                        operators.add(repairDC);
+                        operators.add(repairPE);
+                        operators.add(repairSynergy);
+                        operators.add(repairInter);
+                        operators.add(repairInstOrb);
 
                         properties.setDouble("pmin", 0.03);
 
@@ -246,14 +242,18 @@ public class RBSAEOSSSMAP {
                         ////////
                         constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)), "none");
                         selector = new AdaptiveConstraintSelector(ksr, constraintOperatorMap,0.8, 0.8, 0.03);
-                        
+
+                        //selector for combined
+                        ConsistencyTracker consistencyPopulation = new ConsistencyTracker(population, constraints);
+                        selector = new AOSConstraintConsistency(consistencyPopulation, constraintOperatorMap, operators, 0.8, 0.8, 0.03);
+
                         /////////
 //                        selector = new AdaptiveConstraintHandler(ksr, constraintOperatorMap,
 //                                new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
 //                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
 //                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
-                        AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
+                        AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, consistencyPopulation, archive, selection,
                                 initialization, selector, creditAssignment, comp);
                         hemoea.setName("constraint_adaptive");
                         ecs.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i)));
@@ -314,7 +314,7 @@ public class RBSAEOSSSMAP {
     }
 
     public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode) {
-        return new InstrumentAssignment(path, mode, ArchitectureEvaluatorParams.altnertivesForNumberOfSatellites, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+        return new InstrumentAssignment(path, mode, new int[]{1}, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
     }
 
     public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode) {

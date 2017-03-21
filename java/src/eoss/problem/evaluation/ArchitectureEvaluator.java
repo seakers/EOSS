@@ -324,6 +324,7 @@ public class ArchitectureEvaluator {
                 }
             }
         }
+        
         return cost;
     }
 

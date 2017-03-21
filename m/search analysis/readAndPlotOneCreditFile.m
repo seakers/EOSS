@@ -5,8 +5,8 @@ function [ops, credits] = readAndPlotOneCreditFile()
 %operator
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/IDETC 2017/';
-respath = strcat(path,'emoea_operator_aos');
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
+respath = strcat(path,'emoea_operator_aos_checkChange');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -82,6 +82,7 @@ end
     [0.6350    0.0780    0.1840]};
 
 figure(1)
+cla
 handles = [];
 for i=1:numOps
     X = [1:nepochs,fliplr(1:nepochs)];
@@ -89,7 +90,7 @@ for i=1:numOps
     mean_cred = mean(squeeze(all_epoch_credit(i,:,:)),2);
     Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
     Y(Y<0) = 0; %correct for negative values
-    fill(X,Y,colors{i},'EdgeColor','none');
+%     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
     handles = [handles plot(1:nepochs,mean(squeeze(all_epoch_credit(i,:,:)),2),'Color',colors{i}, 'LineWidth',2)];
@@ -101,6 +102,7 @@ ylabel('Credit earned')
 legend(handles, ops);
 
 figure(2)
+cla
 handles = [];
 %normalize the selection to make it a probability
 concat_select = zeros(nepochs, length(files) * numOps);
@@ -118,7 +120,7 @@ for i=1:numOps
     Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
     Y(Y<0) = 0; %correct for negative values
     Y(Y>1) = 1; %correct for >1 values
-    fill(X,Y,colors{i},'EdgeColor','none');
+%     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
     handles = [handles, plot(2:nepochs,mean(all_epoch_select_norm,2),'Color',colors{i}, 'LineWidth',2)];

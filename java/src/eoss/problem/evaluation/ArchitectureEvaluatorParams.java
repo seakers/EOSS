@@ -69,9 +69,6 @@ public class ArchitectureEvaluatorParams {
     public static String launch_vehicle_selection_rules_clp;
     public static String adhoc_rules_clp;
 
-    // Instruments and orbits
-    public static int[] altnertivesForNumberOfSatellites = {1};
-
     // Results
     public static String path_save_results;
 

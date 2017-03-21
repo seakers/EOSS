@@ -358,6 +358,9 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
             for(Integer instIndex : getInstrumentsInSpacecraft(spacecraftIndex)){
                 payload.add(EOSSDatabase.getInstrument(instIndex));
             }
+            if(payload.isEmpty()){
+                continue;
+            }
             String missionName = combineTag + spacecraftIndex;
             map.put(new Spacecraft(missionName + "_0", payload),getOrbit(spacecraftIndex));
             Mission miss = new Mission.Builder(missionName, map).build();

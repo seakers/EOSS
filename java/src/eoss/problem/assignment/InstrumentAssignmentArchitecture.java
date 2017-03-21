@@ -351,6 +351,14 @@ public class InstrumentAssignmentArchitecture extends Architecture {
     }
 
     /**
+     * Gets the missions within this architecture
+     * @return the missions within this architecture
+     */
+    public Collection<Mission> getMissions(){
+        return missions.values();
+    }
+    
+    /**
      * Sets the mission field represented by this architecture. Resets any
      * missions fields that are computed (e.g. mass, power).
      */

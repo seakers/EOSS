@@ -4,29 +4,29 @@
 % path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric\result\IDETC2017';
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/IDETC 2017';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper';
 [nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline'),'','');
 
 nexperiments = 7;
 hv = zeros(nexperiments,size(fHV,1),30);
 hv(1,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_static'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos'),'','');
 hv(2,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_random'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_cpd_pop_archive'),'','');
 hv(3,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive'),'','');
 hv(4,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_cpd'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
 hv(5,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_disjunction'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_acs_pop_archive'),'','');
 hv(6,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_adaptive_archive'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_AllChange'),'','');
 hv(7,:,:) = fHV;
 
 [dataPoints, ~] = size(fHV);
@@ -58,7 +58,7 @@ end
     [0.4660    0.6740    0.1880]
     [0.3010    0.7450    0.9330]
     [0.6350    0.0780    0.1840]};
-%mu_norm =  mean(squeeze(hv(1,:,:)),2);
+% mu_norm =  mean(squeeze(hv(1,:,:)),2);
 mu_norm = zeros(size(hv,2),1);
 
 figure(1)
@@ -90,7 +90,8 @@ axis([0,5000,0,0.8])
 hold off
 xlabel('NFE')
 ylabel('HV')
-legend(handles, 'O-Rand', 'O-AOS', 'C-CPD','C-DNF','C-ACH','Location','SouthEast')
+legend(handles, 'O-AOS', 'C-CPD','C-DNF','C-ACH', 'C-ACS', 'O-AOS_noX','Location','SouthEast')
+% legend(handles, 'O-Rand', 'O-AOS', 'C-CPD','C-DNF','C-ACH','Location','SouthEast')
 set(gca,'FontSize',16);
 
 

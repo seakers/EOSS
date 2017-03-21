@@ -165,7 +165,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         double dcViolationSum = 0;
         double massViolationSum = 0;
         double packingEfficiencyViolationSum = 0;
-        double instrumentOrbitAssingmentViolationSum = 0;
+        double instrumentOrbitAssignmentViolationSum = 0;
         double synergyViolationSum = 0;
         double interferenceViolationSum = 0;
 
@@ -174,6 +174,8 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
             for (Spacecraft s : mission.getSpacecraft().keySet()) {
                 numSpacecraft++;
 
+                Orbit injectionOrbit = mission.getSpacecraft().get(s);
+
                 dcViolationSum += Math.max(0.0, (dcThreshold - Double.parseDouble(s.getProperty("duty cycle"))) / dcThreshold);
                 massViolationSum += Math.max(0.0, (s.getWetMass() - massThreshold) / s.getWetMass());
 
@@ -181,14 +183,18 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                 for (Collection<Spacecraft> group : mission.getLaunchVehicles().keySet()) {
                     if (group.contains(s)) {
                         double totalVolume = 0;
+                        double totalMass = 0;
                         for (Spacecraft sTemp : group) {
                             double volume = 1.0;
                             for (double d : sTemp.getDimensions()) {
                                 volume *= d;
                             }
                             totalVolume += volume;
+                            totalMass += sTemp.getLaunchMass();
                         }
-                        double packingEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                        double volumeEfficiency = totalVolume / mission.getLaunchVehicles().get(group).getVolume();
+                        double massEfficiency = totalMass / mission.getLaunchVehicles().get(group).getMassBudget(injectionOrbit);
+                        double packingEfficiency = Math.max(volumeEfficiency, massEfficiency);
                         s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
                         //divide any violation by the size of the launch group to not double count violations
                         packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
@@ -201,21 +207,21 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                     for (Instrument inst : s.getPayload()) {
                         String concept = inst.getProperty("Concept");
                         if (concept.contains("chemistry")) {
-                            instrumentOrbitAssingmentViolationSum++;
+                            instrumentOrbitAssignmentViolationSum++;
                         }
                     }
                 }
                 if (o.getRAAN().equals("DD")) {
                     for (Instrument inst : s.getPayload()) {
                         if (inst.getProperty("Illumination").equals("Passive")) {
-                            instrumentOrbitAssingmentViolationSum++;
+                            instrumentOrbitAssignmentViolationSum++;
                         }
                     }
                 }
                 if (o.getAltitude() <= 400.) {
                     for (Instrument inst : s.getPayload()) {
                         if (inst.getProperty("Geometry").equals("slant")) {
-                            instrumentOrbitAssingmentViolationSum++;
+                            instrumentOrbitAssignmentViolationSum++;
                         }
                     }
                 }
@@ -260,20 +266,20 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         dcViolationSum /= numSpacecraft;
         massViolationSum /= numSpacecraft;
         packingEfficiencyViolationSum /= numSpacecraft;
-        instrumentOrbitAssingmentViolationSum /= (36.0 * numSpacecraft);
+        instrumentOrbitAssignmentViolationSum /= (36.0 * numSpacecraft);
         synergyViolationSum /= (10.0 * numSpacecraft);
         interferenceViolationSum /= (10.0 * numSpacecraft);
 
         double constraint = (dcViolationSum + massViolationSum
                 + packingEfficiencyViolationSum
-                + instrumentOrbitAssingmentViolationSum
+                + instrumentOrbitAssignmentViolationSum
                 + synergyViolationSum + interferenceViolationSum)
                 / (6.);
         arch.setAttribute("constraint", constraint);
         arch.setAttribute("dcViolationSum", dcViolationSum);
         arch.setAttribute("massViolationSum", massViolationSum);
         arch.setAttribute("packingEfficiencyViolationSum", packingEfficiencyViolationSum);
-        arch.setAttribute("instrumentOrbitAssingmentViolationSum", instrumentOrbitAssingmentViolationSum);
+        arch.setAttribute("instrumentOrbitAssignmentViolationSum", instrumentOrbitAssignmentViolationSum);
         arch.setAttribute("synergyViolationSum", synergyViolationSum);
         arch.setAttribute("interferenceViolationSum", interferenceViolationSum);
     }

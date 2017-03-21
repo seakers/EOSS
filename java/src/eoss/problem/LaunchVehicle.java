@@ -19,7 +19,8 @@ import java.util.Objects;
  *
  * @author nozomi
  */
-public class LaunchVehicle implements Serializable{
+public class LaunchVehicle implements Serializable {
+
     private static final long serialVersionUID = 2902112748976731561L;
 
     private final String name;
@@ -47,13 +48,34 @@ public class LaunchVehicle implements Serializable{
     public double getHeight() {
         return height;
     }
-    
+
     /**
      * Gets the volume of the fairing. Assumes cylindrical shape
-     * @return 
+     *
+     * @return
      */
-    public double getVolume(){
+    public double getVolume() {
         return (Math.PI * Math.pow(this.diameter / 2.0, 2.0)) * this.height;
+    }
+
+    /**
+     * Gets the amount of mass that the launch vehicle can carry to the
+     * specified orbit
+     *
+     * @param orbit the orbit to launch to
+     * @return the amount of mass that the launch vehicle can carry to the
+     * specified orbit. If the launch vehicle cannot be flown to the specified
+     * orbit, Negative infinity is returned
+     */
+    public double getMassBudget(Orbit orbit) {
+        List<Double> coeffs;
+        try {
+            coeffs = payload_coeffs.get(orbit.getType() + "-" + orbit.getInclination());
+        } catch (NullPointerException ex) {
+            return Double.NEGATIVE_INFINITY; //this launch vehicle does not fly to the specified orbit
+        }
+        double alt = orbit.getAltitude();
+        return coeffs.get(0) + alt * coeffs.get(1) + Math.pow(alt, 2.0) * coeffs.get(2);
     }
 
     public String getName() {
@@ -162,21 +184,24 @@ public class LaunchVehicle implements Serializable{
                         feasibleLV.add(lv);
                     }
                 }
-                if(feasibleLV.isEmpty()){
-                    break;
-                }
-                //find the cheapest launch vehicle
-                Collections.shuffle(feasibleLV);
-                LaunchVehicle cheapestLV = feasibleLV.get(0);
-                for (LaunchVehicle lv : feasibleLV) {
-                    if (lv.getCost() < cheapestLV.getCost()) {
-                        cheapestLV = lv;
+                double cheapestLVCost;
+                if (feasibleLV.isEmpty()) {
+                    cheapestLVCost = Double.POSITIVE_INFINITY;
+                    option.put(groups.get(groupNumber), null);
+                } else {
+                    //find the cheapest launch vehicle
+                    Collections.shuffle(feasibleLV);
+                    LaunchVehicle cheapestLV = feasibleLV.get(0);
+                    for (LaunchVehicle lv : feasibleLV) {
+                        if (lv.getCost() < cheapestLV.getCost()) {
+                            cheapestLV = lv;
+                        }
                     }
+                    option.put(groups.get(groupNumber), cheapestLV);
+                    cheapestLVCost = cheapestLV.getCost();
                 }
+                sumCost += cheapestLVCost;
 
-                option.put(groups.get(groupNumber), cheapestLV);
-
-                sumCost += cheapestLV.getCost();
             }
 
             if (sumCost < lowestCost) {
@@ -198,9 +223,9 @@ public class LaunchVehicle implements Serializable{
         LinkedList<List<Integer>> out = new LinkedList<>();
         List<Integer> initialSet = Arrays.asList(new Integer[]{0});
         out.add(initialSet);
-        while(out.getFirst().size() < n) {
+        while (out.getFirst().size() < n) {
             List<Integer> list = out.removeFirst();
-            
+
             int maxSetValue = 0;
             for (int i = 0; i < list.size(); i++) {
                 maxSetValue = Math.max(maxSetValue, list.get(i));
