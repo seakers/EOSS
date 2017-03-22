@@ -10,7 +10,7 @@
 %   orbits
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_final/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_all/';
 load(strcat(path,'baseline.mat'));
 
 %data size

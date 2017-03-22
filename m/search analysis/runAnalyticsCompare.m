@@ -14,13 +14,13 @@ hv(1,:,:) = fHV;
 [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos'),'','');
 hv(2,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_cpd_pop_archive'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange'),'','');
 hv(3,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
 hv(4,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'baseline_3InstInit'),'','');
 hv(5,:,:) = fHV;
 
 [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_acs_pop_archive'),'','');

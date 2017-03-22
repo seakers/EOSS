@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
-respath = strcat(path,'emoea_operator_aos_checkChange');
+respath = strcat(path,'emoea_constraint_operator_aos_checkChange_AllChange');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -17,25 +17,28 @@ for i=1:length(files)
     while(feof(fid)==0)
         line = fgetl(fid);
         [~, endIndex] = regexp(line,'iteration,');
-        raw_iteration = strsplit(line(endIndex+2:end),',');
+        raw_iteration = strsplit(line(endIndex+1:end),',');
         %need to split out the operator name
         line = fgetl(fid);
-        [startIndex, endIndex] = regexp(line,'[A-z\+]+');
-        raw_credits = strsplit(line(endIndex+2:end),',');
-        op_data = zeros(length(raw_iteration)-1,2);
+        [startIndex, endIndex] = regexp(line,'[A-z\+]+,');
+        raw_credits = strsplit(line(endIndex+1:end),',');
+        op_data = zeros(length(raw_iteration),2);
         for j=1:length(raw_credits)
             op_data(j,1)=str2double(raw_iteration{j}); %iteration
             op_data(j,2)=str2double(raw_credits{j}); %credit
         end
         %sometimes there is 0 iteration selection which is not valid
+        if strcmp(files(i).name,'constraint_aos_checkChangeAll28.credit')
+            pause(0.01)
+        end
         op_data(~any(op_data(:,1),2),:)=[];
-        expData.put(line(startIndex:endIndex),op_data);
+        expData.put(line(startIndex:endIndex-1),op_data);
     end
     fclose(fid);
     allcredits{i} = expData;
 end
 
-%get operator names 
+%get operator names
 iter = expData.keySet.iterator;
 ops = cell(expData.size,1);
 i = 1;
@@ -57,22 +60,32 @@ all_epoch_select = zeros(expData.keySet.size, nepochs, length(files)); %keeps tr
 for i=1:length(files)
     for k = 1:numOps
         hist = allcredits{i}.get(ops{k});
+        if size(hist,1)==0
+            %means that the opeator was never selected
+            continue;
+        elseif size(hist,1) == 2 && size(hist, 2) == 1
+            %sometimes the row vector gets flipped to column vector
+            hist = hist';
+        end
         %sepearates out credits into their respective epochs
         for j=1:nepochs
             %find indices that lie within epoch
             ind1 = epochLength*(j-1)<hist(:,1);
             ind2 = hist(:,1)<epochLength*j;
             epoch = hist(and(ind1,ind2),:);
+            if numel(epoch) == 1
+                disp('a');
+            end
             if(~isempty(epoch(:,1))) %if it is empty then operator was not selected in the epoch
                 all_epoch_credit(k, j, i) = mean(epoch(:,2));
                 all_epoch_select(k, j, i) = length(unique(epoch(:,1)));
             end
-        end 
+        end
     end
 end
 
 
- colors = {
+colors = {
     [0         0.4470    0.7410]
     [0.8500    0.3250    0.0980]
     [0.9290    0.6940    0.1250]
@@ -84,20 +97,25 @@ end
 figure(1)
 cla
 handles = [];
+maxCredit = 0;
 for i=1:numOps
     X = [1:nepochs,fliplr(1:nepochs)];
     stddev = std(squeeze(all_epoch_credit(i,:,:)),0,2);
     mean_cred = mean(squeeze(all_epoch_credit(i,:,:)),2);
     Y = [mean_cred-stddev;flipud(mean_cred+stddev)];
     Y(Y<0) = 0; %correct for negative values
-%     fill(X,Y,colors{i},'EdgeColor','none');
+    %     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
-    handles = [handles plot(1:nepochs,mean(squeeze(all_epoch_credit(i,:,:)),2),'Color',colors{i}, 'LineWidth',2)];
+    handles = [handles plot(1:nepochs,mean_cred,'Color',colors{i}, 'LineWidth',2)];
+    maxCredit = max([max(mean_cred), maxCredit]);
 end
 hold off
 set(gca,'FontSize',16);
-xlabel('Epoch')
+axis([0,nepochs, 0, maxCredit*1.1])
+set(gca,'XTick',0:nepochs/10:nepochs);
+set(gca,'XTickLabels',0:nepochs/10*epochLength:nepochs*epochLength);
+xlabel('NFE')
 ylabel('Credit earned')
 legend(handles, ops);
 
@@ -120,14 +138,17 @@ for i=1:numOps
     Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
     Y(Y<0) = 0; %correct for negative values
     Y(Y>1) = 1; %correct for >1 values
-%     fill(X,Y,colors{i},'EdgeColor','none');
+    %     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
     handles = [handles, plot(2:nepochs,mean(all_epoch_select_norm,2),'Color',colors{i}, 'LineWidth',2)];
 end
-xlabel('Epoch')
-ylabel('Selection frequency')
 legend(handles, ops);
+axis([0, nepochs, 0, 1])
+xlabel('NFE')
+ylabel('Selection frequency')
+set(gca,'XTick',0:nepochs/10:nepochs);
+set(gca,'XTickLabels',0:nepochs/10*epochLength:nepochs*epochLength);
 hold off
 set(gca,'FontSize',16);
 %save files
