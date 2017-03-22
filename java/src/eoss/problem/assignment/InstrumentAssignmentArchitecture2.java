@@ -305,6 +305,19 @@ public class InstrumentAssignmentArchitecture2 extends Architecture {
         return addInstrumentToSpacecraft(instrumentIndex, scIndex);
     }
 
+    /**
+     * sets the orbit of the spacecraft
+     *
+     * @param orbitIndex the index of the orbit as it is in the
+     * EOSSDatabase
+     * @param scIndex the index of the spacecraft
+     * @return true if setting the orbit changes the architecture
+     * decision
+     */
+    public boolean setOrbit(int orbitIndex, int scIndex){
+        return Combining.setValue(0, orbitIndex, this, combineTag + scIndex);
+    }
+
     public String payloadToString() {
         StringBuilder sb = new StringBuilder();
         for (int i=0; i<this.numberOfSpacecraft; i++) {

@@ -21,6 +21,7 @@ import java.io.File;
 
 import knowledge.constraint.*;
 import knowledge.constraint.operator.AOSConstraintConsistency;
+import knowledge.initializer.NInstrumentInitializer;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.Initialization;
 import org.moeaframework.core.Problem;
@@ -199,6 +200,7 @@ public class RBSAEOSSSMAP {
             //initialize problem
             Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
             initialization = new RandomInitialization(problem, popSize);
+            initialization = new NInstrumentInitializer(5, 3, (InstrumentAssignment2) problem, popSize);
 
             //initialize population structure for algorithm
             Population population = new Population();
