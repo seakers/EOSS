@@ -5,9 +5,11 @@
  */
 package knowledge.operator;
 
+import aos.operator.CheckParents;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
+import eoss.problem.Orbit;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
 import eoss.spacecraft.SpacecraftDesigner;
@@ -26,7 +28,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public class RepairPackingEfficiency implements Variation {
+public class RepairPackingEfficiency implements Variation, CheckParents {
 
     /**
      * The duty cycle that a spacecraft must be at or higher
@@ -43,12 +45,11 @@ public class RepairPackingEfficiency implements Variation {
      * The number of satellites to modify
      */
     private final int ySatellites;
-    
+
     /**
      * Designs the spacecraft
      */
     private final SpacecraftDesigner scDesigner;
-
 
     private final ParallelPRNG pprng;
 
@@ -76,25 +77,13 @@ public class RepairPackingEfficiency implements Variation {
             scDesigner.designSpacecraft(mission);
         }
         HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(copy.getMissions());
-        
+
         ArrayList<Mission> candidateMission = new ArrayList();
         for (Mission m : copy.getMissions()) {
-            Spacecraft s = m.getSpacecraft().keySet().iterator().next();
-
-            //compute packing efficiency
-            for (Collection<Spacecraft> group : lvSelection.keySet()) {
-                if (group.contains(s)) {
-                    double totalVolume = 0;
-                    for (Spacecraft sTemp : group) {
-                        double volume = 1.0;
-                        for (double d : sTemp.getDimensions()) {
-                            volume *= d;
-                        }
-                        totalVolume += volume;
-                    }
-                    double packingEfficiency = totalVolume / lvSelection.get(group).getVolume();
-
-                    if (packingEfficiency < threshold && !s.getPayload().isEmpty()) {
+            for (Spacecraft s : m.getSpacecraft().keySet()) {
+                for (Collection<Spacecraft> group : lvSelection.keySet()) {
+                    if (group.contains(s) && 
+                            checkLV(group, m.getSpacecraft().get(s), lvSelection.get(group))) {
                         candidateMission.add(m);
                     }
                 }
@@ -131,4 +120,41 @@ public class RepairPackingEfficiency implements Variation {
         return 1;
     }
 
+    private boolean checkLV(Collection<Spacecraft> group, Orbit o, LaunchVehicle lv) {
+
+        //compute packing efficiency
+        double totalVolume = 0;
+        double totalMass = 0;
+        for (Spacecraft s : group) {
+            double volume = 1.0;
+            for (double d : s.getDimensions()) {
+                volume *= d;
+            }
+            totalVolume += volume;
+            totalMass += s.getLaunchMass();
+        }
+        double volumeEfficiency = totalVolume / lv.getVolume();
+        double massEfficiency = totalMass / lv.getMassBudget(o);
+        double packingEfficiency = Math.max(volumeEfficiency, massEfficiency);
+
+        return packingEfficiency < threshold;
+    }
+
+    @Override
+    public boolean check(Solution[] sltns) {
+        for (Solution sol : sltns) {
+            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sol;
+            for (Mission m : arch.getMissions()) {
+                for (Collection<Spacecraft> group : m.getLaunchVehicles().keySet()) {
+                    for (Spacecraft s : group) {
+                        if (m.getSpacecraft().keySet().contains(s)
+                                && checkLV(group, m.getSpacecraft().get(s), m.getLaunchVehicles().get(group))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

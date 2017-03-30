@@ -5,6 +5,7 @@
  */
 package knowledge.operator;
 
+import aos.operator.CheckParents;
 import eoss.problem.Mission;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
@@ -22,7 +23,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public class RepairDutyCycle implements Variation {
+public class RepairDutyCycle implements Variation, CheckParents {
 
     /**
      * The duty cycle that a spacecraft must be at or higher
@@ -67,12 +68,12 @@ public class RepairDutyCycle implements Variation {
         InstrumentAssignmentArchitecture2 child = (InstrumentAssignmentArchitecture2) sltns[0];
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         copy.setMissions();
-        
+
         ArrayList<Mission> candidateMission = new ArrayList();
         for (Mission m : copy.getMissions()) {
             scDesigner.designSpacecraft(m);
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();
-            if (Double.parseDouble(s.getProperty("duty cycle")) < threshold && !s.getPayload().isEmpty()) {
+            if (checkSpacecraft(s)) {
                 candidateMission.add(m);
             }
         }
@@ -98,6 +99,24 @@ public class RepairDutyCycle implements Variation {
     @Override
     public int getArity() {
         return 1;
+    }
+
+    private boolean checkSpacecraft(Spacecraft s) {
+        return Double.parseDouble(s.getProperty("duty cycle")) < threshold && !s.getPayload().isEmpty();
+    }
+
+    @Override
+    public boolean check(Solution[] sltns) {
+        for (Solution sol : sltns) {
+            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sol;
+            for (Mission m : arch.getMissions()) {
+                Spacecraft s = m.getSpacecraft().keySet().iterator().next();
+                if (checkSpacecraft(s)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

@@ -13,7 +13,7 @@ packingEfficiencyThreshold = 0.4;
 %compute the violations for each constraint
 violations = zeros(length(nfe),6);
 %compute mass violations
-vm = (mass-massThreshold)./mass;
+vm = (mass-massThreshold)./abs(mass);
 vm(vm<0) = 0;
 violations(:,1) = sum(vm,2);
 %compute duty cycle violation

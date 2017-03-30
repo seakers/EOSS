@@ -19,7 +19,7 @@ import java.util.HashSet;
  *
  * @author nozomihitomi
  */
-public class RepairInterference extends AbstractInstrumentSwap {
+public class RepairInterference extends AbstractInstrumentMove {
 
     /**
      * synergistic instrument pairs

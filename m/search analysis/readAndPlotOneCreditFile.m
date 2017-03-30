@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
-respath = strcat(path,'emoea_constraint_operator_aos_checkChange_AllChange');
+respath = strcat(path,'emoea_constraint_ach_pop_archive');
 origin = cd(respath);
 
 files = dir('*.credit');

@@ -5,31 +5,32 @@
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper';
-[nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline'),'','');
+[nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
 
-nexperiments = 7;
-hv = zeros(nexperiments,size(fHV,1),30);
+nexperiments = 4;
+ntrials = 30;
+hv = zeros(nexperiments,size(fHV,1),ntrials);
 hv(1,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10'),'','');
 hv(2,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive'),'','');
 hv(3,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
+[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
 hv(4,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'baseline_3InstInit'),'','');
-hv(5,:,:) = fHV;
+% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
+% hv(5,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_acs_pop_archive'),'','');
-hv(6,:,:) = fHV;
+% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
+% hv(6,:,:) = fHV;
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_AllChange'),'','');
-hv(7,:,:) = fHV;
+% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
+% hv(7,:,:) = fHV;
 
-[dataPoints, ~] = size(fHV);
+dataPoints = size(fHV,1);
 base_experiment_metric_sig = zeros(dataPoints,nexperiments-1);
 
 sigLevel = 0.05;
@@ -61,37 +62,55 @@ end
 % mu_norm =  mean(squeeze(hv(1,:,:)),2);
 mu_norm = zeros(size(hv,2),1);
 
+%plot HV history over NFE
 figure(1)
 cla
 hold on
 handles = [];
 plot([0,5000],[0,0],'--k');
-for i=2:nexperiments
-% X = [nfe(:,1);flipud(nfe(:,1))];
-% stddev = std(squeeze(hv(i,:,:)),0,2);
-mu = (mean(squeeze(hv(i,:,:)),2)-mu_norm);
-% Y = [mu-stddev;flipud(mu+stddev)];
-% h = fill(X,Y,'k','EdgeColor','none');
-% alpha(h,0.15) %sest transparency
-handles = [handles plot(nfe(:,1), mu, '-', 'Color',colors{i-1})];
-ind = or(base_experiment_metric_sig(:,i)==1,base_experiment_metric_sig(:,i)==-1);
-plot(nfe(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i-1});
+for i=1:nexperiments
+    X = [nfe(:,1);flipud(nfe(:,1))];
+    stddev = std(squeeze(hv(i,:,:)),0,2);
+    mu = (mean(squeeze(hv(i,:,:)),2)-mu_norm);
+    Y = [mu-stddev;flipud(mu+stddev)];
+    h = fill(X,Y,colors{i},'EdgeColor','none');
+    alpha(h,0.15) %sest transparency
+    handles = [handles plot(nfe(:,1), mu, '-', 'Color',colors{i})];
+    %plot where the performance is statistically significantly different
+    ind = or(base_experiment_metric_sig(:,i)==1,base_experiment_metric_sig(:,i)==-1);
+    plot(nfe(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i});
 end
-
-%plot where the performance is statistically significantly different
-
-% plot(nfe(base_constraint_metric_sig==-1,1),ones(sum(base_constraint_metric_sig==-1),1)*0.2,'.k','LineWidth',1)
-% plot(nfe(base_constraint_metric_sig==1,1),ones(sum(base_constraint_metric_sig==1),1)*0.21,'ok','LineWidth',1)
-% plot(nfe(base_rand_metric_sig==-1,1),ones(sum(base_rand_metric_sig==-1),1)*0.3,'.k','LineWidth',1)
-% plot(nfe(base_rand_metric_sig==1,1),ones(sum(base_rand_metric_sig==1),1)*0.31,'ok','LineWidth',1)
-% plot(nfe(base_aos_metric_sig==-1,1),ones(sum(base_aos_metric_sig==-1),1)*0.4,'.k','LineWidth',1)
-% plot(nfe(base_aos_metric_sig==1,1),ones(sum(base_aos_metric_sig==1),1)*0.41,'ok','LineWidth',1)
 axis([0,5000,0,0.8])
 hold off
 xlabel('NFE')
 ylabel('HV')
-legend(handles, 'O-AOS', 'C-CPD','C-DNF','C-ACH', 'C-ACS', 'O-AOS_noX','Location','SouthEast')
-% legend(handles, 'O-Rand', 'O-AOS', 'C-CPD','C-DNF','C-ACH','Location','SouthEast')
+legend(handles, '\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+% legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
 set(gca,'FontSize',16);
 
-
+%find convergence differences
+maxHV = max(max(max(hv)));
+thresholdHV = 0.75;
+attainment = zeros(nexperiments,ntrials);
+for i=1:nexperiments
+    for j=1:ntrials
+        ind = find(hv(i,:,j) >= thresholdHV*maxHV, 1);
+        if isempty(ind)
+            attainment(i,j) = inf;
+        else
+            attainment(i,j) = nfe(ind,1);
+        end
+    end
+end
+figure(2)
+cla
+hold on
+for i=1:nexperiments
+    ecdf(attainment(i,:))
+end
+axis([0,5000,0,1])
+hold off
+xlabel('NFE')
+ylabel(sprintf('Probability of attaing %2.2f%% HV',thresholdHV*100))
+legend('\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+set(gca,'FontSize',16);

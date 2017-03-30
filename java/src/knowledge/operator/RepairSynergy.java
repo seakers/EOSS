@@ -19,7 +19,7 @@ import java.util.HashSet;
  *
  * @author nozomihitomi
  */
-public class RepairSynergy extends AbstractInstrumentSwap {
+public class RepairSynergy extends AbstractInstrumentMove {
 
     /**
      * Names of synergistic instrument pairs

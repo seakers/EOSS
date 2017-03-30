@@ -10,8 +10,8 @@
 %   orbits
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_all/';
-load(strcat(path,'baseline.mat'));
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_final/';
+load(strcat(path,'baseline_eps_001_10.mat'));
 
 %data size
 ndata = size(decisions,1);
@@ -20,7 +20,9 @@ ndata = size(decisions,1);
 maxNumSats = 5;
 %12 instruments
 maxNumInst = 12;
-instName = {'ACE_ORCA','ACE_POL','ACE_LID','CLAR_ERB','ACE_CPR','DESD_SAR','DESD_LID','GACM_VIS','GACM_SWIR','HYSP_TIR','POSTEPS_IRS','CNES_KaRIN'};
+instName = {'ACE_ORCA','ACE_POL','ACE_LID','CLAR_ERB',...
+    'ACE_CPR','DESD_SAR','DESD_LID','GACM_VIS',...
+    'GACM_SWIR','HYSP_TIR','POSTEPS_IRS','CNES_KaRIN'};
 %12 orbits
 maxNumOrb = 12;
 orbName = {'400-polar','400-sso-am','400-sso-pm','400-sso-dd','600-polar','600-sso-am','600-sso-pm','600-sso-dd','800-polar','800-sso-am','800-sso-pm','800-sso-dd'};
@@ -87,6 +89,28 @@ raan_sso_am = sum(orbit_copy(:,2:4:maxNumOrb),2);
 raan_sso_pm = sum(orbit_copy(:,3:4:maxNumOrb),2);
 raan_sso_dd = sum(orbit_copy(:,4:4:maxNumOrb),2);
 
+%find synergy occurences
+synergyPairs = [1,2;    %ace_orca, ace_pol
+                1,3;    %ace_orca, ace_lid
+                1,7;    %ace_orca, desd_lid
+                1,8;    %ace_orca, gacm_vis
+                1,10;   %ace_orca, hysp_tir
+                2,7;    %ace_pol, desd_lid
+                3,7;    %ace_lid, desd_lid
+                3,8;    %ace_lid, gacm_vis
+                3,12;   %ace_lid, cnes_karin
+                10,11]; %hysp_tir, posteps_irs
+synergylabel = {'ace_orca, ace_pol','ace_orca, ace_lid','ace_orca, desd_lid',...
+    'ace_orca, gacm_vis','ace_orca, hysp_tir','ace_pol, desd_lid','ace_lid, desd_lid',...
+     'ace_lid, gacm_vis','ace_lid, cnes_karin','hysp_tir, posteps_irs'};
+synergyPairCount = zeros(size(decisions,1),size(synergyPairs,1));
+for i=1:maxNumSats
+    satInst = decisions(:,ind_inst(i,:));
+    for j=1:size(synergyPairs,1)
+        synergyPairCount(:,j) = synergyPairCount(:,j) + sum(satInst(:,synergyPairs(j,:)),2)==2;
+    end
+end
+            
 %plot the number of instruments and satellites in the architecture
 figure(1)
 scatter(-objectives(:,1),objectives(:,2),5,numSatellites)    
@@ -135,3 +159,17 @@ h = gca;
 h.XTickLabel = orbName;
 h.XTickLabelRotation = 90;
 
+%plot the number of synergies in each architecture
+figure(8)
+for i=1:length(synergylabel)
+    subplot(2,5,i)
+    scatter(-objectives(:,1),objectives(:,2),5,synergyPairCount(:,i))
+    title(synergylabel{i})
+    colormap jet
+    colorbar
+end
+figure(9)
+bar(sum(synergyPairCount,1));
+h = gca;
+h.XTickLabel = synergylabel;
+h.XTickLabelRotation = 90;

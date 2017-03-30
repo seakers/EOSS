@@ -5,6 +5,7 @@
  */
 package knowledge.operator;
 
+import aos.operator.CheckParents;
 import eoss.problem.Mission;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
@@ -21,7 +22,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public class RepairMass implements Variation {
+public class RepairMass implements Variation, CheckParents {
 
     /**
      * The dry mass of the spacecraft must be at or lower
@@ -98,5 +99,24 @@ public class RepairMass implements Variation {
     public int getArity() {
         return 1;
     }
+    
+    private boolean checkSpacecraft(Spacecraft s) {
+        return s.getWetMass() > threshold && !s.getPayload().isEmpty();
+    }
+
+    @Override
+    public boolean check(Solution[] sltns) {
+        for (Solution sol : sltns) {
+            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sol;
+            for (Mission m : arch.getMissions()) {
+                Spacecraft s = m.getSpacecraft().keySet().iterator().next();
+                if (checkSpacecraft(s)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
 }

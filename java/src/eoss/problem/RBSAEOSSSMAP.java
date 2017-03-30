@@ -141,7 +141,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 20;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -153,7 +153,7 @@ public class RBSAEOSSSMAP {
         Initialization initialization;
 
         //setup for epsilon MOEA
-        double[] epsilonDouble = new double[]{0.001, 0.001};
+        double[] epsilonDouble = new double[]{0.001, 1};
 
         //setup for innovization
         int epochLength = 1000; //for learning rate
@@ -200,7 +200,7 @@ public class RBSAEOSSSMAP {
             //initialize problem
             Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
             initialization = new RandomInitialization(problem, popSize);
-            initialization = new NInstrumentInitializer(5, 3, (InstrumentAssignment2) problem, popSize);
+//            initialization = new NInstrumentInitializer(5, 3, (InstrumentAssignment2) problem, popSize);
 
             //initialize population structure for algorithm
             Population population = new Population();
@@ -242,12 +242,12 @@ public class RBSAEOSSSMAP {
                         INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators);
 
                         ////////
-                        constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)), "none");
-                        selector = new AdaptiveConstraintSelector(ksr, constraintOperatorMap,0.8, 0.8, 0.03);
+//                        constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)), "none");
+//                        selector = new AdaptiveConstraintSelector(ksr, constraintOperatorMap,0.8, 0.8, 0.03);
 
                         //selector for combined
-                        ConsistencyTracker consistencyPopulation = new ConsistencyTracker(population, constraints);
-                        selector = new AOSConstraintConsistency(consistencyPopulation, constraintOperatorMap, operators, 0.8, 0.8, 0.03);
+//                        ConsistencyTracker consistencyPopulation = new ConsistencyTracker(population, constraints);
+//                        selector = new AOSConstraintConsistency(consistencyPopulation, constraintOperatorMap, operators, 0.8, 0.8, 0.03);
 
                         /////////
 //                        selector = new AdaptiveConstraintHandler(ksr, constraintOperatorMap,
@@ -255,7 +255,7 @@ public class RBSAEOSSSMAP {
 //                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
 //                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
 
-                        AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, consistencyPopulation, archive, selection,
+                        AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, comp);
                         hemoea.setName("constraint_adaptive");
                         ecs.submit(new InstrumentedSearch(hemoea, properties, path + File.separator + "result", hemoea.getName() + String.valueOf(i)));

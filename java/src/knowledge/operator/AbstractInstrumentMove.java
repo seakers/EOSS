@@ -5,6 +5,7 @@
  */
 package knowledge.operator;
 
+import aos.operator.CheckParents;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;
@@ -21,7 +22,7 @@ import org.moeaframework.core.Variation;
  *
  * @author nozomihitomi
  */
-public abstract class AbstractInstrumentSwap implements Variation {
+public abstract class AbstractInstrumentMove implements Variation, CheckParents {
 
     /**
      * The number of changes to make to the architecture
@@ -31,13 +32,13 @@ public abstract class AbstractInstrumentSwap implements Variation {
     /**
      * The list of possible swaps that can improve the architecture
      */
-    private final ArrayList<SwapMove> moves;
+    private final ArrayList<Move> moves;
 
     /**
      *
      * @param nChanges
      */
-    public AbstractInstrumentSwap(int nChanges) {
+    public AbstractInstrumentMove(int nChanges) {
         this.nChanges = nChanges;
         this.moves = new ArrayList<>();
     }
@@ -56,9 +57,9 @@ public abstract class AbstractInstrumentSwap implements Variation {
                         for (Spacecraft sj : mj.getSpacecraft().keySet()) {
                             if (!si.equals(sj) && checkOtherSpacecraft(sj, mj.getSpacecraft().get(sj), inst)) {
                                 if (addToCurrentSpacecraft()) {
-                                    moves.add(new SwapMove(mi, mj, inst));
+                                    moves.add(new Move(mi, mj, inst));
                                 } else {
-                                    moves.add(new SwapMove(mj, mi, inst));
+                                    moves.add(new Move(mj, mi, inst));
                                 }
                             }
                         }
@@ -73,7 +74,7 @@ public abstract class AbstractInstrumentSwap implements Variation {
         int changes = 0;
 
         while (i < moves.size() && changes < nChanges) {
-            SwapMove swap = moves.get(i);
+            Move swap = moves.get(i);
             int instInd = EOSSDatabase.findInstrumentIndex(swap.getInst());
             if (addToCurrentSpacecraft()) {
                 //if other spacecraft still has the instrument to remove then add it to the original spacecraft
@@ -133,11 +134,33 @@ public abstract class AbstractInstrumentSwap implements Variation {
      */
     protected abstract boolean addToCurrentSpacecraft();
 
+    @Override
+    public boolean check(Solution[] sltns) {
+        for (Solution sol : sltns) {
+            InstrumentAssignmentArchitecture2 arch = (InstrumentAssignmentArchitecture2) sol;
+            for (Mission mi : arch.getMissions()) {
+                for (Spacecraft si : mi.getSpacecraft().keySet()) {
+                    for (Instrument inst : checkThisSpacecraft(si, mi.getSpacecraft().get(si))) {
+                        //search for a satellite in the architecture with missing instrument
+                        for (Mission mj : arch.getMissions()) {
+                            for (Spacecraft sj : mj.getSpacecraft().keySet()) {
+                                if (!si.equals(sj) && checkOtherSpacecraft(sj, mj.getSpacecraft().get(sj), inst)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Class that stores information on which instrument to swap between two
      * spacecraft
      */
-    private class SwapMove {
+    private class Move {
 
         private final Instrument inst;
 
@@ -153,7 +176,7 @@ public abstract class AbstractInstrumentSwap implements Variation {
          * @param add spacecraft to add instrument
          * @param remove spacecraft to remove instrument
          */
-        public SwapMove(Mission mAdd, Mission mRemove, Instrument inst) {
+        public Move(Mission mAdd, Mission mRemove, Instrument inst) {
             this.inst = inst;
             this.mAdd = mAdd;
             this.mRemove = mRemove;
