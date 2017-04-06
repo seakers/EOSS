@@ -120,7 +120,7 @@ public class SpacecraftDesigner {
 
         // assuming 1 seven minute pass at 500Mbps max
         double perOrbit = (s.getDataRate() * 1.2 * Orbits.period(o)) / (1024 * 8); //(GByte/orbit) 20% overhead
-        double drdc = (1. * 7. * 60. * 500. * (1. / 8192.)) * perOrbit;
+        double drdc = (1. * 7. * 60. * 500. * (1. / 8192.)) / perOrbit;
         s.setProperty("data-rate duty cycle", Double.toString(drdc));
 
         // Computes the power duty cycle assuming a limit at 10kW
