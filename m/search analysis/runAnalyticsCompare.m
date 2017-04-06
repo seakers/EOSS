@@ -3,49 +3,62 @@
 
 % path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric\result\IDETC2017';
 
-
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper';
-[nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/analysis/metrics/';
+% [nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
+load(strcat(path,'baseline_eps_001_1_res.mat'));
 
 nexperiments = 4;
 ntrials = 30;
-hv = zeros(nexperiments,size(fHV,1),ntrials);
-hv(1,:,:) = fHV;
+hv = zeros(nexperiments,size(HV,1),ntrials);
+igd = zeros(nexperiments,size(IGD,1),ntrials);
+hv(1,:,:) = HV(:,1:ntrials);
+igd(1,:,:) = IGD(:,1:ntrials);
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10'),'','');
-hv(2,:,:) = fHV;
+% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10'),'','');
+load(strcat(path,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1_res.mat'));
+hv(2,:,:) = HV(:,1:ntrials);
+igd(2,:,:) = IGD(:,1:ntrials);
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive'),'','');
-hv(3,:,:) = fHV;
+% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive_eps_001_1'),'','');
+load(strcat(path,'emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
+hv(3,:,:) = HV(:,1:ntrials);
+igd(3,:,:) = IGD(:,1:ntrials);
 
-[~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
-hv(4,:,:) = fHV;
+% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
+load(strcat(path,'emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
+hv(4,:,:) = HV(:,1:ntrials);
+igd(4,:,:) = IGD(:,1:ntrials);
 
-% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
-% hv(5,:,:) = fHV;
-
-% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
-% hv(6,:,:) = fHV;
-
-% [~,fHV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_operator_aos_checkChange_AllChange'),'','');
-% hv(7,:,:) = fHV;
-
-dataPoints = size(fHV,1);
-base_experiment_metric_sig = zeros(dataPoints,nexperiments-1);
-
+dataPoints = size(HV,1);
+base_experiment_metric_sigHV = zeros(dataPoints,nexperiments-1);
+base_experiment_metric_sigIGD = zeros(dataPoints,nexperiments-1);
 sigLevel = 0.05;
 for i = 2:nexperiments
     for j=1:dataPoints
+        %for hypervolume
         [~,h] = ranksum(squeeze(hv(1,j,:)),squeeze(hv(i,j,:)));
         if h==1 %then significant difference and medians are different at 0.95 confidence
             med_diff = median(squeeze(hv(1,j,:)))-median(squeeze(hv(i,j,:)));
             if med_diff < 0
-                base_experiment_metric_sig(j,i) = -1;
+                base_experiment_metric_sigHV(j,i) = -1;
             else
-                base_experiment_metric_sig(j,i) = 1;
+                base_experiment_metric_sigHV(j,i) = 1;
             end
         else
-            base_experiment_metric_sig(j,i) = 0;
+            base_experiment_metric_sigHV(j,i) = 0;
+        end
+        
+        %for inverted generational distance
+        [~,h] = ranksum(squeeze(igd(1,j,:)),squeeze(igd(i,j,:)));
+        if h==1 %then significant difference and medians are different at 0.95 confidence
+            med_diff = median(squeeze(igd(1,j,:)))-median(squeeze(igd(i,j,:)));
+            if med_diff < 0
+                base_experiment_metric_sigIGD(j,i) = -1;
+            else
+                base_experiment_metric_sigIGD(j,i) = 1;
+            end
+        else
+            base_experiment_metric_sigIGD(j,i) = 0;
         end
     end
 end
@@ -67,20 +80,22 @@ figure(1)
 cla
 hold on
 handles = [];
-plot([0,5000],[0,0],'--k');
+% maxHV = 1.0805; %highest attainable based on refPop
+maxHV = max(max(max(hv)));
+plot([0,5000],[maxHV,maxHV],'--k');
 for i=1:nexperiments
-    X = [nfe(:,1);flipud(nfe(:,1))];
+    X = [NFE(:,1);flipud(NFE(:,1))];
     stddev = std(squeeze(hv(i,:,:)),0,2);
     mu = (mean(squeeze(hv(i,:,:)),2)-mu_norm);
     Y = [mu-stddev;flipud(mu+stddev)];
     h = fill(X,Y,colors{i},'EdgeColor','none');
     alpha(h,0.15) %sest transparency
-    handles = [handles plot(nfe(:,1), mu, '-', 'Color',colors{i})];
+    handles = [handles plot(NFE(:,1), mu, '-', 'Color',colors{i})];
     %plot where the performance is statistically significantly different
-    ind = or(base_experiment_metric_sig(:,i)==1,base_experiment_metric_sig(:,i)==-1);
-    plot(nfe(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i});
+    ind = or(base_experiment_metric_sigHV(:,i)==1,base_experiment_metric_sigHV(:,i)==-1);
+    plot(NFE(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i});
 end
-axis([0,5000,0,0.8])
+axis([0,5000,0,1.2])
 hold off
 xlabel('NFE')
 ylabel('HV')
@@ -89,7 +104,6 @@ legend(handles, '\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
 set(gca,'FontSize',16);
 
 %find convergence differences
-maxHV = max(max(max(hv)));
 thresholdHV = 0.75;
 attainment = zeros(nexperiments,ntrials);
 for i=1:nexperiments
@@ -98,7 +112,7 @@ for i=1:nexperiments
         if isempty(ind)
             attainment(i,j) = inf;
         else
-            attainment(i,j) = nfe(ind,1);
+            attainment(i,j) = NFE(ind,1);
         end
     end
 end
@@ -112,5 +126,58 @@ axis([0,5000,0,1])
 hold off
 xlabel('NFE')
 ylabel(sprintf('Probability of attaing %2.2f%% HV',thresholdHV*100))
+legend('\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+set(gca,'FontSize',16);
+
+%plot IGD history over NFE
+figure(3)
+cla
+hold on
+handles = [];
+plot([0,5000],[0,0],'--k');
+for i=1:nexperiments
+    X = [NFE(:,1);flipud(NFE(:,1))];
+    stddev = std(squeeze(igd(i,:,:)),0,2);
+    mu = (mean(squeeze(igd(i,:,:)),2)-mu_norm);
+    Y = [mu-stddev;flipud(mu+stddev)];
+    h = fill(X,Y,colors{i},'EdgeColor','none');
+    alpha(h,0.15) %sest transparency
+    handles = [handles plot(NFE(:,1), mu, '-', 'Color',colors{i})];
+    %plot where the performance is statistically significantly different
+    ind = or(base_experiment_metric_sigIGD(:,i)==1,base_experiment_metric_sigIGD(:,i)==-1);
+    plot(NFE(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i});
+end
+axis([0,5000,0,0.8])
+hold off
+xlabel('NFE')
+ylabel('IGD')
+legend(handles, '\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+% legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
+set(gca,'FontSize',16);
+
+%find convergence differences
+rangeIGD = max(max(max(igd)))-min(min(min(igd)));
+thresholdIGD = 1-0.75;
+attainment = zeros(nexperiments,ntrials);
+for i=1:nexperiments
+    for j=1:ntrials
+        ind = find(igd(i,:,j) <= thresholdIGD*rangeIGD, 1);
+        if isempty(ind)
+            attainment(i,j) = inf;
+        else
+            attainment(i,j) = NFE(ind,1);
+        end
+    end
+end
+figure(4)
+cla
+hold on
+for i=1:nexperiments
+    ecdf(attainment(i,:))
+end
+axis([0,5000,0,1])
+hold off
+xlabel('NFE')
+ylabel(sprintf('Probability of attaing %2.2f%% IGD',thresholdIGD*100))
 legend('\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
 set(gca,'FontSize',16);

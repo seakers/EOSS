@@ -198,6 +198,10 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
                         s.setProperty("packingEfficiency", Double.toString(packingEfficiency));
                         //divide any violation by the size of the launch group to not double count violations
                         packingEfficiencyViolationSum += Math.max(0.0, ((packingEffThreshold - packingEfficiency) / packingEffThreshold) / group.size());
+                        
+                        if(Double.isNaN(packingEfficiencyViolationSum)){
+                            System.out.println("");
+                        }
                     }
                 }
 
@@ -269,6 +273,17 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
         instrumentOrbitAssignmentViolationSum /= (36.0 * numSpacecraft);
         synergyViolationSum /= (10.0 * numSpacecraft);
         interferenceViolationSum /= (10.0 * numSpacecraft);
+        
+        //fix nans. Can occur if there are no spacecraft (empty architecture)
+        if(Double.isNaN(instrumentOrbitAssignmentViolationSum)){
+            instrumentOrbitAssignmentViolationSum = 0;
+        }
+        if(Double.isNaN(synergyViolationSum)){
+            synergyViolationSum = 0;
+        }
+        if(Double.isNaN(interferenceViolationSum)){
+            interferenceViolationSum = 0;
+        }
 
         double constraint = (dcViolationSum + massViolationSum
                 + packingEfficiencyViolationSum

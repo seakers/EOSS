@@ -1,13 +1,14 @@
 function mergePopulations(jarpath,filepath)
-
+%this function merges all results into one mat file containing the relevant
+%information for each solution
 
 try
     EOSS_init(jarpath);
     origin = cd(filepath);
-    files = dir('*.pop');
+    files = dir('*all.pop');
     mergedPopulation = org.moeaframework.core.Population;
     for i=1:length(files)
-        if strcmp(files(i).name(end-4), 'l');
+        if ~strcmp(files(i).name(end-4), 'l');
             continue
         end
         mergedPopulation.addAll(architecture.io.ResultIO.loadPopulation(files(i).name));

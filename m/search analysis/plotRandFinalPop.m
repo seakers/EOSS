@@ -3,9 +3,9 @@
 
 n_representatives = 3;
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/';
-method1 = 'baseline_eps_001_10/';
-method2 = 'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10/';
-method3 = 'emoea_constraint_dnf_pop_archive/';
+method1 = 'baseline_eps_001_1/';
+method2 = 'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1/';
+method3 = 'emoea_constraint_dnf_pop_archive_eps_001_1/';
 method4 = 'emoea_constraint_ach_pop_archive/';
 
 files1 = dir(strcat(path,method1,'*.obj'));
@@ -19,6 +19,10 @@ ind3 = randi(length(files3),n_representatives);
 
 files4 = dir(strcat(path,method4,'*.obj'));
 ind4 = randi(length(files4),n_representatives);
+
+%load refPop to show Pareto front
+load(strcat(path,filesep,'analysis',filesep,'pop_final',filesep,'refPop.mat'));
+[~,ind] = sort(objectives(:,1));
 
  colors = {
     [0         0.4470    0.7410]
@@ -41,11 +45,14 @@ for i=1:n_representatives
     scatter(-pop2(:,1),pop2(:,2),20,colors{2})
     scatter(-pop3(:,1),pop3(:,2),20,colors{3})
     scatter(-pop4(:,1),pop4(:,2),20,colors{4})
+    plot(-objectives(ind,1), objectives(ind,2),'--k');
     hold off
     xlabel('Scientific Benefit')
     axis([0,0.35,0,6000])
     set(gca,'FontSize',16);
 end
+
+
 subplot(1,n_representatives,1)
-legend( '\epsilonMOEA','aos','DNF', 'ACH', 'location','northwest')
+legend( '\epsilonMOEA','aos','DNF', 'ACH', 'PF^*','location','northwest')
 ylabel('Lifecycle cost ($FY10M)')

@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
-respath = strcat(path,'emoea_constraint_ach_pop_archive');
+respath = strcat(path,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -28,9 +28,6 @@ for i=1:length(files)
             op_data(j,2)=str2double(raw_credits{j}); %credit
         end
         %sometimes there is 0 iteration selection which is not valid
-        if strcmp(files(i).name,'constraint_aos_checkChangeAll28.credit')
-            pause(0.01)
-        end
         op_data(~any(op_data(:,1),2),:)=[];
         expData.put(line(startIndex:endIndex-1),op_data);
     end
@@ -123,25 +120,13 @@ figure(2)
 cla
 handles = [];
 %normalize the selection to make it a probability
-concat_select = zeros(nepochs, length(files) * numOps);
-for i=1:numOps
-    concat_select(:,(i-1) * length(files) + 1:i*length(files)) = squeeze(all_epoch_select(i,:,:));
-end
-mins = repmat(min(concat_select(2:end,:),[],2),1,length(files));
-maxs = repmat(max(concat_select(2:end,:),[],2),1,length(files));
+means = mean(all_epoch_select,3);
+mean_sum = sum(means,1);
 
 for i=1:numOps
-    all_epoch_select_norm = (squeeze(all_epoch_select(i,2:end,:))-mins)./(maxs-mins);
-    X = [2:nepochs,fliplr(2:nepochs)];
-    stddev_sel = std(all_epoch_select_norm,0,2);
-    mean_sel = mean(all_epoch_select_norm,2);
-    Y = [mean_sel-stddev_sel;flipud(mean_sel+stddev_sel)];
-    Y(Y<0) = 0; %correct for negative values
-    Y(Y>1) = 1; %correct for >1 values
-    %     fill(X,Y,colors{i},'EdgeColor','none');
-    alpha(0.15)
+    mean_sel = means(i,:)./mean_sum;
     hold on
-    handles = [handles, plot(2:nepochs,mean(all_epoch_select_norm,2),'Color',colors{i}, 'LineWidth',2)];
+    handles = [handles, plot(2:nepochs,mean_sel(2:end),'Color',colors{i}, 'LineWidth',2)];
 end
 legend(handles, ops);
 axis([0, nepochs, 0, 1])

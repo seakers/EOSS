@@ -30,16 +30,26 @@ violations(:,4) = instorb;
 violations(:,5) = synergy;
 violations(:,6) = interference;
 
-%compute the violations over nfe
+%compute the solutions with any violations over nfe
 uniqueNFE = unique(nfe);
-vec = zeros(length(unique(nfe)),6);
+anyViolation = zeros(length(unique(nfe)),6);
 for i=2:length(uniqueNFE)
     ind = and(nfe > uniqueNFE(i-1), nfe <= uniqueNFE(i));
     for j =1:6
         temp = violations(ind,j);
-        vec(i,j) = sum(temp>0)/sum(ind);
+        anyViolation(i,j) = sum(temp>0)/sum(ind);
     end
 end
+
+%compute the average violation in the population over nfe
+meanViolation = zeros(length(unique(nfe)),6);
+for i=2:length(uniqueNFE)
+    ind = and(nfe > uniqueNFE(i-1), nfe <= uniqueNFE(i));
+    for j =1:6
+        meanViolation(i,j) = mean(violations(ind,j));
+    end
+end
+
 
 %plot fraction of solutions with any violation (smooth signal)
 h = figure(1);
@@ -48,7 +58,7 @@ windowSize = 100;
 wts = ones(1,windowSize)/windowSize;
 hold on
 for i=1:6
-    v = filter(wts,1,vec(:,i));
+    v = filter(wts,1,anyViolation(:,i));
     plot(uniqueNFE - windowSize/2,v);
 end
 legend('Mass','DutyCycle','PackingEfficiency','InstrumentOrbit','Synergy','Interference')
@@ -58,8 +68,25 @@ axis([0,5000,0,1])
 saveas(h, strcat(filename, '_violations_history.fig'))
 saveas(h, strcat(filename, '_violations_history.png'))
 
-%plot heat map of violations in objective space
+%plot sum of violations in population
 h = figure(2);
+cla
+windowSize = 100;
+wts = ones(1,windowSize)/windowSize;
+hold on
+for i=1:6
+    v = filter(wts,1,meanViolation(:,i));
+    plot(uniqueNFE - windowSize/2,v);
+end
+legend('Mass','DutyCycle','PackingEfficiency','InstrumentOrbit','Synergy','Interference')
+xlabel('NFE')
+ylabel('Mean violation')
+axis([0,5000,0,1])
+saveas(h, strcat(filename, '_violations_history.fig'))
+saveas(h, strcat(filename, '_violations_history.png'))
+
+%plot heat map of violations in objective space
+h = figure(3);
 cla
 constraints = {'mass','dutycycle','packing efficiency','instrument-orbit','synergy','interference'};
 for i=1:size(violations,2)
@@ -75,7 +102,7 @@ saveas(h, strcat(filename, '_violations_map.fig'))
 saveas(h, strcat(filename, '_violations_map.png'))
 
 %plot heat map of violations in objective space
-h = figure(3);
+h = figure(4);
 cla
 scatter(-objectives(:,1),objectives(:,2), 5, nfe);
 colormap jet

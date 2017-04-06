@@ -176,7 +176,7 @@ public class LaunchVehicle implements Serializable {
 
             double sumCost = 0;
             HashMap<Collection<Spacecraft>, LaunchVehicle> option = new HashMap();
-            for (Integer groupNumber : groupIndex) {
+            for (Integer groupNumber : groups.keySet()) {
                 //find all the feasible launch vehicles for each group of spacecraft
                 ArrayList<LaunchVehicle> feasibleLV = new ArrayList<>();
                 for (LaunchVehicle lv : EOSSDatabase.getLaunchVehicles()) {
@@ -201,7 +201,6 @@ public class LaunchVehicle implements Serializable {
                     cheapestLVCost = cheapestLV.getCost();
                 }
                 sumCost += cheapestLVCost;
-
             }
 
             if (sumCost < lowestCost) {

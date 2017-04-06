@@ -6,6 +6,7 @@
 package knowledge.constraint;
 
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.comparator.EpsilonBoxDominanceComparator;
 
 /**
@@ -19,14 +20,14 @@ public class EpsilonKnoweldgeConstraintComparator extends EpsilonBoxDominanceCom
     /**
      * The aggregate constraint comparator.
      */
-    private final KnowledgeStochasticRanking comparator;
+    private final DominanceComparator comparator;
 
-    public EpsilonKnoweldgeConstraintComparator(double epsilon, KnowledgeStochasticRanking ksr) {
+    public EpsilonKnoweldgeConstraintComparator(double epsilon, DominanceComparator ksr) {
         super(epsilon);
         this.comparator = ksr;
     }
 
-    public EpsilonKnoweldgeConstraintComparator(double[] epsilons, KnowledgeStochasticRanking ksr) {
+    public EpsilonKnoweldgeConstraintComparator(double[] epsilons, DominanceComparator ksr) {
         super(epsilons);
         this.comparator = ksr;
     }
