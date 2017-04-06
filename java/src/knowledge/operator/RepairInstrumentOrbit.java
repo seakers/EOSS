@@ -36,7 +36,7 @@ public class RepairInstrumentOrbit extends AbstractInstrumentMove {
 
     @Override
     protected boolean checkOtherSpacecraft(Spacecraft s, Orbit o, Instrument inst) {
-        return chemistryInPM(inst, o) || passiveInDD(inst, o) || slantLowAltitude(inst, o);
+        return !chemistryInPM(inst, o) && !passiveInDD(inst, o) && !slantLowAltitude(inst, o);
     }
 
     @Override
