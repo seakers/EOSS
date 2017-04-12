@@ -98,7 +98,7 @@ public class InstrumentedSearch implements Callable<Algorithm> {
             IAOS algAOS = (IAOS) alg;
             if (properties.getBoolean("saveQuality", false)) {
                 IOQualityHistory ioqh = new IOQualityHistory();
-                ioqh.saveHistory(algAOS.getQualityHistory(), savePath + File.separator + name + ".credit", ",");
+                ioqh.saveHistory(algAOS.getQualityHistory(), savePath + File.separator + name + ".qual", ",");
             }
             if (properties.getBoolean("saveCredits", false)) {
                 IOCreditHistory ioch = new IOCreditHistory();
