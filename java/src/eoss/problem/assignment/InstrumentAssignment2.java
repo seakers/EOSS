@@ -67,7 +67,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
      */
     public InstrumentAssignment2(String path, int nSpacecraft, RequirementMode reqMode, boolean withSynergy) {
         //nInstruments*nSpacecraft for the assigning problem, nSpacecraft for the combining problem
-        super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 4);
+        super(EOSSDatabase.getNumberOfInstruments() * nSpacecraft + nSpacecraft, 2, 0);
 
         this.nSpacecraft = nSpacecraft;
 
@@ -299,7 +299,7 @@ public class InstrumentAssignment2 extends AbstractProblem implements SystemArch
     public Solution newSolution() {
         return new InstrumentAssignmentArchitecture2(
                 EOSSDatabase.getNumberOfInstruments(), nSpacecraft,
-                EOSSDatabase.getNumberOfOrbits(), 2, 4);
+                EOSSDatabase.getNumberOfOrbits(), 2, 0);
     }
 
 }

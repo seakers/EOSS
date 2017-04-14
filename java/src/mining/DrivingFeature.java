@@ -11,7 +11,7 @@ package mining;
  * @author Bang
  */
  
-public class DrivingFeature {
+public class DrivingFeature implements Feature{
         
         private int index;
         private String name; // specific names
@@ -59,6 +59,26 @@ public class DrivingFeature {
             this.param = param;
             this.metrics = metrics;
             this.preset = true;
+        }
+        
+        @Override
+        public double getSupport(){
+            return metrics[0];
+        }
+        
+        @Override
+        public double getFConfidence(){
+            return metrics[2];
+        }
+        
+        @Override
+        public double getRConfidence(){
+            return metrics[3];
+        }
+        
+        @Override
+        public double getLift(){
+            return metrics[1];
         }
         
         public int getIndex(){return index;}

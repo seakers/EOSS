@@ -15,11 +15,11 @@ import org.jblas.DoubleMatrix;
  */
 public class Apriori {
 	
-    private double[] thresholds;
-    ArrayList<DrivingFeature> presetDrivingFeatures;
-    DoubleMatrix dataFeatureMat;
-    int nrows;
-    int ncols;
+    private final double[] thresholds;
+    private final ArrayList<DrivingFeature> presetDrivingFeatures;
+    private final DoubleMatrix dataFeatureMat;
+    private final int nrows;
+    private final int ncols;
     
     public Apriori(ArrayList<DrivingFeature> presetDrivingFeatures, double[][] dataFeatureMat, double[] thresholds){
     	
@@ -90,8 +90,7 @@ public class Apriori {
 
                                                     if(metrics[2] > thresholds[2]){
                                                             // Create a new candidate
-                                                            SetOfFeatures newFeat = new SetOfFeatures(newIntArr);
-                                                            newFeat.setMetrics(metrics);
+                                                            SetOfFeatures newFeat = new SetOfFeatures(newIntArr, metrics);
                                                             // If the metric is above the threshold, current feature is statistically significant
                                                             S.add(newFeat);
                                                     }
@@ -104,8 +103,7 @@ public class Apriori {
             }
 
             if(run_mRMR){
-                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
-                S = dfg.sort(1, S);
+                Collections.sort(S, new FeatureComparator(FeatureMetric.LIFT));
                 ArrayList<SetOfFeatures> S_reduced = new ArrayList<>();
                 
                 if(num_features_to_extract==1){
@@ -121,8 +119,7 @@ public class Apriori {
                     }
                 }
 
-                MRMR mRMR = new MRMR();
-                S = mRMR.minRedundancyMaxRelevance(dataFeatureMat, S_reduced, num_features_to_extract);
+                S = MRMR.minRedundancyMaxRelevance(dataFeatureMat, S_reduced, num_features_to_extract);
             }
             return S;
     }
@@ -170,22 +167,17 @@ public class Apriori {
     return metrics;
     }
 
-
     public ArrayList<SetOfFeatures> generateInitialSets(ArrayList<DrivingFeature> drivingFeatures){
 
             ArrayList<SetOfFeatures> S = new ArrayList<>();
             for(DrivingFeature feat:drivingFeatures){
                     int[] temp = new int[1];
                     temp[0] = feat.getIndex();
-                    SetOfFeatures set = new SetOfFeatures(temp);
-                    set.setMetrics(feat.getMetrics());
+                    SetOfFeatures set = new SetOfFeatures(temp, feat.getMetrics());
                     S.add(set);
             }
             return S;
     }
-	
-
-
     
     public ArrayList<boolean[]> intMatrix2BoolArray(ArrayList<int[][]> input){
     	

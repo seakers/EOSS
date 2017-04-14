@@ -64,11 +64,6 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
     private final HashMap<Instrument, Instrument[]> interferenceMap;
 
     /**
-     * Solution database to reuse the computed values;
-     */
-    private final HashMap<Solution, double[]> solutionDB;
-
-    /**
      * Constructor for the problem. Assumes that only one satellite can occupy
      * each candidate orbit
      *
@@ -76,11 +71,10 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * @param reqMode
      */
     public InstrumentAssignment(String path, RequirementMode reqMode) {
-        this(path, reqMode, new int[]{1}, true, null);
+        this(path, reqMode, new int[]{1}, true);
     }
 
     /**
-     *
      * @param path
      * @param reqMode
      * @param altnertivesForNumberOfSatellites
@@ -88,20 +82,8 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
      * with synergy rules.
      */
     public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean withSynergy) {
-        this(path, reqMode, altnertivesForNumberOfSatellites, withSynergy, null);
-    }
-
-    /**
-     *
-     * @param path
-     * @param reqMode
-     * @param altnertivesForNumberOfSatellites
-     * @param withSynergy determines whether or not to evaluate the solutions
-     * with synergy rules.
-     */
-    public InstrumentAssignment(String path, RequirementMode reqMode, int[] altnertivesForNumberOfSatellites, boolean withSynergy, File database) {
         //2 decisions for Choosing and Assigning Patterns
-        super(2, 2);
+        super(1 + EOSSDatabase.getNumberOfInstruments()*EOSSDatabase.getNumberOfOrbits(), 2);
 
         ValueTree template = null;
         try {
@@ -159,67 +141,16 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             this.interferenceMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
         }
 
-        //load database of solution if requested.
-        solutionDB = new HashMap<>();
-        if (database != null) {
-            try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(database))) {
-                System.out.println("Loading solution database: " + database.toString());
-                solutionDB.putAll((HashMap<Solution, double[]>) is.readObject());
-            } catch (IOException ex) {
-                Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
         this.altnertivesForNumberOfSatellites = altnertivesForNumberOfSatellites;
     }
 
     @Override
     public void evaluate(Solution sltn) {
-        try {
-            InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
-            arch.setMissions();
-            if (!loadArchitecture(arch)) {
-                evaluateArch(arch);
-            }
-
-            System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
-                    arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
-        } catch (JessException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    /**
-     * Load the solution from the database if it exists and copies computed
-     * values over to give solution.
-     *
-     * @param solution the solution to evaluate
-     * @return true if solution is found in database. Else false;
-     */
-    private boolean loadArchitecture(InstrumentAssignmentArchitecture solution) throws JessException {
-        if (solutionDB.containsKey(solution)) {
-            double[] objectives = solutionDB.get(solution);
-            for (int i = 0; i < solution.getNumberOfObjectives(); i++) {
-                solution.setObjective(i, objectives[i]);
-            }
-
-            //compute the auxilary facts
-            ArrayList<Mission> missions = new ArrayList<>();
-            for (String missionName : solution.getMissionNames()) {
-                missions.add(solution.getMission(missionName));
-            }
-            if (missions.isEmpty()) {
-                return true;
-            } else {
-                eval.designSpacecraft(missions);
-                getAuxFacts(solution);
-                return true;
-            }
-        } else {
-            return false;
-        }
+        InstrumentAssignmentArchitecture arch = (InstrumentAssignmentArchitecture) sltn;
+        arch.setMissions();
+        evaluateArch(arch);
+        System.out.println(String.format("Arch %s Science = %10f; Cost = %10f :: %s",
+                arch.toString(), arch.getObjective(0), arch.getObjective(1), arch.payloadToString()));
     }
 
     private void evaluateArch(InstrumentAssignmentArchitecture arch) {
@@ -232,13 +163,12 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             arch.setObjective(0, -tree.computeScores()); //negative because MOEAFramework assumes minimization problems
 
             double cost = eval.cost(missions);
-            arch.setObjective(1, cost / 33495.939796); //normalize cost to maximum value
+            arch.setObjective(1, cost); //normalize cost to maximum value
 
             getAuxFacts(arch);
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
-        solutionDB.put(arch, new double[]{arch.getObjective(0), arch.getObjective(1)});
     }
 
     /**
@@ -356,6 +286,17 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         synergyViolationSum /= (10.0 * numSpacecraft);
         interferenceViolationSum /= (10.0 * numSpacecraft);
 
+        //fix nans. Can occur if there are no spacecraft (empty architecture)
+        if (Double.isNaN(instrumentOrbitAssignmentViolationSum)) {
+            instrumentOrbitAssignmentViolationSum = 0;
+        }
+        if (Double.isNaN(synergyViolationSum)) {
+            synergyViolationSum = 0;
+        }
+        if (Double.isNaN(interferenceViolationSum)) {
+            interferenceViolationSum = 0;
+        }
+
         double constraint = (dcViolationSum + massViolationSum
                 + packingEfficiencyViolationSum
                 + instrumentOrbitAssignmentViolationSum
@@ -368,24 +309,6 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         arch.setAttribute("instrumentOrbitAssignmentViolationSum", instrumentOrbitAssignmentViolationSum);
         arch.setAttribute("synergyViolationSum", synergyViolationSum);
         arch.setAttribute("interferenceViolationSum", interferenceViolationSum);
-    }
-
-    /**
-     * Saves the solution database created during the search
-     *
-     * @param file the file in which to save the database
-     * @return true if successfully saved
-     */
-    public boolean saveSolutionDB(File file) {
-        boolean flag = true;
-        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));) {
-            os.writeObject(solutionDB);
-            os.close();
-        } catch (IOException ex) {
-            Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
-            flag = false;
-        }
-        return flag;
     }
 
     @Override

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
+import mining.FeatureMetric;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
 import org.moeaframework.Instrumenter;
@@ -81,15 +82,16 @@ public class InnovizationSearch implements Callable<Algorithm> {
      * the strategy for how to and when to remove and add operators
      */
     private final OperatorReplacementStrategy ops;
-    
+
     /**
      * Constructs new search and automatically initializes Jess
+     *
      * @param alg
      * @param properties
      * @param dataLabeler
      * @param ops
      * @param savePath
-     * @param name 
+     * @param name
      */
     public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name) {
         this.alg = alg;
@@ -130,21 +132,18 @@ public class InnovizationSearch implements Callable<Algorithm> {
         HashSet<Solution> allSolutions = new HashSet();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
+            initPop.get(i).setAttribute("NFE", 0);
             allSolutions.add(initPop.get(i));
         }
 
-
         //count the number of times we reset operators
         int opResetCount = 0;
-        
+
+        //The association rule mining engine
+        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(alg.getProblem().getNumberOfVariables());
+
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
-            //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
-            for (int i = pop.size() - 3; i < pop.size(); i++) {
-                if (!allSolutions.contains(pop.get(i))) {
-                    allSolutions.add(pop.get(i));
-                }
-            }
 
             int nFuncEvals = instAlgorithm.getNumberOfEvaluations();
             //Check if the operators need to be replaced
@@ -168,15 +167,12 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 dataLabeler.label(allSolnPop);
                 String labledDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_labels.csv";
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
-                
+
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
-                // Find driving features
-                // Sort driving features based on the metric of your choice (0: support, 1: lift, 2: confidence)
-//                dfg.getDrivingFeatures(labledDataFile, featureDataFile, 2, nOpsToAdd);
                 
-                //The association rule mining engine
-                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
-		dfg.getDrivingFeatures_clustering(labledDataFile,featureDataFile, 1, nOpsToAdd);
+                // Find driving features
+                // Sort driving features based on the metric of your choice (support, lift, confidence)
+                dfg.getDrivingFeatures(labledDataFile, featureDataFile, FeatureMetric.FCONFIDENCE, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
 
@@ -200,6 +196,13 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 System.out.println("  Archivesize: " + ((AbstractEvolutionaryAlgorithm) alg).getArchive().size());
             }
             instAlgorithm.step();
+
+            //since new solutions are put at end of population, only check the last few to see if any new solutions entered population
+            for (int i = 1; i < 3; i++) {
+                Solution s = pop.get(pop.size() - i);
+                s.setAttribute("NFE", instAlgorithm.getNumberOfEvaluations());
+                allSolutions.add(s);
+            }
         }
 
         Population allpop = new Population();
@@ -215,20 +218,23 @@ public class InnovizationSearch implements Callable<Algorithm> {
         String filename = savePath + File.separator + alg.getClass().getSimpleName() + "_" + name;
         ResultIO.saveSearchMetrics(instAlgorithm, filename);
         ResultIO.savePopulation(((AbstractEvolutionaryAlgorithm) alg).getPopulation(), filename);
-        ResultIO.savePopulation(allpop, filename + "allpop");
+        ResultIO.savePopulation(allpop, filename + "_all");
         ResultIO.saveObjectives(instAlgorithm.getResult(), filename);
 
-        if (properties.getBoolean("saveQuality", false)) {
-            IOQualityHistory ioqh = new IOQualityHistory();
-            ioqh.saveHistory(alg.getQualityHistory(), savePath + File.separator + name + ".credit", ",");
-        }
-        if (properties.getBoolean("saveCredits", false)) {
-            IOCreditHistory ioch = new IOCreditHistory();
-            ioch.saveHistory(alg.getCreditHistory(), savePath + File.separator + name + ".credit", ",");
-        }
-        if (properties.getBoolean("saveSelection", false)) {
-            IOSelectionHistory iosh = new IOSelectionHistory();
-            iosh.saveHistory(alg.getSelectionHistory(), savePath + File.separator + name + ".hist", ",");
+        if (alg instanceof IAOS) {
+            IAOS algAOS = (IAOS) alg;
+            if (properties.getBoolean("saveQuality", false)) {
+                IOQualityHistory ioqh = new IOQualityHistory();
+                ioqh.saveHistory(algAOS.getQualityHistory(), savePath + File.separator + name + ".qual", ",");
+            }
+            if (properties.getBoolean("saveCredits", false)) {
+                IOCreditHistory ioch = new IOCreditHistory();
+                ioch.saveHistory(algAOS.getCreditHistory(), savePath + File.separator + name + ".credit", ",");
+            }
+            if (properties.getBoolean("saveSelection", false)) {
+                IOSelectionHistory iosh = new IOSelectionHistory();
+                iosh.saveHistory(algAOS.getSelectionHistory(), savePath + File.separator + name + ".hist", ",");
+            }
         }
 
         return alg;

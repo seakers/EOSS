@@ -8,8 +8,6 @@ package mining;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 
 
 
@@ -25,19 +23,10 @@ public class Scheme{
     private int orbit=-1;
     private int instrument2=-1, instrument3=-1;
     private int count=-1;
-    private final int ninstr;
-    private final int norb;
-    private String[] orbit_list;
-    private String[] instrument_list;
 //    private ArrayList<String> presetFeatureNames;
     int tmpcnt;
     
     public Scheme(){
-
-        norb = DrivingFeaturesParams.orbit_list.length;
-        orbit_list = DrivingFeaturesParams.orbit_list;
-        ninstr = DrivingFeaturesParams.instrument_list.length;
-        instrument_list = DrivingFeaturesParams.instrument_list;
         tmpcnt = 0;
     }
     

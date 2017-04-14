@@ -113,7 +113,7 @@ public class RBSAEOSSSMAP {
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
             args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "2"; //Mode
+            args[1] = "3"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -165,14 +165,11 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveCredits", true);
         properties.setBoolean("saveSelection", true);
 
-        //initialize EOSS database
-        EOSSDatabase.getInstance();
-        EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
-        EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
-        EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits.xml"));
-        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
-
         for (int i = 0; i < numRuns; i++) {
+            
+            //initialize problem
+//            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
+            Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE);
 
             //Random knowledge operator
             Variation repairMass = new RepairMass(3000.0, 1, 1);
@@ -197,8 +194,6 @@ public class RBSAEOSSSMAP {
 
             HashSet<String> constraints = new HashSet(constraintOperatorMap.values());
 
-            //initialize problem
-            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
             initialization = new RandomInitialization(problem, popSize);
 //            initialization = new NInstrumentInitializer(5, 3, (InstrumentAssignment2) problem, popSize);
 
@@ -317,10 +312,24 @@ public class RBSAEOSSSMAP {
     }
 
     public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode) {
-        return new InstrumentAssignment(path, mode, new int[]{1}, true, new File(path + File.separator + "database" + File.separator + "solutions.dat"));
+        //initialize EOSS database
+        EOSSDatabase.getInstance();
+        EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
+        EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
+        EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits5.xml"));
+        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
+
+        return new InstrumentAssignment(path, mode, new int[]{1}, true);
     }
 
     public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode) {
+        //initialize EOSS database
+        EOSSDatabase.getInstance();
+        EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
+        EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
+        EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits12.xml"));
+        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
+
         return new InstrumentAssignment2(path, nSpacecraft, mode, true);
     }
 

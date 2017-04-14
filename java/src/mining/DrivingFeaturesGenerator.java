@@ -20,9 +20,8 @@ Member functions
 
 
 
+import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.lang.Math;
 
 import mining.label.Clustering;
 
@@ -31,20 +30,19 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 
 /**
  *
  * @author Bang
  */
 public class DrivingFeaturesGenerator {
+    
+    private final int numberOfVariables;
 
     private double supp_threshold;
     private double confidence_threshold;
     private double lift_threshold;
-    private String[] instrument_list;
-    private String[] orbit_list;
-    private int ninstr;
-    private int norb;
     
     private ArrayList<DrivingFeature> presetDrivingFeatures;
     
@@ -59,17 +57,13 @@ public class DrivingFeaturesGenerator {
     public boolean run_mRMR;
 
 
-    public DrivingFeaturesGenerator(){
+    public DrivingFeaturesGenerator(int numberOfVariables){
+        this.numberOfVariables = numberOfVariables;
         
-    	this.orbit_list = DrivingFeaturesParams.orbit_list;
-    	this.instrument_list = DrivingFeaturesParams.instrument_list;
-    	this.norb = orbit_list.length;
-    	this.ninstr = instrument_list.length;
         this.supp_threshold=DrivingFeaturesParams.support_threshold;
         this.confidence_threshold=DrivingFeaturesParams.confidence_threshold;
         this.lift_threshold=DrivingFeaturesParams.lift_threshold;
         this.presetDrivingFeatures = new ArrayList<>();
-        this.max_num_of_instruments=DrivingFeaturesParams.max_number_of_instruments;
         
         this.tallMatrix=DrivingFeaturesParams.tallMatrix;
         this.maxLength = DrivingFeaturesParams.maxLength;
@@ -81,9 +75,8 @@ public class DrivingFeaturesGenerator {
         this.architectures = new ArrayList<>();
 
     }
-    
 
-    public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
+    public ArrayList<SetOfFeatures> getDrivingFeatures(String labeledDataFile, String saveDataFile, FeatureMetric metric, int topN){
         
     	parseCSV(labeledDataFile);
         
@@ -97,11 +90,12 @@ public class DrivingFeaturesGenerator {
     	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
     	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, topN);
 
-    	exportDrivingFeatures(sort(sort_index,features), saveDataFile, topN);
+        Collections.sort(features, new FeatureComparator(metric));
+    	exportDrivingFeatures(features, saveDataFile, topN);
     	return features;
     }
     
-    public void getDrivingFeatures_clustering(String labeledDataFile, String saveDataFile, int sort_index, int numCluster){
+    public void getDrivingFeatures_clustering(String labeledDataFile, String saveDataFile, FeatureMetric metric, int numCluster){
     	
     	parseCSV_clustering(labeledDataFile);
     	clusterData(numCluster);
@@ -152,7 +146,8 @@ public class DrivingFeaturesGenerator {
 	
 	        	Apriori ap = new Apriori(preset, dataFeatureMat, thresholds);
 	        	ArrayList<SetOfFeatures> features = ap.runApriori(maxLength,run_mRMR, 1);
-	        	exportDrivingFeatures_clustering(w, sort(sort_index,features));
+                        Collections.sort(features, new FeatureComparator(metric));
+	        	exportDrivingFeatures_clustering(w, features);
 	    	}
 	    	
 	        w.flush();
@@ -213,34 +208,34 @@ public class DrivingFeaturesGenerator {
         ArrayList<DrivingFeature> presetFeatures = new ArrayList<>();
 
         scheme.setName("present");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             scheme.setInstrument (i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int[] param = new int[1];
                 param[0] = i;
-                String featureName = "present[" + instrument_list[i] + "]";
+                String featureName = "present[" + EOSSDatabase.getInstrument(i) + "]";
                 presetFeatures.add(new DrivingFeature(ind,featureName,"present", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
         scheme.setName("absent");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             scheme.setInstrument (i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int [] param = new int[1];
                 param[0] = i;
-                String featureName = "absent[" + instrument_list[i] + "]";
+                String featureName = "absent[" + EOSSDatabase.getInstrument(i) + "]";
                 presetFeatures.add(new DrivingFeature(ind,featureName,"absent", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
         scheme.setName("inOrbit");
-        for (int i = 0; i < norb; ++i) {
-            for (int j = 0; j < ninstr; ++j) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
+            for (int j = 0; j < EOSSDatabase.getNumberOfInstruments(); ++j) {
                 scheme.setInstrument (j);
                 scheme.setOrbit(i);
                 double[] metrics = computeMetrics(scheme);
@@ -248,7 +243,7 @@ public class DrivingFeaturesGenerator {
                     int[] param = new int[2];
                     param[0] = i;
                     param[1] = j;
-                    String featureName = "inOrbit[" + orbit_list[i] + ", " + instrument_list[j] + "]";
+                    String featureName = "inOrbit[" + EOSSDatabase.getOrbit(i) + ", " + EOSSDatabase.getInstrument(j) + "]";
                     presetFeatures.add(new DrivingFeature(ind,featureName,"inOrbit", param, metrics));
                     ind++;
                 }
@@ -256,8 +251,8 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("notInOrbit");
-        for (int i = 0; i < norb; ++i) {
-            for (int j = 0; j < ninstr; ++j) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
+            for (int j = 0; j < EOSSDatabase.getNumberOfInstruments(); ++j) {
                 scheme.setInstrument (j);
                 scheme.setOrbit(i);
                 double[] metrics = computeMetrics(scheme);
@@ -265,7 +260,7 @@ public class DrivingFeaturesGenerator {
                     int[] param = new int[2];
                     param[0] = i;
                     param[1] = j;
-                    String featureName = "notInOrbit[" + orbit_list[i] + ", " + instrument_list[j] + "]";
+                    String featureName = "notInOrbit[" + EOSSDatabase.getOrbit(i) + ", " + EOSSDatabase.getInstrument(j) + "]";
                     presetFeatures.add(new DrivingFeature(ind,featureName,"notInOrbit", param, metrics));
                     ind++;
                 } 
@@ -273,7 +268,7 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("together2");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             for (int j = 0; j < i; ++j) {
                 scheme.setInstrument(i);
                 scheme.setInstrument2(j);
@@ -282,7 +277,7 @@ public class DrivingFeaturesGenerator {
                     int[] param = new int[2];
                     param[0] = i;
                     param[1] = j;
-                    String featureName = "together2[" + instrument_list[i] + ", " + instrument_list[j] + "]";
+                    String featureName = "together2[" + EOSSDatabase.getInstrument(i) + ", " + EOSSDatabase.getInstrument(j) + "]";
                     presetFeatures.add(new DrivingFeature(ind,featureName,"together2", param, metrics));
                     ind++;
                 }
@@ -290,8 +285,8 @@ public class DrivingFeaturesGenerator {
         }    
         scheme.resetArg();
         scheme.setName("togetherInOrbit2");
-        for (int i = 0; i < norb; ++i) {
-            for (int j = 0; j < ninstr; ++j) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
+            for (int j = 0; j < EOSSDatabase.getNumberOfInstruments(); ++j) {
                 for (int k = 0; k < j; ++k) {
                     scheme.setInstrument(j);
                     scheme.setInstrument2(k);
@@ -302,8 +297,8 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "togetherInOrbit2[" + orbit_list[i] + ", " + instrument_list[j] + 
-                                ", " + instrument_list[k] + "]"; 
+                        String featureName = "togetherInOrbit2[" + EOSSDatabase.getOrbit(i) + ", " + EOSSDatabase.getInstrument(j) + 
+                                ", " + EOSSDatabase.getInstrument(k) + "]"; 
                         presetFeatures.add(new DrivingFeature(ind,featureName,"togetherInOrbit2", param,metrics));
                         ind++;
                     }
@@ -312,7 +307,7 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("separate2");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             for (int j = 0; j < i; ++j) {
                 scheme.setInstrument(i);
                 scheme.setInstrument2(j);
@@ -321,7 +316,7 @@ public class DrivingFeaturesGenerator {
                         int[] param = new int[2];
                         param[0] = i;
                         param[1] = j;
-                        String featureName = "separate2[" + instrument_list[i] + ", " + instrument_list[j] + "]";
+                        String featureName = "separate2[" + EOSSDatabase.getInstrument(i) + ", " + EOSSDatabase.getInstrument(j) + "]";
                         presetFeatures.add(new DrivingFeature(ind,featureName,"separate2", param, metrics));
                         ind++;
                     }
@@ -329,7 +324,7 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("together3");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             for (int j = 0; j < i; ++j) {
                 for (int k = 0; k < j; ++k) {
                     scheme.setInstrument(i);
@@ -341,8 +336,8 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "together3[" + instrument_list[i] + ", " + 
-                        		instrument_list[j] + ", " + instrument_list[k] + "]";
+                        String featureName = "together3[" + EOSSDatabase.getInstrument(i) + ", " + 
+                        		EOSSDatabase.getInstrument(j) + ", " + EOSSDatabase.getInstrument(k) + "]";
                         presetFeatures.add(new DrivingFeature(ind,featureName,"together3", param, metrics));
                         ind++;
                     }
@@ -351,8 +346,8 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("togetherInOrbit3");
-        for (int i = 0; i < norb; ++i) {
-            for (int j = 0; j < ninstr; ++j) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
+            for (int j = 0; j < EOSSDatabase.getNumberOfInstruments(); ++j) {
                 for (int k = 0; k < j; ++k) {
                     for (int l = 0; l < k; ++l) {
                         scheme.setName("togetherInOrbit3");
@@ -367,8 +362,8 @@ public class DrivingFeaturesGenerator {
                             param[1] = j;
                             param[2] = k;
                             param[3] = l;
-                            String featureName = "togetherInOrbit3[" + orbit_list[i] + ", " + 
-                            		instrument_list[j] + ", " + instrument_list[k] + "," + instrument_list[l] + "]";
+                            String featureName = "togetherInOrbit3[" + EOSSDatabase.getOrbit(i) + ", " + 
+                            		EOSSDatabase.getInstrument(j) + ", " + EOSSDatabase.getInstrument(k) + "," + EOSSDatabase.getInstrument(l) + "]";
                             presetFeatures.add(new DrivingFeature(ind,featureName,"togetherInOrbit3", param, metrics));
                             ind++;
                         }
@@ -378,7 +373,7 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("separate3");
-        for (int i = 0; i < ninstr; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfInstruments(); ++i) {
             for (int j = 0; j < i; ++j) {
                 for (int k = 0; k < j; ++k) {
                     scheme.setInstrument(i);
@@ -390,8 +385,8 @@ public class DrivingFeaturesGenerator {
                         param[0] = i;
                         param[1] = j;
                         param[2] = k;
-                        String featureName = "separate3[" + instrument_list[i] + ", " + 
-                        		instrument_list[j] + ", " + instrument_list[k] + "]";
+                        String featureName = "separate3[" + EOSSDatabase.getInstrument(i) + ", " + 
+                        		EOSSDatabase.getInstrument(j) + ", " + EOSSDatabase.getInstrument(k) + "]";
                         presetFeatures.add(new DrivingFeature(ind,featureName,"separate3", param, metrics));
                         ind++;
                     }
@@ -400,20 +395,20 @@ public class DrivingFeaturesGenerator {
         }
         scheme.resetArg();
         scheme.setName("emptyOrbit");
-        for (int i = 0; i < norb; ++i) {
+        for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
             scheme.setOrbit(i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
                 int[] param = new int[1];
                 param[0] = i;
-                String featureName = "emptyOrbit[" + orbit_list[i] + "]";
+                String featureName = "emptyOrbit[" + EOSSDatabase.getOrbit(i) + "]";
                 presetFeatures.add(new DrivingFeature(ind,featureName,"emptyOrbit", param, metrics));
                 ind++;
             }
         }
         scheme.resetArg();
         scheme.setName("numOrbitUsed");
-        for (int i = 1; i < norb+1; i++) {
+        for (int i = 1; i < EOSSDatabase.getNumberOfOrbits()+1; i++) {
             scheme.setCount(i);
             double[] metrics = computeMetrics(scheme);
             if (checkThreshold(metrics)) {
@@ -441,7 +436,7 @@ public class DrivingFeaturesGenerator {
         scheme.resetArg();
         scheme.setName("numInstruments"); 
         // Number of each instrument
-        for (int i=0;i<ninstr;i++){
+        for (int i=0;i<EOSSDatabase.getNumberOfInstruments();i++){
         	for (int j=1;j<max_num_of_instruments;j++){
         		scheme.setInstrument(i);
 	            scheme.setCount(j);
@@ -450,7 +445,7 @@ public class DrivingFeaturesGenerator {
 	                int[] param = new int[2];
 	                param[0] = i;
 	                param[1] = j;
-	                String featureName = "numInstruments[" + instrument_list[i] + ","+ j +"]";
+	                String featureName = "numInstruments[" + EOSSDatabase.getInstrument(i) + ","+ j +"]";
 	                presetFeatures.add(new DrivingFeature(ind,featureName,"numInstruments", param, metrics));
 	                ind++;
 	            }
@@ -628,37 +623,6 @@ public class DrivingFeaturesGenerator {
         this.presetDrivingFeatures = sortedList;
         return sortedList;
     }
-    public ArrayList<SetOfFeatures> sort(int metric, ArrayList<SetOfFeatures> inputList){
-    
-    	ArrayList<SetOfFeatures> sortedList = new ArrayList<>();
-    	int length = inputList.size();
-    	
-        for(int i=0;i<length;i++){
-
-                SetOfFeatures df = inputList.get(i);
-                double val = df.getMetrics()[metric];
-                if (sortedList.isEmpty()){
-                        sortedList.add(df);
-                }else if (val >= sortedList.get(0).getMetrics()[metric]){
-                        // If val is smaller than the first element, insert it at as the first element
-                        sortedList.add(0, df);
-                }else if(val < sortedList.get(sortedList.size()-1).getMetrics()[metric]){
-                        // If val is larger than the last element, add it to the last
-                        sortedList.add(df);
-                }else{
-                        // Insert df based on the metric value
-                        for(int j=0;j<sortedList.size();j++){
-                                if(val < sortedList.get(j).getMetrics()[metric] && 
-                                val >= sortedList.get(j+1).getMetrics()[metric] ){
-                                        sortedList.add(j+1, df);
-                                }
-                        }
-                }
-        }
-        return sortedList;
-    }
-    
-    
     
     public double[][] getDataFeatureMat_double(){
     	int[][] dataMat = getDataFeatureMat();
@@ -696,7 +660,6 @@ public class DrivingFeaturesGenerator {
 
             for(int j=0;j<numFeature-1;j++){
                 DrivingFeature f = presetDrivingFeatures.get(j);
-                int id = f.getIndex();
                 String type = f.getType();
                 int[] param_ = f.getParam();
                 ArrayList<String> param = new ArrayList<>();
@@ -737,7 +700,6 @@ public class DrivingFeaturesGenerator {
         String line = "";
         String splitBy = ",";
 
-
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
         	//skip header
         	line = br.readLine();
@@ -746,11 +708,15 @@ public class DrivingFeaturesGenerator {
                 // use comma as separator
                 String[] tmp = line.split(splitBy);
                 int label = Integer.parseInt(tmp[0]);
-                String bitString = tmp[2];
+                StringBuilder sb = new StringBuilder();
+                //skiip the first variable since it is the number of sats per orbit
+                for(int i=1; i < numberOfVariables; i++){
+                    sb.append(tmp[i+1]);
+                }
                 if (label==1){
-                	this.behavioral.add(bitString2intArr(bitString));
+                	this.behavioral.add(bitString2intArr(sb.toString()));
                 }else{
-                	this.non_behavioral.add(bitString2intArr(bitString));
+                	this.non_behavioral.add(bitString2intArr(sb.toString()));
                 }
             }
         } catch (IOException e) {
@@ -787,12 +753,12 @@ public class DrivingFeaturesGenerator {
     }
 
     private int[][] bitString2intArr(String input){
-    	int[][] output = new int[norb][ninstr];
+    	int[][] output = new int[EOSSDatabase.getNumberOfOrbits()][EOSSDatabase.getNumberOfInstruments()];
     	
     	int cnt=0;
     	if (DrivingFeaturesParams.tallMatrix){
-        	for(int i=0;i<ninstr;i++){
-        		for (int o=0;o<norb;o++){
+        	for(int i=0;i<EOSSDatabase.getNumberOfInstruments();i++){
+        		for (int o=0;o<EOSSDatabase.getNumberOfOrbits();o++){
         			int thisBit;
         			if(cnt==input.length()-1){
         				thisBit = Integer.parseInt(input.substring(cnt));
@@ -804,8 +770,8 @@ public class DrivingFeaturesGenerator {
         		}
         	}
     	}else{
-        	for(int i=0;i<norb;i++){
-        		for (int j=0;j<ninstr;j++){
+        	for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
+        		for (int j=0;j<EOSSDatabase.getNumberOfInstruments();j++){
         			int thisBit;
         			if(cnt==input.length()-1){
         				thisBit = Integer.parseInt(input.substring(cnt));

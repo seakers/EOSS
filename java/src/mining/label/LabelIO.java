@@ -62,7 +62,7 @@ public class LabelIO implements Serializable {
 
             //Write information of each individual
             int numDec = population.get(0).getNumberOfVariables();
-            int numObj = population.get(0).getNumberOfVariables();
+            int numObj = population.get(0).getNumberOfObjectives();
             for (Solution individual : population) {
                 if (individual.hasAttribute(AbstractPopulationLabeler.LABELATTRIB)) {
                     fw.append(individual.getAttribute(AbstractPopulationLabeler.LABELATTRIB) + separator);
