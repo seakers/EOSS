@@ -46,9 +46,10 @@ public class Apriori {
     }
     
     
-    public ArrayList<Feature> runApriori(int maxLength, boolean run_mRMR, int num_features_to_extract){        
+    public ArrayList<Feature> runApriori(int maxLength){        
         
-            System.out.println("Size of the matrix: " + mat.length + " X " + mat[0].length);
+            long t0 = System.currentTimeMillis();
+            System.out.println("...[Apriori] size of the input matrix: " + mat.length + " X " + mat[0].length);
         
         
             // Define the initial set of features
@@ -81,7 +82,7 @@ public class Apriori {
                 ArrayList<Feature> candidates = apriori_gen_join(frontier);
                 candidates = apriori_gen_prune(candidates, frontier);
                 
-                System.out.println("Number of candidates (length "+l+"): " + candidates.size());
+                System.out.println("...[Apriori] number of candidates (length "+l+"): " + candidates.size());
                 
                 frontier = new ArrayList<>();
                 for(Feature f:candidates){
@@ -107,7 +108,8 @@ public class Apriori {
                 l=l+1;              
             }
             
-            System.out.println("Number of extracted features: " + S.size());
+            long t1 = System.currentTimeMillis();
+            System.out.println("...[Apriori] evaluation done in: " + String.valueOf(t1-t0) + " msec, with " + S.size() + " features found");
             return S;
     }
     

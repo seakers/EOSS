@@ -22,7 +22,8 @@ public class MRMR {
 
     public ArrayList<DrivingFeature> minRedundancyMaxRelevance(DoubleMatrix dataMat, DoubleMatrix label, ArrayList<DrivingFeature> features ,int target_num_features){
         
-        System.out.println("Running mRMR...");
+        long t0 = System.currentTimeMillis();
+        System.out.println("...[mRMR] running mRMR");
         
     	this.ncols = dataMat.columns;
         this.nrows = dataMat.rows;
@@ -51,26 +52,26 @@ public class MRMR {
                 double D = new MutualInformationCalculator(this.dataFeatureMat, this.label, i).call();
                 double R = 0;
 
-                for (int featInd: selectedFeatures) {
-                    //R = R + getMutualInformation(this.dataFeatureMat, this.label, i, featInd);
-                    MutualInformationCalculator task = new MutualInformationCalculator(this.dataFeatureMat, this.label, i, featInd);
-                    futures.add(threadpool.submit(task));
-                }
-                
-                for(Future<Double> future:futures){
-                    try{
-                        double r = future.get();
-                        synchronized(this) {
-                            R = R + r;
-                        }                    
-                    }catch(Exception e){
-                        System.out.println(e.getMessage());
-                    }
-                }
-                
 //                for (int featInd: selectedFeatures) {
-//                    R = R + new MutualInformationCalculator(this.dataFeatureMat, this.label, i, featInd).call();
+//                    //R = R + getMutualInformation(this.dataFeatureMat, this.label, i, featInd);
+//                    MutualInformationCalculator task = new MutualInformationCalculator(this.dataFeatureMat, this.label, i, featInd);
+//                    futures.add(threadpool.submit(task));
 //                }
+//                
+//                for(Future<Double> future:futures){
+//                    try{
+//                        double r = future.get();
+//                        synchronized(this) {
+//                            R = R + r;
+//                        }                    
+//                    }catch(Exception e){
+//                        System.out.println(e.getMessage());
+//                    }
+//                }
+                
+                for (int featInd: selectedFeatures) {
+                    R = R + new MutualInformationCalculator(this.dataFeatureMat, this.label, i, featInd).call();
+                }
                 
                 
                 if(numSelected!=0){
@@ -91,7 +92,9 @@ public class MRMR {
         for(int index:selectedFeatures){
             out.add(this.features.get(index));
         }
-        System.out.println("Finished running mRMR...");
+        
+        long t1 = System.currentTimeMillis();
+        System.out.println("...[mRMR] Finished running mRMR in "+ String.valueOf(t1-t0) + " msec");
         threadpool.shutdown();
         return out;
     }  

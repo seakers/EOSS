@@ -68,6 +68,7 @@ public class DrivingFeaturesGenerator {
     public boolean tallMatrix;
     public int maxLength;
     public boolean run_mRMR;
+    public int max_number_of_features_before_mRMR;
     
     private FilterExpressionHandler feh;
     
@@ -106,11 +107,14 @@ public class DrivingFeaturesGenerator {
         this.maxLength = DrivingFeaturesParams.maxLength;
         this.run_mRMR = DrivingFeaturesParams.run_mRMR;
 
+        this.max_number_of_features_before_mRMR = DrivingFeaturesParams.max_number_of_features_before_mRMR;
     }
     
 
-    public void getDrivingFeatures(String labeledDataFile, String saveDataFile, int sort_index, int topN){
+    public void getDrivingFeatures(String labeledDataFile, String saveDataFile, int topN){
         
+        long t0 = System.currentTimeMillis();
+
         // Read-in a csv file with labeled data
     	parseCSV(labeledDataFile);
         
@@ -123,11 +127,24 @@ public class DrivingFeaturesGenerator {
         // Sort driving features
         Collections.sort(this.drivingFeatures, DrivingFeature.DrivingFeatureComparator);
         
-        MRMR mRMR = new MRMR();
-        this.drivingFeatures = mRMR.minRedundancyMaxRelevance(getDataMat(this.drivingFeatures), new DoubleMatrix(this.labels), this.drivingFeatures, topN);
+        ArrayList<DrivingFeature> reduced_set = new ArrayList<>();
+        for(int i=0;i<this.max_number_of_features_before_mRMR;i++){
+            reduced_set.add(this.drivingFeatures.get(i));
+        }
+        this.drivingFeatures = reduced_set;
         
+        System.out.println("...[DrivingFeatures] Number of features before mRMR: " + reduced_set.size() + ", with max lift of " + reduced_set.get(0).getMetrics()[1]);
+        
+        if(this.run_mRMR){
+            MRMR mRMR = new MRMR();
+            this.drivingFeatures = mRMR.minRedundancyMaxRelevance(getDataMat(this.drivingFeatures), new DoubleMatrix(this.labels), this.drivingFeatures, topN);       
+        }
+
         // Printout result
         exportDrivingFeatures(saveDataFile,topN);
+        
+        long t1 = System.currentTimeMillis();
+        System.out.println( "...[DrivingFeature] Total data mining time : " + String.valueOf(t1-t0) + " msec");
         
     }
     
@@ -144,6 +161,8 @@ public class DrivingFeaturesGenerator {
     
     public ArrayList<DrivingFeature> getPresetDrivingFeatures(){
 
+        long t0 = System.currentTimeMillis();
+        
         this.presetDrivingFeatures = new ArrayList<>();
         this.presetDrivingFeatures_satList = new ArrayList<>();        
 
@@ -162,7 +181,7 @@ public class DrivingFeaturesGenerator {
             candidate_features.add("{present[;"+i+";]}");
             candidate_features.add("{absent[;"+i+";]}");
             
-            for(int j=0;j<norb+1;j++){
+            for(int j=1;j<norb+1;j++){
                 // numOfInstruments (number of specified instruments across all orbits)
                 candidate_features.add("{numOfInstruments[;"+i+";"+j+"]}");
             }                
@@ -265,9 +284,9 @@ public class DrivingFeaturesGenerator {
                             }
                         }
                     }        	
-                    System.out.println("RuleSetSize: " + addedFeatureIndices.size() +" Treshold: "+ this.adaptSupp);
+                    System.out.println("...[DrivingFeatures] number of preset rules found: " + addedFeatureIndices.size() +" with treshold: "+ this.adaptSupp);
                 }		
-                System.out.println("Driving features extracted in "+ iter +" steps with size: " + addedFeatureIndices.size());
+                System.out.println("...[DrivingFeatures] preset features extracted in "+ iter +" steps with size: " + addedFeatureIndices.size());
             }else{
                 for(int i=0;i<featureData_name.size();i++){
                     double[] metrics = featureData_metrics.get(i);
@@ -284,6 +303,8 @@ public class DrivingFeaturesGenerator {
                 id++;
             }
 
+            long t1 = System.currentTimeMillis();
+            System.out.println( "...[DrivingFeatures] preset feature evaluation done in: " + String.valueOf(t1-t0) + " msec");
 
             //if(apriori) return getDrivingFeatures();
             return this.presetDrivingFeatures;
@@ -334,7 +355,7 @@ public class DrivingFeaturesGenerator {
         Apriori ap = new Apriori(this.presetDrivingFeatures, this.dataFeatureMat, labels, thresholds);
         
         // Run Apriori algorithm
-        ArrayList<Apriori.Feature> new_features = ap.runApriori(this.maxLength,this.run_mRMR,100);
+        ArrayList<Apriori.Feature> new_features = ap.runApriori(this.maxLength);
 
         // Create a new list of driving features (assign new IDs)
         int id=0;

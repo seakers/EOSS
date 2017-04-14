@@ -4,7 +4,7 @@ package mining;
 public class DrivingFeaturesParams {
 	
     public static double support_threshold = 0.10;
-    public static double confidence_threshold = 0.4;
+    public static double confidence_threshold = 0.5;
     public static double lift_threshold = 1.0;
     public static String[] instrument_list = {"ACE_ORCA","ACE_POL",	"ACE_LID","CLAR_ERB",
                                                                                             "ACE_CPR","DESD_SAR","DESD_LID","GACM_VIS","GACM_SWIR",
