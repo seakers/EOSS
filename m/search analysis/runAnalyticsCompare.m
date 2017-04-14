@@ -5,7 +5,7 @@
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/analysis/metrics/';
 % [nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
-load(strcat(path,'baseline_eps_001_1_res.mat'));
+load(strcat(path,'new_baseline_eps_001_1_res.mat'));
 
 nexperiments = 4;
 ntrials = 30;
@@ -15,17 +15,17 @@ hv(1,:,:) = HV(:,1:ntrials);
 igd(1,:,:) = IGD(:,1:ntrials);
 
 % [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10'),'','');
-load(strcat(path,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1_res.mat'));
+load(strcat(path,'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1_res.mat'));
 hv(2,:,:) = HV(:,1:ntrials);
 igd(2,:,:) = IGD(:,1:ntrials);
 
 % [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive_eps_001_1'),'','');
-load(strcat(path,'emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
+load(strcat(path,'new_emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
 hv(3,:,:) = HV(:,1:ntrials);
 igd(3,:,:) = IGD(:,1:ntrials);
 
 % [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
-load(strcat(path,'emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
+load(strcat(path,'new_emoea_constraint_ach_pop_archive_eps_001_1_res.mat'));
 hv(4,:,:) = HV(:,1:ntrials);
 igd(4,:,:) = IGD(:,1:ntrials);
 
@@ -99,7 +99,7 @@ axis([0,5000,0,1.2])
 hold off
 xlabel('NFE')
 ylabel('HV')
-legend(handles, '\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+legend(handles, '\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
 % legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
 set(gca,'FontSize',16);
 
@@ -126,7 +126,7 @@ axis([0,5000,0,1])
 hold off
 xlabel('NFE')
 ylabel(sprintf('Probability of attaing %2.2f%% HV',thresholdHV*100))
-legend('\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+legend('\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','NorthEast')
 set(gca,'FontSize',16);
 
 %plot IGD history over NFE
@@ -147,11 +147,11 @@ for i=1:nexperiments
     ind = or(base_experiment_metric_sigIGD(:,i)==1,base_experiment_metric_sigIGD(:,i)==-1);
     plot(NFE(ind,1),mu(ind),'LineStyle','none','Marker','.','MarkerSize', 20,'Color',colors{i});
 end
-axis([0,5000,0,0.8])
+axis([0,5000,0,2])
 hold off
 xlabel('NFE')
 ylabel('IGD')
-legend(handles, '\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+legend(handles, '\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
 % legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
 set(gca,'FontSize',16);
 
@@ -179,5 +179,5 @@ axis([0,5000,0,1])
 hold off
 xlabel('NFE')
 ylabel(sprintf('Probability of attaing %2.2f%% IGD',thresholdIGD*100))
-legend('\epsilon-MOEA', 'AOS', 'DNF', 'ACH','Location','SouthEast')
+legend('\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
 set(gca,'FontSize',16);

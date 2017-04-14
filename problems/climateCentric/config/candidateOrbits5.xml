@@ -24,6 +24,17 @@
 	</orbit>
 	
 	<orbit>
+		<name>SSO-600-SSO-DD</name>
+		<semimajoraxis>6978100.0</semimajoraxis><!-- in m-->
+		<type>SSO</type>
+		<inclination>SSO</inclination><!-- in deg -->
+		<raan>DD</raan><!-- in deg -->
+		<meananomaly>0</meananomaly><!-- in deg -->
+		<eccentricity>0</eccentricity>
+		<argumentperigee>0</argumentperigee><!-- in deg -->
+	</orbit>
+	
+	<orbit>
 		<name>SSO-800-SSO-PM</name>
 		<semimajoraxis>7178100.0</semimajoraxis><!-- in m-->
 		<type>SSO</type>

@@ -3,10 +3,10 @@
 
 n_representatives = 3;
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/';
-method1 = 'baseline_eps_001_1/';
-method2 = 'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1/';
-method3 = 'emoea_constraint_dnf_pop_archive_eps_001_1/';
-method4 = 'emoea_constraint_ach_pop_archive/';
+method1 = 'new_baseline_eps_001_1/';
+method2 = 'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1/';
+method3 = 'new_emoea_constraint_dnf_pop_archive_eps_001_1/';
+method4 = 'new_emoea_constraint_ach_pop_archive_eps_001_1/';
 
 files1 = dir(strcat(path,method1,'*.obj'));
 ind1 = randi(length(files1),n_representatives);
@@ -48,11 +48,11 @@ for i=1:n_representatives
     plot(-objectives(ind,1), objectives(ind,2),'--k');
     hold off
     xlabel('Scientific Benefit')
-    axis([0,0.35,0,6000])
+    axis([0,0.35,0,4000])
     set(gca,'FontSize',16);
 end
 
 
 subplot(1,n_representatives,1)
-legend( '\epsilonMOEA','aos','DNF', 'ACH', 'PF^*','location','northwest')
+legend( '\epsilonMOEA','O-AOS','C-DNF', 'C-ACH', 'PF^*','location','northwest')
 ylabel('Lifecycle cost ($FY10M)')

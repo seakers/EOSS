@@ -10,8 +10,9 @@
 %   orbits
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_final/';
-load(strcat(path,'baseline_eps_001_10.mat'));
+
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC Paper/analysis/pop_all/';
+load(strcat(path,'for Ref Pop allPop.mat'));
 
 %data size
 ndata = size(decisions,1);
@@ -54,6 +55,10 @@ for i=1:maxNumSats
     numInstPerSat(:,i) = sum(sat_i,2);
 end
 
+%On off satellites
+satsOnOff = dutyCycle > 0;
+nSatsOn = sum(satsOnOff,2);
+
 %number of instruments per architecture
 numInstPerArch = sum(numInstPerSat,2);
 
@@ -63,7 +68,7 @@ bool_sat = numInstPerSat > 0;
 %numSatellites
 numSatellites = sum(bool_sat,2);
 
-%orbits (modify orbit selection id to mean 0 = no satellit occupying that
+%orbits (modify orbit selection id to mean 0 = no satellite occupying that
 %orbit)
 orbit = zeros(ndata,maxNumSats);
 for i=1:maxNumSats
@@ -88,6 +93,30 @@ raan_polar = sum(orbit_copy(:,1:4:maxNumOrb),2);
 raan_sso_am = sum(orbit_copy(:,2:4:maxNumOrb),2);
 raan_sso_pm = sum(orbit_copy(:,3:4:maxNumOrb),2);
 raan_sso_dd = sum(orbit_copy(:,4:4:maxNumOrb),2);
+
+%find optimal instrument to orbit assignments
+pointingInsts = [5,6,12];
+atmInsts = [9];
+opticalInsts = [1,2,3,4,6,7,8,9,10,11];
+orbitdd = [3, 7, 11];
+orbitpm = [4, 8, 12];
+orbit400 = [1:4];
+opt_inst_orb = zeros(ndata,maxNumSats);
+for i=1:maxNumSats
+    sat_i = decisions(:,ind_inst(i,:));
+    hasPointing = any(sat_i(:,pointingInsts),2);
+    hasAtm = any(sat_i(:,atmInsts),2);
+    hasOptical = any(sat_i(:,opticalInsts),2);
+    fliesInDD = ismember(orbit(:,i),orbitdd);
+    fliesInPM = ismember(orbit(:,i),orbitpm);
+    fliesIn400 = ismember(orbit(:,i),orbit400);
+    
+    optPointing = and(hasPointing, not(fliesIn400));
+    optAtm = and(hasAtm, fliesInPM);
+    optOptical = and(hasOptical, not(fliesInDD));
+    
+    opt_inst_orb(:,i) = optPointing + optAtm + optOptical;
+end
 
 %find synergy occurences
 synergyPairs = [1,2;    %ace_orca, ace_pol
@@ -173,3 +202,46 @@ bar(sum(synergyPairCount,1));
 h = gca;
 h.XTickLabel = synergylabel;
 h.XTickLabelRotation = 90;
+
+%plot the heatmap of the duty cycle
+figure(10)
+subplot(3,2,1)
+ind = dutyCycle > 1;
+dutyCycle(ind) = 1;
+meanDC = sum(dutyCycle,2)./numSatellites;
+scatter(-objectives(:,1),objectives(:,2),5,meanDC)
+colormap jet
+colorbar
+title('mean duty cycle')
+%plot the heatmap of the number of optimal assignments of inst to orb
+subplot(3,2,2)
+scatter(-objectives(:,1),objectives(:,2),5,sum(opt_inst_orb,2))
+colormap jet
+colorbar
+title('number of optimal instrument-orbit relationships')
+%plot the heatmap of the number of interference pairs
+subplot(3,2,3)
+scatter(-objectives(:,1),objectives(:,2),5,interference)
+colormap jet
+colorbar
+title('number of interference pairs')
+%plot the heatmap of the mass
+subplot(3,2,4)
+scatter(-objectives(:,1),objectives(:,2),5,sum(mass,2)./numSatellites)
+colormap jet
+colorbar
+title('mean mass')
+%plot the heatmap of the packing efficiency
+subplot(3,2,5)
+ind = isnan(packingEfficiency);
+packingEfficiency(ind) = 0;
+scatter(-objectives(:,1),objectives(:,2),5,sum(packingEfficiency,2)./numSatellites)
+colormap jet
+colorbar
+title('mean packing efficiency')
+%plot the heatmap of the number of synergy pairs
+subplot(3,2,6)
+scatter(-objectives(:,1),objectives(:,2),5,sum(synergyPairCount,2))
+colormap jet
+colorbar
+title('number of synergy pairs')

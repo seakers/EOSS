@@ -5,7 +5,7 @@ function mergePopulations(jarpath,filepath)
 try
     EOSS_init(jarpath);
     origin = cd(filepath);
-    files = dir('*all.pop');
+    files = dir('*.pop');
     mergedPopulation = org.moeaframework.core.Population;
     for i=1:length(files)
         if ~strcmp(files(i).name(end-4), 'l');

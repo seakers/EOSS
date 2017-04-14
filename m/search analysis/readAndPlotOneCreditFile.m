@@ -6,11 +6,12 @@ function [ops, credits] = readAndPlotOneCreditFile()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
-respath = strcat(path,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1');
+respath = strcat(path,'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1');
 origin = cd(respath);
 
 files = dir('*.credit');
 allcredits  = cell(length(files),1);
+ops_set = java.util.HashSet;
 for i=1:length(files)
     expData = java.util.HashMap;
     fid = fopen(files(i).name,'r');
@@ -30,13 +31,16 @@ for i=1:length(files)
         %sometimes there is 0 iteration selection which is not valid
         op_data(~any(op_data(:,1),2),:)=[];
         expData.put(line(startIndex:endIndex-1),op_data);
+        
+        %record the operator names
+        ops_set.add(line(startIndex:endIndex-1));
     end
     fclose(fid);
     allcredits{i} = expData;
 end
 
 %get operator names
-iter = expData.keySet.iterator;
+iter = ops_set.iterator;
 ops = cell(expData.size,1);
 i = 1;
 while(iter.hasNext)
@@ -47,7 +51,7 @@ ops = sort(ops);
 numOps = length(ops);
 
 %plot
-nepochs = 50;
+nepochs = 100;
 
 maxEval = 5000;
 epochLength = maxEval/nepochs;
@@ -83,7 +87,7 @@ end
 
 
 colors = {
-    [0         0.4470    0.7410]
+      [0         0.4470    0.7410]
     [0.8500    0.3250    0.0980]
     [0.9290    0.6940    0.1250]
     [0.4940    0.1840    0.5560]
@@ -128,6 +132,7 @@ for i=1:numOps
     hold on
     handles = [handles, plot(2:nepochs,mean_sel(2:end),'Color',colors{i}, 'LineWidth',2)];
 end
+plot([0,5000],[0.03,0.03],'--k')
 legend(handles, ops);
 axis([0, nepochs, 0, 1])
 xlabel('NFE')
