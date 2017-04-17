@@ -1,92 +1,60 @@
 package mining;
+
+import java.io.Serializable;
+import org.jblas.DoubleMatrix;
+
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
-
 /**
  *
  * @author Bang
  */
- 
-public class DrivingFeature implements Feature{
-        
-        private int index;
-        private String name; // specific names
-        private String type; // inOrbit, together, separate, present, absent, etc.
-        private int[] param;
-        private boolean preset;
-        private double[] metrics;
-        
+public class DrivingFeature extends AbstractFeature implements Comparable<DrivingFeature>, Serializable {
 
-        public DrivingFeature(String name, String type){
-            this.name = name;
-            this.type = type;
-            this.preset = false;
-        }
-        public DrivingFeature(String name, String type, double[] metrics){
-            this.name = name;
-            this.type = type;
-            this.metrics = metrics;
-            this.preset = false;
-        }
-        public DrivingFeature(String name, String type, int[] param, double[] metrics){
-            this.name = name;
-            this.type = type;
-            this.param = param;
-            this.metrics = metrics;
-            this.preset = true;
-        }
-        public DrivingFeature(int index,String name, String type){
-            this.name = name;
-            this.type = type;
-            this.preset = false;
-            this.index=index;
-        }
-        public DrivingFeature(int index,String name, String type, double[] metrics){
-        	this.index=index;
-        	this.name = name;
-            this.type = type;
-            this.metrics = metrics;
-            this.preset = false;
-        }
-        public DrivingFeature(int index,String name, String type, int[] param, double[] metrics){
-        	this.index=index;
-        	this.name = name;
-            this.type = type;
-            this.param = param;
-            this.metrics = metrics;
-            this.preset = true;
-        }
-        
-        @Override
-        public double getSupport(){
-            return metrics[0];
-        }
-        
-        @Override
-        public double getFConfidence(){
-            return metrics[2];
-        }
-        
-        @Override
-        public double getRConfidence(){
-            return metrics[3];
-        }
-        
-        @Override
-        public double getLift(){
-            return metrics[1];
-        }
-        
-        public int getIndex(){return index;}
-        public void setIndex(int index){this.index=index;}
-        public String getType(){return type;}
-        public String getName(){return name;}
-        public int[] getParam(){return param;}
-        public double[] getMetrics(){return metrics;}
-        public boolean isPreset(){return preset;}
-        
+    private static final long serialVersionUID = -4894252014929283438L;
+
+    private int id;
+    private final String name;
+    private final String expression;
+    private DoubleMatrix datArray;
+
+    public DrivingFeature(int id, String name, String expression, double support, double lift, double fconfidence, double rconfidence) {
+        super(support, lift, fconfidence, rconfidence);
+        this.id = id;
+        this.name = name;
+        this.expression = expression;
     }
+
+    public int getID() {
+        return id;
+    }
+
+    public String getExpression() {
+        return expression;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setDatArray(DoubleMatrix m) {
+        datArray = m;
+    }
+
+    public DoubleMatrix getDatArray() {
+        return datArray;
+    }
+
+    @Override
+    public int compareTo(DrivingFeature other) {
+        if (this.getName().compareTo(other.getName()) == 0) {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+}

@@ -12,5 +12,7 @@ dist/**
 
 #ignore the results folder
 problems/**/result/**
+#ignore DS_Store
+*.DS_Store
 
 manifest.mf

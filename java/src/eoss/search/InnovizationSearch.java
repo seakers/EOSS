@@ -11,12 +11,8 @@ import aos.IO.IOSelectionHistory;
 import aos.aos.IAOS;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import architecture.io.ResultIO;
-import eoss.problem.assignment.InstrumentAssignmentArchitecture;
-import eoss.problem.assignment.InstrumentAssignment;
 import java.io.File;
-import java.util.BitSet;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
@@ -172,7 +168,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 
                 // Find driving features
                 // Sort driving features based on the metric of your choice (support, lift, confidence)
-                dfg.getDrivingFeatures(labledDataFile, featureDataFile, FeatureMetric.FCONFIDENCE, nOpsToAdd);
+                dfg.getDrivingFeatures(labledDataFile, featureDataFile, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
 
