@@ -8,6 +8,8 @@ package mining;
 import java.util.*;
 import org.jblas.DoubleMatrix;
 
+
+
 /**
  *
  * @author Bang
@@ -34,40 +36,96 @@ public class Apriori {
     	this.nrows = mat.length;
     	this.ncols = mat[0].length;   
         this.mat = mat;
+        this.labels = labels;
 
         this.DMMat = new DoubleMatrix(mat);
         this.DMLabel = new DoubleMatrix(labels);
-
+        
         // thresholds = {supp_threshold, lift_threshold, conf_threshold}
-        this.thresholds = thresholds;
+    	this.thresholds = thresholds;
     }
-
-    public ArrayList<AprioriFeature> runApriori(int maxLength) {
-
-        long t0 = System.currentTimeMillis();
-        System.out.println("...[Apriori] size of the input matrix: " + mat.length + " X " + mat[0].length);
-
-        // Define the initial set of features
-        ArrayList<AprioriFeature> S = new ArrayList<>();
-
-        for (int i = 0; i < mat[0].length; i++) {
-            double support =drivingFeatures.get(i).getSupport();
-            double lift =drivingFeatures.get(i).getLift();
-            double fconfidence =drivingFeatures.get(i).getFConfidence();
-            double rconfidence =drivingFeatures.get(i).getRConfidence();
+    
+    
+    public ArrayList<Feature> runApriori(int maxLength){        
+        
+            long t0 = System.currentTimeMillis();
+            System.out.println("...[Apriori] size of the input matrix: " + mat.length + " X " + mat[0].length);
+        
+        
+            // Define the initial set of features
+            ArrayList<Feature> S = new ArrayList<>();
             
-            S.add(new AprioriFeature(i, support, lift, fconfidence, rconfidence));
-        }
+            for(int i=0;i<mat[0].length;i++){
+                Feature newFeat = new Feature(i);
+                // Count frequency
+                double[] metrics = drivingFeatures.get(i).getMetrics();
+                newFeat.setMetrics(metrics);
+                newFeat.setDatArray(DMMat.getColumn(i));
+                S.add(newFeat);
+            }            
 
-        // Define frontier. Frontier is the set of features whose length is L and passes significant test
-        // Copy the initial set of features to the frontier
-        ArrayList<AprioriFeature> frontier = new ArrayList<>(S);
+            // Define frontier. Frontier is the set of features whose length is L and passes significant test
+            ArrayList<Feature> frontier = new ArrayList<>(); 
 
-        int l = 2;
-        // While there are features still left to explore
-        while (frontier.size() > 0) {
-            if (l - 1 == maxLength) {
-                break;
+            // Copy the initial set of features to the frontier
+            for (Feature s:S){
+                frontier.add(s);
+            }
+
+            int l = 2;
+            // While there are features still left to explore
+            while(frontier.size() > 0){
+                if(l-1==maxLength){
+                        break;
+                }
+                // Candidates to form the frontier with length L+1
+                ArrayList<Feature> candidates = apriori_gen_join(frontier);
+                candidates = apriori_gen_prune(candidates, frontier);
+                
+                System.out.println("...[Apriori] number of candidates (length "+l+"): " + candidates.size());
+                
+                frontier = new ArrayList<>();
+                for(Feature f:candidates){
+                    // Count frequency
+                    double[] metrics = computeMetrics(DMMat,f.getElements(),DMLabel);
+                    
+                    // Check if it passes minimum support threshold
+                    if(metrics[0] <= thresholds[0]){
+                            continue;
+                    }else{
+                        // Add all features whose support is above threshold, add to candidates
+                        frontier.add(f);
+                        if(metrics[2] > thresholds[2]){
+                                f.setMetrics(metrics);
+                                // Store 
+                                f.setDatArray(this.tempMat);
+                                // If the metric is above the threshold, current feature is statistically significant
+                                S.add(f);
+
+                        }
+                    }                    
+                }
+                l=l+1;              
+            }
+            
+            long t1 = System.currentTimeMillis();
+            System.out.println("...[Apriori] evaluation done in: " + String.valueOf(t1-t0) + " msec, with " + S.size() + " features found");
+            return S;
+    }
+    
+    
+    
+    public ArrayList<Feature> sortFeatures(ArrayList<Feature> features){
+        ArrayList<Feature> sorted = new ArrayList<>();
+	
+        double value=0;
+        double maxval = 1000000000;
+        double minval = -1;
+        for(int i=0;i<features.size();i++){
+            Apriori.Feature feat1 = features.get(i);		
+            if(i==0){
+                sorted.add(feat1);
+                continue;
             }
             value = feat1.getMetrics()[2]; // Confidence (feature->selection)
             maxval = sorted.get(0).getMetrics()[2];
@@ -89,12 +147,8 @@ public class Apriori {
                         }
                 }
             }
-            l = l + 1;
-        }
-
-        long t1 = System.currentTimeMillis();
-        System.out.println("...[Apriori] evaluation done in: " + String.valueOf(t1 - t0) + " msec, with " + S.size() + " features found");
-        return S;
+	}         
+        return sorted;
     }
     
 
@@ -129,68 +183,74 @@ public class Apriori {
                     candidates.add(new Feature(elm1));
                 }
             }
-        }
+        }        
+        
         return candidates;
     }
-
-    private ArrayList<AprioriFeature> apriori_gen_prune(ArrayList<AprioriFeature> cand, ArrayList<AprioriFeature> prev) {
+    
+    
+    private ArrayList<Feature> apriori_gen_prune(ArrayList<Feature> cand, ArrayList<Feature> prev){
         // cand is a set of Features of length L and prev is a set of Features of length L-1
-        ArrayList<AprioriFeature> candidates = new ArrayList<>();
-
-        for (AprioriFeature f : cand) {
-            ArrayList<Integer> list = new ArrayList(f.getElements());
-
-            Set<Integer> subset = new HashSet<Integer>(list);
+        ArrayList<Feature> candidates = new ArrayList<>();
+                
+        for(Feature f:cand){
+            ArrayList<Integer> list = f.getElements();
+            
+            Set<Integer> subset = new HashSet<Integer>(list); 
             int length = subset.size();
             boolean included = true;
-
-            for (int i = 0; i < length; i++) {
+                        
+            for(int i=0;i<length;i++){
                 // All subsets of length L-1 should be included in prev
                 int elm = list.get(i);
                 // Create a subset of length L-1
                 subset.remove(elm);
-
+                                
                 boolean match_found = false;
                 // Test if the subset is included in prev
-                for (AprioriFeature prevF : prev) {
-                    Set<Integer> prevset = new HashSet<Integer>(prevF.getElements());
-                    if (same(subset, prevset)) {
-                        match_found = true;
+                for(Feature prevF:prev){
+                    Set<Integer> prevset = new HashSet<Integer>(prevF.getElements());  
+                    if(same(subset,prevset)){
+                        match_found=true;
                         break;
                     }
                 }
                 subset.add(elm);
-                if (!match_found) {
+                if(!match_found){
                     included = false;
                     break;
                 }
             }
-
-            if (included) {
+            
+            if(included){
                 // If all subsets of length L-1 of current feature are included in prev, add to the candidates
                 candidates.add(f);
-            }
+            }            
         }
         return candidates;
     }
+    
+    
+    
 
-    public boolean same(Set<?> set1, Set<?> set2) {
-        if (set1 == null || set2 == null) {
+
+    public boolean same(Set<?> set1, Set<?> set2){
+        if(set1 == null || set2 ==null){
             return false;
         }
-        if (set1.size() != set2.size()) {
+        if(set1.size()!=set2.size()){
             return false;
         }
         return set1.containsAll(set2);
     }
-
-    public boolean contains(int[] arr, int i) {
-        for (int a : arr) {
-            if (a == i) {
-                return true;
+	
+    public boolean contains(int[] arr, int i){
+            for(int a:arr){
+                    if(a==i){
+                            return true; 
+                    }
             }
-        }
-        return false;
+            return false;
     }
 
 
@@ -199,14 +259,12 @@ public class Apriori {
         
         int numFeat = indexArray.size();
         int[] indices = new int[numFeat];
-        int i = 0;
-        for (Integer ind : feature.getElements()) {
-            indices[i] = ind;
-            i++;
+        for(int i=0;i<numFeat;i++){
+            indices[i]=indexArray.get(i);
         }
-
-        DoubleMatrix cond = DoubleMatrix.zeros(ncols, 1);
-        cond.put(indices, 0, 1.0);
+        
+        DoubleMatrix cond = DoubleMatrix.zeros(ncols,1);
+        cond.put(indices, 0,  1.0);
 
         double cnt_all = nrows;
         double cnt_F = 0;
@@ -215,22 +273,28 @@ public class Apriori {
 
         DoubleMatrix countMat = dataMat.mmul(cond);
         countMat = countMat.eq(numFeat);
-
+        
         this.tempMat = countMat;
-
+        
         cnt_SF = label.dot(countMat);
         cnt_S = label.norm1();
         cnt_F = countMat.norm1();
 
-        double support = cnt_SF / cnt_all;
-        double lift = (cnt_SF / cnt_S) / (cnt_F / cnt_all);
-        double conf_given_F = (cnt_SF) / (cnt_F);   // confidence (feature -> selection)
-        double conf_given_S = (cnt_SF) / (cnt_S);   // confidence (selection -> feature)
 
-        return new AprioriFeature(feature.getElements(), support, lift, conf_given_F, conf_given_S);
+        double[] metrics = new double[4];
+        double support = cnt_SF/cnt_all;
+        double lift = (cnt_SF/cnt_S) / (cnt_F/cnt_all);
+        double conf_given_F = (cnt_SF)/(cnt_F);   // confidence (feature -> selection)
+        double conf_given_S = (cnt_SF)/(cnt_S);   // confidence (selection -> feature)
+        
+        metrics[0] = support;
+        metrics[1] = lift;
+        metrics[2] = conf_given_F;
+        metrics[3] = conf_given_S;
+        
+        return metrics;
     }
 
-    public ArrayList<boolean[]> intMatrix2BoolArray(ArrayList<int[][]> input) {
 
     
     public ArrayList<boolean[]> intMatrix2BoolArray(ArrayList<int[][]> input){
@@ -259,25 +323,37 @@ public class Apriori {
 
     	return boolArray;
     }
+   
+    
+    
 
-    public class AprioriFeature extends CompoundFeature{
 
+    
+    class Feature{
+        private ArrayList<Integer> elements;
+        private double[] metrics;
         private DoubleMatrix datArray;
-
-        public AprioriFeature(int i, double support, double lift, double fconfidence, double rconfidence) {
-            this(Arrays.asList(new Integer[]{i}), support, lift, fconfidence, rconfidence);
+        
+        
+        public Feature(ArrayList<Integer> elem){
+            this.elements = elem;
         }
-
-        public AprioriFeature(Collection<Integer> elems, double support, double lift, double fconfidence, double rconfidence) {
-            super(elems, support, lift, fconfidence, rconfidence);
+        public Feature(int i){
+            this.elements = new ArrayList<>();
+            this.elements.add(i);
         }
-
-        public void setDatArray(DoubleMatrix m) {
-            datArray = m;
+        public ArrayList<Integer> getElements(){
+            return this.elements;
         }
-
-        public DoubleMatrix getDatArray() {
-            return datArray;
+        public void setMetrics(double[] metrics){
+            this.metrics = metrics;
         }
+        public double[] getMetrics(){
+            return this.metrics;
+        }
+        public void setDatArray(DoubleMatrix m){datArray=m;}
+        public DoubleMatrix getDatArray(){return datArray;}
+        
     }
+    
 }

@@ -163,7 +163,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
                                 
                 //The association rule mining engine
-                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
+                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(alg.getProblem().getNumberOfVariables());
                 dfg.getDrivingFeatures(labledDataFile, featureDataFile, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
