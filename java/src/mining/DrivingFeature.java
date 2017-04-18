@@ -13,14 +13,18 @@ import org.jblas.DoubleMatrix;
  *
  * @author Bang
  */
-public class DrivingFeature extends AbstractFeature implements Comparable<DrivingFeature>, Serializable {
+ 
 
     private static final long serialVersionUID = -4894252014929283438L;
 
-    private int id;
-    private final String name;
-    private final String expression;
-    private DoubleMatrix datArray;
+public class DrivingFeature implements Comparable<DrivingFeature>, java.io.Serializable{
+        
+	
+        private int id;
+        private String name; 
+        private String expression; 
+        private double[] metrics;
+        private DoubleMatrix datArray;
 
     public DrivingFeature(int id, String name, String expression, double support, double lift, double fconfidence, double rconfidence) {
         super(support, lift, fconfidence, rconfidence);
@@ -29,9 +33,46 @@ public class DrivingFeature extends AbstractFeature implements Comparable<Drivin
         this.expression = expression;
     }
 
-    public int getID() {
-        return id;
-    }
+        public DrivingFeature(int id, String name, String expression){
+            this.id=id;
+            this.name = name;
+            this.expression=expression;
+        }
+        public DrivingFeature(int id, String name, String expression, double[] metrics){
+            this.id=id;
+            this.name = name;
+            this.expression = expression;
+            this.metrics = metrics;
+        }
+
+        
+                
+        public int getID(){return id;}
+        public String getExpression(){return expression;}
+        public String getName(){return name;}
+        public double[] getMetrics(){return metrics;}
+        public void setDatArray(DoubleMatrix m){datArray=m;}
+        public DoubleMatrix getDatArray(){return datArray;}
+        
+        
+       @Override
+       public int compareTo(DrivingFeature other) {
+           if(this.getName().compareTo(other.getName()) == 0)
+               return 0;
+           else return 1;
+       }        
+       
+       public static Comparator<DrivingFeature> DrivingFeatureComparator = new Comparator<DrivingFeature>() {
+            @Override
+            public int compare(DrivingFeature d1, DrivingFeature d2) {
+                double x = (d1.getMetrics()[2] - d2.getMetrics()[2]);
+                if(x<0) {
+                    return 1;
+                } else if (x>0) {
+                    return - 1;
+                } else {
+                    return 0;
+                }
 
     public String getExpression() {
         return expression;
@@ -41,6 +82,7 @@ public class DrivingFeature extends AbstractFeature implements Comparable<Drivin
         return name;
     }
 
+<<<<<<< HEAD (a922cd3) - merged in new data mini
     public void setDatArray(DoubleMatrix m) {
         datArray = m;
     }
@@ -58,3 +100,6 @@ public class DrivingFeature extends AbstractFeature implements Comparable<Drivin
         }
     }
 }
+=======
+
+>>>>>>> fix (3848969) - merged with Harris' code

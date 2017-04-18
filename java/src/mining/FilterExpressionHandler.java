@@ -17,8 +17,6 @@ import mining.DrivingFeaturesGenerator.Architecture;
  */
 public class FilterExpressionHandler {
 
-    private int norb;
-    private int ninstr;
     private ArrayList<DrivingFeaturesGenerator.Architecture> archs;
     private ArrayList<Integer> behavioral;
     private ArrayList<Integer> non_behavioral;
@@ -36,9 +34,6 @@ public class FilterExpressionHandler {
     	this.non_behavioral = nb;
     	this.population=pop;
     	archs = inputArchs;
-        
-        norb = EOSSDatabase.getNumberOfOrbits();
-        ninstr = EOSSDatabase.getNumberOfInstruments();
     }
     
     
@@ -177,14 +172,14 @@ public class FilterExpressionHandler {
         
         if(type.equalsIgnoreCase("present")){
             int instrument = Integer.parseInt(instruments[0]);
-            for (int i=0;i<norb;i++) {
+            for (int i=0;i<EOSSDatabase.getNumberOfOrbits();i++) {
                 if (mat[i][instrument]==1) return true;
             }
             return false;
         } else if(type.equalsIgnoreCase("absent")){
             
             int instrument = Integer.parseInt(instruments[0]);
-            for (int i = 0; i < norb; ++i) {
+            for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
                 if (mat[i][instrument]==1) return false;
             }
             return true;  
@@ -205,7 +200,7 @@ public class FilterExpressionHandler {
             
         } else if(type.equalsIgnoreCase("together")){
             
-            for(int i=0;i<norb;i++){
+            for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
                 boolean together = true;
                 for(int j=0;j<instruments.length;j++){
                     int instrument = Integer.parseInt(instruments[j]);
@@ -217,7 +212,7 @@ public class FilterExpressionHandler {
             
         } else if(type.equalsIgnoreCase("separate")){
             
-            for(int i=0;i<norb;i++){
+            for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
                 boolean together = true;
                 for(int j=0;j<instruments.length;j++){
                     int instrument = Integer.parseInt(instruments[j]);
@@ -230,7 +225,7 @@ public class FilterExpressionHandler {
         } else if(type.equalsIgnoreCase("emptyOrbit")){
             
             int orbit = Integer.parseInt(orbits[0]);
-            for(int i=0;i<ninstr;i++){
+            for(int i=0;i<EOSSDatabase.getNumberOfInstruments();i++){
                 if(mat[orbit][i]==1){return false;}
             }
             return true;
@@ -239,9 +234,9 @@ public class FilterExpressionHandler {
             
             int num = Integer.parseInt(numbers[0]);
             int count = 0;
-            for (int i = 0; i < norb; ++i) {
+            for (int i = 0; i < EOSSDatabase.getNumberOfOrbits(); ++i) {
                boolean empty= true;
-               for (int j=0; j< ninstr; j++){
+               for (int j=0; j< EOSSDatabase.getNumberOfInstruments(); j++){
                    if(mat[i][j]==1){
                        empty= false;
                    }
@@ -262,19 +257,19 @@ public class FilterExpressionHandler {
             if(orbits[0]!=null && !orbits[0].isEmpty()){
                 // Number of instruments in a specified orbit
                 int orbit = Integer.parseInt(orbits[0]);
-                for(int i=0;i<ninstr;i++){
+                for(int i=0;i<EOSSDatabase.getNumberOfInstruments();i++){
                     if(mat[orbit][i]==1){count++;}
                 }
             }else if(instruments[0]!=null && !instruments[0].isEmpty()){
                 // Number of a specified instrument
                 int instrument = Integer.parseInt(instruments[0]);
-                for(int i=0;i<norb;i++){
+                for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
                     if(mat[i][instrument]==1){count++;}
                 }
             }else{
                 // Number of instruments in all orbits
-                for(int i=0;i<norb;i++){
-                    for(int j=0;j<ninstr;j++){
+                for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
+                    for(int j=0;j<EOSSDatabase.getNumberOfInstruments();j++){
                         if(mat[i][j]==1){count++;}
                     }
                 }
@@ -306,10 +301,10 @@ public class FilterExpressionHandler {
     
     
     public int[][] booleanString2IntArray(String booleanString){
-        int[][] mat = new int[norb][ninstr];
-        for(int i=0;i<norb;i++){
-            for(int j=0;j<ninstr;j++){
-                int loc = i*ninstr+j;
+        int[][] mat = new int[EOSSDatabase.getNumberOfOrbits()][EOSSDatabase.getNumberOfInstruments()];
+        for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
+            for(int j=0;j<EOSSDatabase.getNumberOfInstruments();j++){
+                int loc = i*EOSSDatabase.getNumberOfInstruments()+j;
                 mat[i][j] = Integer.parseInt(booleanString.substring(loc,loc+1));
             }
         }
@@ -477,10 +472,10 @@ public class FilterExpressionHandler {
 
     public int[][] booleanString2intArray(String booleanString){
         int leng = booleanString.length();
-        int[][] mat = new int[this.norb][this.ninstr];
+        int[][] mat = new int[EOSSDatabase.getNumberOfOrbits()][EOSSDatabase.getNumberOfInstruments()];
         int cnt=0;
-        for(int i=0;i<this.norb;i++){
-            for(int j=0;j<this.ninstr;j++){
+        for(int i=0;i<EOSSDatabase.getNumberOfOrbits();i++){
+            for(int j=0;j<EOSSDatabase.getNumberOfInstruments();j++){
                 if(booleanString.charAt(cnt)=='0'){
                     mat[i][j] = 0;
                 }else{
@@ -491,9 +486,6 @@ public class FilterExpressionHandler {
         }
         return mat;
     }
-    
-    
-    
     
     
     /**

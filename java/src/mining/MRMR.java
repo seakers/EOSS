@@ -37,11 +37,11 @@ public class MRMR {
         
         
         int numSelected = 0;
-        while (numSelected < target_num_features) {
-
+        while(numSelected < target_num_features){
+        	
             int bestFeatInd = -1;
             double phi = -10000;
-
+            
             // Implement incremental search
             for(int i=0;i<features.size();i++){
             	
@@ -77,9 +77,9 @@ public class MRMR {
                 if(numSelected!=0){
                    R = (double) R / (double)numSelected;
                 }
-
-                if (D - R > phi) {
-                    phi = D - R;
+  
+                if(D-R > phi){
+                    phi = D-R;
                     bestFeatInd = i;
                 }
             }

@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
-import mining.FeatureMetric;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.LabelIO;
 import org.moeaframework.Instrumenter;
@@ -135,9 +134,6 @@ public class InnovizationSearch implements Callable<Algorithm> {
         //count the number of times we reset operators
         int opResetCount = 0;
 
-        //The association rule mining engine
-        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(alg.getProblem().getNumberOfVariables());
-
         while (!instAlgorithm.isTerminated() && (instAlgorithm.getNumberOfEvaluations() < maxEvaluations)) {
             Population pop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
 
@@ -165,9 +161,9 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
 
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
-                
-                // Find driving features
-                // Sort driving features based on the metric of your choice (support, lift, confidence)
+                                
+                //The association rule mining engine
+                DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator();
                 dfg.getDrivingFeatures(labledDataFile, featureDataFile, nOpsToAdd);
 
                 opCreator.learnFeatures(new File(featureDataFile));
