@@ -20,8 +20,6 @@ import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
 
 import knowledge.constraint.*;
-import knowledge.constraint.operator.AOSConstraintConsistency;
-import knowledge.initializer.NInstrumentInitializer;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.Initialization;
 import org.moeaframework.core.Problem;
