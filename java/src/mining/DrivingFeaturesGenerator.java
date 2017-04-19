@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -44,7 +45,7 @@ public class DrivingFeaturesGenerator {
     private ArrayList<Integer> population;
     
     private ArrayList<Architecture> architectures;
-    private ArrayList<DrivingFeature> presetDrivingFeatures;
+    private List<DrivingFeature> presetDrivingFeatures;
     private ArrayList<int[]> presetDrivingFeatures_satList;
     private ArrayList<DrivingFeature> drivingFeatures;
 
@@ -138,7 +139,7 @@ public class DrivingFeaturesGenerator {
         
     }
     
-    public ArrayList<DrivingFeature> getPresetDrivingFeatures(){
+    public List<DrivingFeature> getPresetDrivingFeatures(){
 
         long t0 = System.currentTimeMillis();
         
@@ -301,9 +302,14 @@ public class DrivingFeaturesGenerator {
    public void setDrivingFeatureSatisfactionData(){
 	   
        // Get feature satisfaction matrix
+//       ArrayList<DrivingFeature> newList = new ArrayList();
+//       newList.add(this.presetDrivingFeatures.get(1));
+//       newList.add(this.presetDrivingFeatures.get(3));
+//       newList.add(this.presetDrivingFeatures.get(5));
+       this.presetDrivingFeatures = presetDrivingFeatures.subList(0, 40);
        this.dataFeatureMat = new double[population.size()][presetDrivingFeatures.size()];
        this.labels = new double[population.size()];
-       
+              
        for(int i=0;i<population.size();i++){
             for(int j=0;j<presetDrivingFeatures.size();j++){
 
@@ -329,13 +335,16 @@ public class DrivingFeaturesGenerator {
     	
     	//System.out.println("higher level feature extraced");
     	ArrayList<DrivingFeature> dfs=new ArrayList<>();
+        
+        Apriori2 ap2 = new Apriori2(dataFeatureMat);
+        ap2.run(this.presetDrivingFeatures, labels, thresholds, maxLength);
 
         // Create a new instance of Apriori
         Apriori ap = new Apriori(this.presetDrivingFeatures, this.dataFeatureMat, labels, thresholds);
         
         // Run Apriori algorithm
         ArrayList<Apriori.Feature> new_features = ap.runApriori(this.maxLength);
-
+       
         // Create a new list of driving features (assign new IDs)
         int id=0;
         for(int f=0;f<new_features.size();f++){
@@ -360,7 +369,7 @@ public class DrivingFeaturesGenerator {
             }
             double[] metrics = feat.getMetrics();
             DrivingFeature df = new DrivingFeature(id,name,expression, metrics);
-            df.setDatArray(feat.getDatArray());
+            df.setDatArray(feat.getArray());
             id++;
             dfs.add(df);
         }
@@ -624,9 +633,12 @@ public class DrivingFeaturesGenerator {
                 String[] tmp = line.split(splitBy);
                 // The first column is the label
                 boolean label = tmp[0].equals("1");
-                String bitString = tmp[2];
-
-                architectures.add(new Architecture(id,label,bitString2intArr(bitString)));
+                StringBuilder sb = new StringBuilder();
+                //skip first variables ince it is the number of satellites per plane
+                for(int i=1; i<numberOfVariables; i++){
+                    sb.append(tmp[i+1]);
+                }
+                architectures.add(new Architecture(id,label,bitString2intArr(sb.toString())));
                 if (label){
                 	this.behavioral.add(id);
                 }else{

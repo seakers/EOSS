@@ -5,7 +5,7 @@
  */
 package mining;
 
-import org.jblas.DoubleMatrix;
+import java.util.BitSet;
 
 /**
  * A feature that explains data
@@ -44,5 +44,9 @@ public interface Feature {
      */
     public double getLift();
     
-    public DoubleMatrix getDatArray();
+    /**
+     * Gets the bit set that contains 1 for every observation that matches the feature
+     * @return the bit set that contains 1 for every observation that matches the feature
+     */
+    public BitSet getMatches();
 }

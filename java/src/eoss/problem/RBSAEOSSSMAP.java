@@ -61,6 +61,7 @@ import knowledge.operator.RepairInterference;
 import knowledge.operator.RepairMass;
 import knowledge.operator.RepairPackingEfficiency;
 import knowledge.operator.RepairSynergy;
+import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import orekit.util.OrekitConfig;
@@ -85,6 +86,11 @@ import org.xml.sax.SAXException;
 public class RBSAEOSSSMAP {
 
     /**
+     * flag for if EOSSDatabase has been initialized
+     */
+    private static boolean initEOSSDatabase;
+
+    /**
      * pool of resources
      */
     private static ExecutorService pool;
@@ -104,6 +110,8 @@ public class RBSAEOSSSMAP {
      */
     public static void main(String[] args) throws IOException {
 
+        initEOSSDatabase = false;
+
         //PATH
         if (args.length == 0) {
             args = new String[4];
@@ -122,10 +130,15 @@ public class RBSAEOSSSMAP {
         System.out.println("Will do " + args[3] + " runs");
 
         String path = args[0];
+        
+        getAssignmentProblem(path, RequirementMode.FUZZYCASE);
+        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(61);
+        dfg.getDrivingFeatures("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.csv", "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.res", 4);
+        System.exit(0);
 
         //record the current class java file to save the parameters for future reference
-        quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"),"java","src","eoss","problem","RBSAEOSSSMAP.java"})),
-                new File(String.join(File.separator,new String[]{path,"result","RBSAEOSSSMAP.java"})));
+        quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"), "java", "src", "eoss", "problem", "RBSAEOSSSMAP.java"})),
+                new File(String.join(File.separator, new String[]{path, "result", "RBSAEOSSSMAP.java"})));
         int mode = Integer.parseInt(args[1]);
         int numCPU = Integer.parseInt(args[2]);
         int numRuns = Integer.parseInt(args[3]);
@@ -164,7 +177,7 @@ public class RBSAEOSSSMAP {
         properties.setBoolean("saveSelection", true);
 
         for (int i = 0; i < numRuns; i++) {
-            
+
             //initialize problem
 //            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
             Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE);
@@ -181,7 +194,6 @@ public class RBSAEOSSSMAP {
 //                repairMass, repairDC, repairPE,
 //                repairSynergy, repairInter, repairInstOrb};
 //            RandomKnowledgeOperator rko = new RandomKnowledgeOperator(6, operators);
-
             HashMap<Variation, String> constraintOperatorMap = new HashMap<>();
             constraintOperatorMap.put(repairMass, "massViolationSum");
             constraintOperatorMap.put(repairDC, "dcViolationSum");
@@ -238,17 +250,14 @@ public class RBSAEOSSSMAP {
                         ////////
 //                        constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)), "none");
 //                        selector = new AdaptiveConstraintSelector(ksr, constraintOperatorMap,0.8, 0.8, 0.03);
-
                         //selector for combined
 //                        ConsistencyTracker consistencyPopulation = new ConsistencyTracker(population, constraints);
 //                        selector = new AOSConstraintConsistency(consistencyPopulation, constraintOperatorMap, operators, 0.8, 0.8, 0.03);
-
                         /////////
 //                        selector = new AdaptiveConstraintHandler(ksr, constraintOperatorMap,
 //                                new CompoundVariation(new OnePointCrossover(crossoverProbability, 2),
 //                                        new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
 //                        creditAssignment = new PopulationConsistency(constraintOperatorMap);
-
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment, comp);
                         hemoea.setName("constraint_adaptive");
@@ -310,24 +319,28 @@ public class RBSAEOSSSMAP {
     }
 
     public static InstrumentAssignment getAssignmentProblem(String path, RequirementMode mode) {
-        //initialize EOSS database
-        EOSSDatabase.getInstance();
-        EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
-        EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
-        EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits5.xml"));
-        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
-
+        if (!initEOSSDatabase) {
+            //initialize EOSS database
+            EOSSDatabase.getInstance();
+            EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
+            EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
+            EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits5.xml"));
+            EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
+            initEOSSDatabase = !initEOSSDatabase;
+        }
         return new InstrumentAssignment(path, mode, new int[]{1}, true);
     }
 
     public static InstrumentAssignment2 getAssignmentProblem2(String path, int nSpacecraft, RequirementMode mode) {
-        //initialize EOSS database
-        EOSSDatabase.getInstance();
-        EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
-        EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
-        EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits12.xml"));
-        EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
-
+        if (!initEOSSDatabase) {
+            //initialize EOSS database
+            EOSSDatabase.getInstance();
+            EOSSDatabase.loadBuses(new File(path + File.separator + "config" + File.separator + "candidateBuses.xml"));
+            EOSSDatabase.loadInstruments(new File(path + File.separator + "xls" + File.separator + "Instrument Capability Definition.xls"));
+            EOSSDatabase.loadOrbits(new File(path + File.separator + "config" + File.separator + "candidateOrbits12.xml"));
+            EOSSDatabase.loadLaunchVehicles(new File(path + File.separator + "config" + File.separator + "candidateLaunchVehicles.xml"));
+            initEOSSDatabase = !initEOSSDatabase;
+        }
         return new InstrumentAssignment2(path, nSpacecraft, mode, true);
     }
 

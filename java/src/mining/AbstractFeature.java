@@ -5,25 +5,36 @@
  */
 package mining;
 
+import java.util.BitSet;
+
 /**
  * An abstract class for a feature that explains the data
  *
  * @author nozomihitomi
  */
 public abstract class AbstractFeature implements Feature {
-
+    /**
+     * The bitset for the observations this feature matches
+     */
+    private final BitSet matches;
+    
     private final double support;
     private final double lift;
     private final double fconfidence;
     private final double rconfidence;
 
-    public AbstractFeature(double support, double lift, double fconfidence, double rconfidence) {
+    public AbstractFeature(BitSet matches, double support, double lift, double fconfidence, double rconfidence) {
+        this.matches = matches;
         this.support = support;
         this.lift = lift;
         this.fconfidence = fconfidence;
         this.rconfidence = rconfidence;
     }
-
+    
+    public BitSet getMatches() {
+        return matches;
+    }
+    
     @Override
     public double getSupport() {
         return support;
