@@ -17,6 +17,10 @@ public class DrivingFeature2 extends AbstractFeature{
      * Name associated to the feature;
      */
     private final String name;
+    
+    public DrivingFeature2(String name, BitSet matches) {
+        this(name, matches, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+    }
 
     public DrivingFeature2(String name, BitSet matches, double support, double lift, double fconfidence, double rconfidence) {
         super(matches, support, lift, fconfidence, rconfidence);
