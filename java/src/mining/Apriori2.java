@@ -45,11 +45,6 @@ public class Apriori2 {
     private double supportThreshold;
 
     /**
-     * The threshold for forward confidence
-     */
-    private double fConfidenceThreshold;
-
-    /**
      * A constructor to initialize the apriori algorithm
      *
      * @param numberOfObservations the number of observations in the data
@@ -79,8 +74,7 @@ public class Apriori2 {
      */
     public void run(BitSet labels, double supportThreshold, double fConfidenceThreshold, int maxLength) {
         this.supportThreshold = supportThreshold;
-        this.fConfidenceThreshold = fConfidenceThreshold;
-        
+
         long t0 = System.currentTimeMillis();
 
         System.out.println("...[Apriori2] size of the input matrix: " + numberOfObservations + " X " + baseFeatures.size());
@@ -96,15 +90,14 @@ public class Apriori2 {
         for (int i = 0; i < baseFeatures.size(); i++) {
             metrics = computeMetrics(baseFeaturesBit[i], labels);
             if (!Double.isNaN(metrics[0])) {
+                BitSet featureCombo = new BitSet(baseFeatures.size());
+                featureCombo.set(i, true);
+                front.add(featureCombo);
                 if (metrics[2] > fConfidenceThreshold) {
                     //only add feature to output list if it passes support and confidence thresholds
                     AprioriFeature feat = new AprioriFeature(baseFeaturesBit[i], metrics[0], metrics[1], metrics[2], metrics[3]);
                     viableFeatures.add(feat);
                 }
-
-                BitSet featureCombo = new BitSet(baseFeatures.size());
-                featureCombo.set(i, true);
-                front.add(featureCombo);
             }
         }
 
@@ -114,7 +107,6 @@ public class Apriori2 {
             if (currentLength - 1 == maxLength) {
                 break;
             }
-            System.out.println("...[Apriori2] " + viableFeatures.size() + " features found");
             // Candidates to form the frontier with length L+1
             //updated front with new instance only containing the L+1 combinations of features
             ArrayList<BitSet> candidates = join(front, baseFeatures.size());
@@ -133,7 +125,7 @@ public class Apriori2 {
 
                 // Check if it passes minimum support threshold
                 metrics = computeMetrics(matches, labels);
-                if (!Double.isNaN(metrics[0]) ) {
+                if (!Double.isNaN(metrics[0])) {
                     // Add all features whose support is above threshold, add to candidates
                     front.add(featureCombo);
 
@@ -177,10 +169,10 @@ public class Apriori2 {
             int ind = featureCombo.nextSetBit(0);
             BitSet matches = (BitSet) baseFeaturesBit[ind].clone();
             sb.append(baseFeatures.get(ind).getName());
-
+            
             //find feature indices
             for (int j = featureCombo.nextSetBit(ind + 1); j != -1; j = featureCombo.nextSetBit(j + 1)) {
-                sb.append(":");
+                sb.append("&&");
                 sb.append(baseFeatures.get(j).getName());
                 matches.and(baseFeaturesBit[j]);
             }
@@ -303,12 +295,12 @@ public class Apriori2 {
      */
     private double[] computeMetrics(BitSet feature, BitSet labels) {
         double[] out = new double[4];
-        
+
         BitSet copyMatches = (BitSet) feature.clone();
         copyMatches.and(labels);
         double cnt_SF = (double) copyMatches.cardinality();
         out[0] = cnt_SF / (double) numberOfObservations; //support
-        
+
         // Check if it passes minimum support threshold
         if (out[0] > supportThreshold) {
             //compute the confidence and lift

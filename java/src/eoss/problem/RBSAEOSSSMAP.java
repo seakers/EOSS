@@ -131,10 +131,10 @@ public class RBSAEOSSSMAP {
 
         String path = args[0];
         
-        getAssignmentProblem(path, RequirementMode.FUZZYCASE);
-        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(61);
-        dfg.getDrivingFeatures("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.csv", "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.res", 4);
-        System.exit(0);
+//        getAssignmentProblem(path, RequirementMode.FUZZYCASE);
+//        DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(61);
+//        dfg.getDrivingFeatures("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.csv", "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.res", 4);
+//        System.exit(0);
 
         //record the current class java file to save the parameters for future reference
         quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"), "java", "src", "eoss", "problem", "RBSAEOSSSMAP.java"})),

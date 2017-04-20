@@ -20,7 +20,7 @@ public class DrivingFeaturesParams {
     
     public static boolean run_mRMR = true;
     
-    public static int max_number_of_features_before_mRMR = 500;
+    public static int max_number_of_features_before_mRMR = 1000000;
     
     public static int numThreads = 2;
     

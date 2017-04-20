@@ -16,14 +16,12 @@ Member functions
 import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
 
-import org.jblas.DoubleMatrix;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,10 +43,10 @@ public class DrivingFeaturesGenerator {
     private ArrayList<Architecture> architectures;
     private List<DrivingFeature> presetDrivingFeatures;
     private ArrayList<int[]> presetDrivingFeatures_satList;
-    private ArrayList<DrivingFeature> drivingFeatures;
+    private List<DrivingFeature2> drivingFeatures;
 
     double[][] dataFeatureMat;
-    double[] labels;
+    private BitSet labels;
 
     double[] thresholds;
 
@@ -105,22 +103,13 @@ public class DrivingFeaturesGenerator {
         getPresetDrivingFeatures();
 
 //    	System.out.println("...Starting Apriori");
-        getDrivingFeatures();
+        this.drivingFeatures = getDrivingFeatures();
 
-        // Sort driving features
-        Collections.sort(this.drivingFeatures, DrivingFeature.DrivingFeatureComparator);
-
-        ArrayList<DrivingFeature> reduced_set = new ArrayList<>();
-        for (int i = 0; i < this.max_number_of_features_before_mRMR; i++) {
-            reduced_set.add(this.drivingFeatures.get(i));
-        }
-        this.drivingFeatures = reduced_set;
-
-        System.out.println("...[DrivingFeatures] Number of features before mRMR: " + reduced_set.size() + ", with max lift of " + reduced_set.get(0).getMetrics()[1]);
+        System.out.println("...[DrivingFeatures] Number of features before mRMR: " + drivingFeatures.size() + ", with max confidence of " + drivingFeatures.get(0).getFConfidence());
 
         if (this.run_mRMR) {
             MRMR mRMR = new MRMR();
-            this.drivingFeatures = mRMR.minRedundancyMaxRelevance(getDataMat(this.drivingFeatures), new DoubleMatrix(this.labels), this.drivingFeatures, topN);
+            this.drivingFeatures = mRMR.minRedundancyMaxRelevance( population.size(), getDataMat(this.drivingFeatures), this.labels, this.drivingFeatures, topN);
         }
 
         // Printout result
@@ -286,9 +275,9 @@ public class DrivingFeaturesGenerator {
     public void setDrivingFeatureSatisfactionData() {
 
         // Get feature satisfaction matrix
-        this.presetDrivingFeatures = presetDrivingFeatures.subList(0, 50);
+//        this.presetDrivingFeatures = presetDrivingFeatures.subList(0, 50);
         this.dataFeatureMat = new double[population.size()][presetDrivingFeatures.size()];
-        this.labels = new double[population.size()];
+        this.labels = new BitSet(population.size());
 
         for (int i = 0; i < population.size(); i++) {
             for (int j = 0; j < presetDrivingFeatures.size(); j++) {
@@ -298,32 +287,23 @@ public class DrivingFeaturesGenerator {
                 this.dataFeatureMat[i][j] = (double) presetDrivingFeatures_satList.get(index)[i];
             }
             if (behavioral.contains(population.get(i))) {
-                labels[i] = 1;
-            } else {
-                labels[i] = 0;
+                labels.set(i, true);
             }
-
         }
     }
 
-    public ArrayList<DrivingFeature> getDrivingFeatures() {
+    /**
+     * Runs Apriori and returns the top n features discovered from Apriori. Features are ordered by fconfidence in descending order.
+     * @return 
+     */
+    public List<DrivingFeature2> getDrivingFeatures() {
 
         this.setDrivingFeatureSatisfactionData();
-
-        //System.out.println("higher level feature extraced");
-        ArrayList<DrivingFeature> dfs = new ArrayList<>();
-
-        BitSet labelBit = new BitSet(labels.length);
-        for (int i = 0; i < labels.length; i++) {
-            if (labels[i] > 0.0001) {
-                labelBit.set(i, tallMatrix);
-            }
-        }
 
         ArrayList<DrivingFeature2> newFeatures = new ArrayList<>();
 
         for (int j = 0; j < presetDrivingFeatures.size(); j++) {
-            BitSet bs = new BitSet(labels.length);
+            BitSet bs = new BitSet(population.size());
             for (int i = 0; i < population.size(); i++) {
 
                 DrivingFeature df = presetDrivingFeatures.get(j);
@@ -332,54 +312,18 @@ public class DrivingFeaturesGenerator {
                     bs.set(i);
                 }
             }
-            newFeatures.add(new DrivingFeature2(presetDrivingFeatures.get(j).getName(), bs));
+            newFeatures.add(new DrivingFeature2(presetDrivingFeatures.get(j).getExpression(), bs));
         }
 
-        Apriori2 ap2 = new Apriori2(labels.length, newFeatures);
-        ap2.run(labelBit, thresholds[0], thresholds[2], maxLength);
+        Apriori2 ap2 = new Apriori2(population.size(), newFeatures);
+        ap2.run(labels, thresholds[0], thresholds[2], maxLength);
 
-        // Create a new instance of Apriori
-        Apriori ap = new Apriori(this.presetDrivingFeatures, this.dataFeatureMat, labels, thresholds);
-
-        // Run Apriori algorithm
-        ArrayList<Apriori.Feature> new_features = ap.runApriori(this.maxLength);
-
-        // Create a new list of driving features (assign new IDs)
-        int id = 0;
-        for (int f = 0; f < new_features.size(); f++) {
-
-            Apriori.Feature feat = new_features.get(f);
-            String expression = "";
-            String name = "";
-            ArrayList<Integer> featureIndices = feat.getElements();
-
-            boolean first = true;
-            for (int index : featureIndices) {
-                if (first) {
-                    first = false;
-                } else {
-                    expression = expression + "&&";
-                    name = name + "&&";
-                }
-                DrivingFeature thisDF = this.presetDrivingFeatures.get(index);
-                expression = expression + thisDF.getExpression();
-                name = name + thisDF.getName();
-            }
-            double[] metrics = feat.getMetrics();
-            DrivingFeature df = new DrivingFeature(id, name, expression, metrics);
-            df.setDatArray(feat.getArray());
-            id++;
-            dfs.add(df);
-        }
-
-        this.drivingFeatures = dfs;
-
-        return this.drivingFeatures;
+        return ap2.getTopFeatures(max_number_of_features_before_mRMR, FeatureMetric.FCONFIDENCE);
     }
 
-    public void RecordSingleFeature(PrintWriter w, DrivingFeature df) {
+    public void RecordSingleFeature(PrintWriter w, DrivingFeature2 df) {
 
-        String expression = df.getExpression();
+        String expression = df.getName();
 
         //{present[orb;instr;num]}&&{absent[orb;instr;num]}
         String[] individual_features = expression.split("&&");
@@ -510,12 +454,8 @@ public class DrivingFeaturesGenerator {
         }
     }
 
-    public void recordMetaInfo(PrintWriter w, DrivingFeature feature) {
-
-        double[] metrics;
-
-        metrics = feature.getMetrics();
-        String expression = feature.getExpression();
+    public void recordMetaInfo(PrintWriter w, DrivingFeature2 feature) {
+        String expression = feature.getName();
         String[] individual_features = expression.split("&&");
 
         String name = "";
@@ -569,7 +509,9 @@ public class DrivingFeaturesGenerator {
                 name = name.substring(1);
             }
 
-            w.print("/" + metrics[0] + "/" + metrics[1] + "// " + name + "\n");
+            w.print("/" + feature.getSupport() + "/" + feature.getLift() +
+                    "/" + feature.getFConfidence() + 
+                    "/" + feature.getRConfidence() + "// " + name + "\n");
 
         } catch (Exception e) {
             System.out.println("Exception in printing feature names:" + expression);
@@ -593,7 +535,7 @@ public class DrivingFeaturesGenerator {
 
             int count = 1;
 
-            for (DrivingFeature feature : this.drivingFeatures) {
+            for (DrivingFeature2 feature : this.drivingFeatures) {
                 if (count > topN) {
                     break;
                 }
@@ -702,13 +644,10 @@ public class DrivingFeaturesGenerator {
         return intVector;
     }
 
-    public DoubleMatrix getDataMat(ArrayList<DrivingFeature> dfs) {
-
-        int ncols = dfs.size();
-        int nrows = dfs.get(0).getDatArray().getRows();
-        DoubleMatrix mat = DoubleMatrix.zeros(nrows, ncols);
-        for (int i = 0; i < ncols; i++) {
-            mat.putColumn(i, dfs.get(i).getDatArray());
+    public BitSet[] getDataMat(List<DrivingFeature2> dfs) {
+        BitSet[] mat = new BitSet[dfs.size()];
+        for (int i = 0; i < dfs.size(); i++) {
+            mat[i] = dfs.get(i).getMatches();
         }
         return mat;
     }
