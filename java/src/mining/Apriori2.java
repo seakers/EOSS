@@ -95,7 +95,7 @@ public class Apriori2 {
                 front.add(featureCombo);
                 if (metrics[2] > fConfidenceThreshold) {
                     //only add feature to output list if it passes support and confidence thresholds
-                    AprioriFeature feat = new AprioriFeature(baseFeaturesBit[i], metrics[0], metrics[1], metrics[2], metrics[3]);
+                    AprioriFeature feat = new AprioriFeature(featureCombo, metrics[0], metrics[1], metrics[2], metrics[3]);
                     viableFeatures.add(feat);
                 }
             }
