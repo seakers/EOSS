@@ -268,7 +268,7 @@ public class EOSSOperator extends AbstractEOSSOperator {
                                     unassignedInst.add(i);
                                 }
                                 unassignedInst.removeAll(insts);
-                                arch.removeInstrumentFromOrbit(unassignedInst.get(pprng.nextInt(unassignedInst.size())), orbitInd);
+                                arch.addInstrumentToOrbit(unassignedInst.get(pprng.nextInt(unassignedInst.size())), orbitInd);
                             }
                         }
                         break;
