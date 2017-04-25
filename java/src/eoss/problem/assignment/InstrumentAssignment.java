@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jess.Fact;
 import jess.JessException;
 import org.moeaframework.core.Solution;
 import org.moeaframework.problem.AbstractProblem;
@@ -24,14 +23,9 @@ import eoss.spacecraft.Spacecraft;
 import eoss.problem.ValueAggregationBuilder;
 import eoss.problem.evaluation.RequirementMode;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collection;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.math3.exception.MathArithmeticException;
 import org.xml.sax.SAXException;
 
 /**
@@ -169,6 +163,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         } catch (JessException ex) {
             Logger.getLogger(InstrumentAssignment.class.getName()).log(Level.SEVERE, null, ex);
         }
+        Orbit[] o = arch.getEmptyOrbits();
     }
 
     /**

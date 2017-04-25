@@ -197,12 +197,13 @@ public class InstrumentAssignmentArchitecture extends Architecture {
      */
     public Orbit[] getEmptyOrbits() {
         BitSet orbs = getUniqueOrbits();
-        orbs.flip(0, orbs.length());
+        int norbits = ((Assigning) this.getDecision(assignTag)).getNumberOfRHS();
+        orbs.flip(0, norbits);
         Orbit[] out = new Orbit[orbs.cardinality()];
         int strInd = 0;
         //loop over the indices that have been set true
         for (int i = orbs.nextSetBit(0); i >= 0; i = orbs.nextSetBit(i + 1)) {
-            out[strInd] = EOSSDatabase.getOrbit(i);
+                out[strInd] = EOSSDatabase.getOrbit(i);
             strInd++;
         }
         return out;
