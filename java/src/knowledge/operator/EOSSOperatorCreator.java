@@ -20,8 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.moeaframework.core.Variation;
 import org.moeaframework.core.operator.CompoundVariation;
-import org.moeaframework.core.operator.OnePointCrossover;
-import org.moeaframework.core.operator.binary.BitFlip;
 
 /**
  * This class will read in a text file containing features that commonly occur
@@ -47,16 +45,6 @@ public class EOSSOperatorCreator implements OperatorCreator {
     private final ArrayList<Variation> operatorSet;
 
     /**
-     * the crossover probability of single point crossover
-     */
-    private final double crossoverProbability;
-
-    /**
-     * The mutation probability of the bit flip mutator
-     */
-    private final double mutationProbability;
-
-    /**
      * The text file that will contain the rules to create new operators from.
      * The text must use some agreed upon interface/ontology. For this class,
      * the features that occur in good architectures shall be represented as
@@ -69,18 +57,9 @@ public class EOSSOperatorCreator implements OperatorCreator {
      * and run mode 2 to create architectures with 2 instruments in orbit * (any
      * orbit)
      *
-     * The new operators created will be combined with a bit flip mutator with a
-     * desired probability for mutation
-     *
-     * @param crossoverProbability the crossover probability of single point
-     * crossover
-     * @param mutationProbability The mutation probability of the bit flip
-     * mutator
      */
-    public EOSSOperatorCreator(double crossoverProbability, double mutationProbability) {
+    public EOSSOperatorCreator() {
         this.operatorSet = new ArrayList<>();
-        this.crossoverProbability = crossoverProbability;
-        this.mutationProbability = mutationProbability;
     }
 
     /**
@@ -120,7 +99,6 @@ public class EOSSOperatorCreator implements OperatorCreator {
 
     private Variation featureToOperator(String featureString) {
         CompoundVariation operator = new CompoundVariation();
-        operator.appendOperator(new OnePointCrossover(crossoverProbability));
         Matcher m = atomicFeature.matcher(featureString);
         String operatorName = "";
         while (m.find()) {
@@ -139,9 +117,6 @@ public class EOSSOperatorCreator implements OperatorCreator {
         if (operatorName.equalsIgnoreCase("")) {
             throw new IllegalArgumentException(String.format("%s does not fit feature pattern.", featureString));
         }
-        Variation bitFlipOp = new BitFlip(mutationProbability);
-        operator.appendOperator(bitFlipOp);
-        operatorName += bitFlipOp.getClass().getSimpleName();
         operator.setName(operatorName);
         return operator;
     }

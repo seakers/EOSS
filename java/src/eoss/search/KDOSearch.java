@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
+import knowledge.operator.EOSSOperator;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
@@ -30,6 +31,8 @@ import org.moeaframework.core.PopulationIO;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.Variation;
 import org.moeaframework.core.operator.CompoundVariation;
+import org.moeaframework.core.operator.OnePointCrossover;
+import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
 
 /**
@@ -37,7 +40,7 @@ import org.moeaframework.util.TypedProperties;
  *
  * @author nozomihitomi
  */
-public class InnovizationSearch implements Callable<Algorithm> {
+public class KDOSearch implements Callable<Algorithm> {
 
     /**
      * The path to save the results
@@ -88,7 +91,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
      * @param savePath
      * @param name
      */
-    public InnovizationSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name) {
+    public KDOSearch(IAOS alg, TypedProperties properties, AbstractPopulationLabeler dataLabeler, OperatorReplacementStrategy ops, String savePath, String name) {
         this.alg = alg;
         this.properties = properties;
         this.savePath = savePath;
@@ -161,7 +164,7 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 lableIO.saveLabels(allSolnPop, labledDataFile, ",");
 
                 String featureDataFile = savePath + File.separator + name + "_" + String.valueOf(opResetCount) + "_features.txt";
-                                
+
                 //The association rule mining engine
                 DrivingFeaturesGenerator dfg = new DrivingFeaturesGenerator(alg.getProblem().getNumberOfVariables());
                 dfg.getDrivingFeatures(labledDataFile, featureDataFile, nOpsToAdd);
@@ -169,13 +172,51 @@ public class InnovizationSearch implements Callable<Algorithm> {
                 opCreator.learnFeatures(new File(featureDataFile));
 
                 //add new operators
-                Collection<Variation> newOperators = ops.addNewOperator(alg, nOpsToAdd);
+                Collection<Variation> newOperators = opCreator.createOperator(nOpsToAdd);
+                switch (properties.getString("kdomode", "operator")) {
+                    case "operator":
+                        //combines all extracted features into n operators 
+                        for (Variation newOp : newOperators) {
+                            StringBuilder sb = new StringBuilder();
+                            OnePointCrossover cross = new OnePointCrossover(properties.getDouble("crossoverProbability", 1.0));
+                            sb.append(cross.getClass().getSimpleName()).append(" + ");
+                            BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
+                            sb.append(bitf.getClass().getSimpleName());
+                            CompoundVariation repair = new CompoundVariation(cross, newOp, bitf);
+                            alg.getNextHeuristicSupplier().addOperator(repair);
+                        }
+                        break;
+                    case "repair":
+                        //combines all extracted features into one operator
+                        StringBuilder sb = new StringBuilder();
+                        CompoundVariation repair = new CompoundVariation();
+                        OnePointCrossover cross = new OnePointCrossover(properties.getDouble("crossoverProbability", 1.0));
+                        sb.append(cross.getClass().getSimpleName()).append(" + ");
+                        repair.appendOperator(cross);
+                        for (Variation newOp : newOperators) {
+                            repair.appendOperator(newOp);
+                            String name;
+                            if (newOp instanceof EOSSOperator) {
+                                name = newOp.toString();
+                            } else {
+                                name = newOp.getClass().getSimpleName();
+                            }
+                            sb.append(name).append(" + ");
+                        }
+                        BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
+                        sb.append(bitf.getClass().getSimpleName());
+                        repair.appendOperator(bitf);
+                        alg.getNextHeuristicSupplier().addOperator(repair);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("kdomod needs to be set to operator or repair");
+                }
                 alg.getNextHeuristicSupplier().reset();
-                for (Variation op : newOperators) {
+                for (Variation op : alg.getNextHeuristicSupplier().getOperators()) {
                     if (op instanceof CompoundVariation) {
-                        System.out.println(String.format("Added: %s", ((CompoundVariation) op).getName()));
+                        System.out.println(String.format("Using: %s", ((CompoundVariation) op).getName()));
                     } else {
-                        System.out.println(String.format("Added: %s", op.toString()));
+                        System.out.println(String.format("Using: %s", op.toString()));
                     }
                 }
                 opResetCount++;

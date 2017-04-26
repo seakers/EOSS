@@ -28,7 +28,7 @@ import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
 import org.moeaframework.util.TypedProperties;
-import eoss.search.InnovizationSearch;
+import eoss.search.KDOSearch;
 import eoss.search.InstrumentedSearch;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -157,7 +157,9 @@ public class RBSAEOSSSMAP {
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
+        properties.setDouble("crossoverProbability", crossoverProbability);
         double mutationProbability = 1. / 65.;
+        properties.setDouble("mutationProbability", mutationProbability);
         Variation singlecross;
         Variation bitFlip;
         Variation intergerMutation;
@@ -273,6 +275,9 @@ public class RBSAEOSSSMAP {
                         ICreditAssignment creditAssignment = CreditDefFactory.getInstance().getCreditDef("SIDo", properties, problem);
 
                         ArrayList<Variation> operators2 = new ArrayList();
+                        
+                        //kdo mode set to operator or repair
+                        properties.setString("operator", path);
 
                         //add domain-independent heuristics
                         Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability));
@@ -280,7 +285,7 @@ public class RBSAEOSSSMAP {
 
                         //set up OperatorReplacementStrategy
                         EpochTrigger epochTrigger = new EpochTrigger(epochLength);
-                        EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator(crossoverProbability, mutationProbability);
+                        EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator();
                         ArrayList<Variation> permanentOps = new ArrayList();
                         permanentOps.add(SingleCross);
                         RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, properties.getInt("nOpsToRemove", 2));
@@ -295,7 +300,7 @@ public class RBSAEOSSSMAP {
                                 initialization, selector, creditAssignment);
 
                         AbstractPopulationLabeler labeler = new NondominatedSortingLabeler(.25);
-                        ecs.submit(new InnovizationSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i));
+                        ecs.submit(new KDOSearch(hemoea, properties, labeler, ops, path + File.separator + "result", innovizeAssignment + i));
                     } catch (IOException ex) {
                         Logger.getLogger(RBSAEOSSSMAP.class.getName()).log(Level.SEVERE, null, ex);
 
