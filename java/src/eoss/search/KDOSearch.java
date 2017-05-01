@@ -180,9 +180,11 @@ public class KDOSearch implements Callable<Algorithm> {
                             StringBuilder sb = new StringBuilder();
                             OnePointCrossover cross = new OnePointCrossover(properties.getDouble("crossoverProbability", 1.0));
                             sb.append(cross.getClass().getSimpleName()).append(" + ");
+                            sb.append(newOp.toString()).append(" + ");
                             BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
                             sb.append(bitf.getClass().getSimpleName());
                             CompoundVariation repair = new CompoundVariation(cross, newOp, bitf);
+                            repair.setName(sb.toString());
                             alg.getNextHeuristicSupplier().addOperator(repair);
                         }
                         break;
@@ -206,6 +208,7 @@ public class KDOSearch implements Callable<Algorithm> {
                         BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
                         sb.append(bitf.getClass().getSimpleName());
                         repair.appendOperator(bitf);
+                        repair.setName(sb.toString());
                         alg.getNextHeuristicSupplier().addOperator(repair);
                         break;
                     default:
