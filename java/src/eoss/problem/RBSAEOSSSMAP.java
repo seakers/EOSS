@@ -61,7 +61,6 @@ import knowledge.operator.RepairInterference;
 import knowledge.operator.RepairMass;
 import knowledge.operator.RepairPackingEfficiency;
 import knowledge.operator.RepairSynergy;
-import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import orekit.util.OrekitConfig;
@@ -152,7 +151,7 @@ public class RBSAEOSSSMAP {
         //parameters and operators for search
         TypedProperties properties = new TypedProperties();
         //search paramaters set here
-        int popSize = 100;
+        int popSize = 20;
         int maxEvals = 5000;
         properties.setInt("maxEvaluations", maxEvals);
         properties.setInt("populationSize", popSize);
@@ -247,7 +246,7 @@ public class RBSAEOSSSMAP {
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
-                        INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators);
+                        INextOperator selector = AOSFactory.getInstance().getOperatorSelector("AP", properties, operators);
 
                         ////////
 //                        constraintOperatorMap.put(new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)), "none");
@@ -294,7 +293,7 @@ public class RBSAEOSSSMAP {
                         properties.setDouble("pmin", 0.03);
 
                         //all other properties use default parameters
-                        INextOperator selector = AOSFactory.getInstance().getHeuristicSelector("AP", properties, operators2);
+                        INextOperator selector = AOSFactory.getInstance().getOperatorSelector("AP", properties, operators2);
 
                         AOSEpsilonMOEA hemoea = new AOSEpsilonMOEA(problem, population, archive, selection,
                                 initialization, selector, creditAssignment);

@@ -97,7 +97,7 @@ public class EOSSOperatorCreator implements OperatorCreator {
         return features;
     }
 
-    private Variation featureToOperator(String featureString) {
+    public Variation featureToOperator(String featureString) {
         CompoundVariation operator = new CompoundVariation();
         Matcher m = atomicFeature.matcher(featureString);
         String operatorName = "";
