@@ -68,11 +68,13 @@ try
     end
 catch me
     cd(origin)
+    clear refPop refPoint iter map population archive fhv igd prob sltn
     EOSS_end(jarpath);
     disp(me.message);
     close(h)
 end
 close(h)
+clear refPop refPoint iter map population archive fhv igd prob sltn
 cd(origin)
 EOSS_end(jarpath);
 

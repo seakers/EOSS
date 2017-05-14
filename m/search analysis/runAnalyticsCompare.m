@@ -3,31 +3,29 @@
 
 % path = 'C:\Users\SEAK2\Nozomi\EOSS\problems\climateCentric\result\IDETC2017';
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/analysis/metrics/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/analysis/metrics/';
 % [nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
-load(strcat(path,'new_baseline_eps_001_1_res.mat'));
+load(strcat(path,'aos_noFilter_noCross.mat'));
 
 nexperiments = 4;
-ntrials = 30;
+ntrials = 29;
 hv = zeros(nexperiments,size(HV,1),ntrials);
 igd = zeros(nexperiments,size(IGD,1),ntrials);
 hv(1,:,:) = HV(:,1:ntrials);
 igd(1,:,:) = IGD(:,1:ntrials);
 
-% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_operator_aos_checkChange_allSat_1Inst_eps_001_10'),'','');
-load(strcat(path,'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1_res.mat'));
+load(strcat(path,'baseline.mat'));
 hv(2,:,:) = HV(:,1:ntrials);
 igd(2,:,:) = IGD(:,1:ntrials);
 
-% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_dnf_pop_archive_eps_001_1'),'','');
-load(strcat(path,'new_emoea_constraint_dnf_pop_archive_eps_001_1_res.mat'));
+load(strcat(path,'all_noFilter.mat'));
 hv(3,:,:) = HV(:,1:ntrials);
 igd(3,:,:) = IGD(:,1:ntrials);
 
-% [~,HV,~] = getAllResults(strcat(path,filesep,'emoea_constraint_ach_pop_archive'),'','');
-load(strcat(path,'new_emoea_constraint_ach_pop_archive_eps_001_1_res.mat'));
+load(strcat(path,'random_noFilter_noCross.mat'));
 hv(4,:,:) = HV(:,1:ntrials);
 igd(4,:,:) = IGD(:,1:ntrials);
+
 
 dataPoints = size(HV,1);
 base_experiment_metric_sigHV = zeros(dataPoints,nexperiments-1);
@@ -72,8 +70,10 @@ end
     [0.4660    0.6740    0.1880]
     [0.3010    0.7450    0.9330]
     [0.6350    0.0780    0.1840]};
-% mu_norm =  mean(squeeze(hv(1,:,:)),2);
-mu_norm = zeros(size(hv,2),1);
+% mu_hv =  mean(squeeze(hv(1,:,:)),2);
+% mu_igd =  mean(squeeze(igd(1,:,:)),2);
+mu_hv = zeros(size(hv,2),1);
+mu_igd = zeros(size(igd,2),1);
 
 %plot HV history over NFE
 figure(1)
@@ -82,11 +82,15 @@ hold on
 handles = [];
 % maxHV = 1.0805; %highest attainable based on refPop
 maxHV = max(max(max(hv)));
-plot([0,5000],[maxHV,maxHV],'--k');
+plot([1000,1000],[-2,2],':k')
+plot([2000,2000],[-2,2],':k')
+plot([3000,3000],[-2,2],':k')
+plot([4000,4000],[-2,2],':k')
+
 for i=1:nexperiments
     X = [NFE(:,1);flipud(NFE(:,1))];
     stddev = std(squeeze(hv(i,:,:)),0,2);
-    mu = (mean(squeeze(hv(i,:,:)),2)-mu_norm);
+    mu = (mean(squeeze(hv(i,:,:)),2)-mu_hv);
     Y = [mu-stddev;flipud(mu+stddev)];
     h = fill(X,Y,colors{i},'EdgeColor','none');
     alpha(h,0.15) %sest transparency
@@ -99,7 +103,7 @@ axis([0,5000,0,1.2])
 hold off
 xlabel('NFE')
 ylabel('HV')
-legend(handles, '\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
+legend(handles,'AOS', '\epsilon-MOEA', 'All', 'Random','Location','SouthEast')
 % legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
 set(gca,'FontSize',16);
 
@@ -126,7 +130,7 @@ axis([0,5000,0,1])
 hold off
 xlabel('NFE')
 ylabel(sprintf('Probability of attaing %2.2f%% HV',thresholdHV*100))
-legend('\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','NorthEast')
+legend('AOS', '\epsilon-MOEA', 'All', 'Random','Location','NorthEast')
 set(gca,'FontSize',16);
 
 %plot IGD history over NFE
@@ -134,11 +138,15 @@ figure(3)
 cla
 hold on
 handles = [];
-plot([0,5000],[0,0],'--k');
+plot([1000,1000],[-2,2],':k')
+plot([2000,2000],[-2,2],':k')
+plot([3000,3000],[-2,2],':k')
+plot([4000,4000],[-2,2],':k')
+
 for i=1:nexperiments
     X = [NFE(:,1);flipud(NFE(:,1))];
     stddev = std(squeeze(igd(i,:,:)),0,2);
-    mu = (mean(squeeze(igd(i,:,:)),2)-mu_norm);
+    mu = (mean(squeeze(igd(i,:,:)),2)-mu_igd);
     Y = [mu-stddev;flipud(mu+stddev)];
     h = fill(X,Y,colors{i},'EdgeColor','none');
     alpha(h,0.15) %sest transparency
@@ -151,7 +159,7 @@ axis([0,5000,0,2])
 hold off
 xlabel('NFE')
 ylabel('IGD')
-legend(handles, '\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
+legend(handles, 'AOS', '\epsilon-MOEA', 'All', 'Random','Location','NorthEast')
 % legend(handles, 'CPD','DNF','ACH','ACS', 'Location', 'SouthEast')
 set(gca,'FontSize',16);
 
@@ -179,5 +187,5 @@ axis([0,5000,0,1])
 hold off
 xlabel('NFE')
 ylabel(sprintf('Probability of attaing %2.2f%% IGD',thresholdIGD*100))
-legend('\epsilon-MOEA', 'O-AOS', 'C-DNF', 'C-ACH','Location','SouthEast')
+legend('AOS', '\epsilon-MOEA', 'All', 'Random','Location','SouthEast')
 set(gca,'FontSize',16);

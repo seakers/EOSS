@@ -5,8 +5,8 @@ function [ops, credits] = readAndPlotOneCreditFile()
 %operator
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
-respath = strcat(path,'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1');
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
+respath = strcat(path,'random');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -60,6 +60,9 @@ all_epoch_select = zeros(expData.keySet.size, nepochs, length(files)); %keeps tr
 
 for i=1:length(files)
     for k = 1:numOps
+        if(strcmp(op,'OnePointCrossover+BitFlip'))
+            continue;
+        end
         hist = allcredits{i}.get(ops{k});
         if size(hist,1)==0
             %means that the opeator was never selected

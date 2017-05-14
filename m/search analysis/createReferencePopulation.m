@@ -14,14 +14,17 @@ try
     end
     
     architecture.io.ResultIO.savePopulation(refPop, saveFileName)
+    
 catch me
     close(h)
+    clear refPop
     fprintf(me.message)
     cd(origin)
     EOSS_end(jarpath);
     disp(me.message);
 end
 close(h)
+clear refPop
 cd(origin)
 EOSS_end(jarpath);
 

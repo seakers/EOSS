@@ -2,8 +2,8 @@
 %population evolves with time
 
 n_representatives = 2;
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA SciTech/';
-method = '5000eval_learning_withSinglecross/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
+method = 'random/';
 
 files = dir(strcat(path,method,'*.obj'));
 ind = randi(length(files),n_representatives);

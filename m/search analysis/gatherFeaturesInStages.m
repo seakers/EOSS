@@ -1,6 +1,6 @@
 %combine features mined from the same stages of differnet runs together
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA SciTech/';
-resPath = '5000eval_learning_withSinglecross/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
+resPath = 'aos_noFilter/';
 
 stage = 0;
 while(true)

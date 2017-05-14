@@ -2,7 +2,7 @@
 %that occur the most often
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA SciTech/5000eval_learning_withSinglecross/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/aos_noFilter/';
 fid = fopen((strcat(path, filesep,'AIAA_innovize_feats_stage3.txt')));
 
 single_feats = java.util.HashMap; %counts the occurences of single features
@@ -11,7 +11,7 @@ combo_feat = java.util.HashMap; %counts the occurences of combined features
 
 while(~feof(fid))
     line = fgetl(fid);
-    feats = sort(strsplit(line, ' , '));
+    feats = sort(strsplit(line, ','));
     
     str = '';
     for i=1:length(feats)
@@ -22,6 +22,19 @@ while(~feof(fid))
         if ~feature_arg_map.containsKey(m.pattern)
             feature_arg_map.put(m.pattern, java.util.ArrayList);
         end
+%         args = strsplit(m.args,';');
+%         args = args(~cellfun(@isempty,args));
+%         
+%       
+%         for j = 1:length(args)
+%             temp_args = strsplit(args{j},',');
+%             for k=1:length(temp_args)
+%                 if strcmp(temp_args{k},']')
+%                     continue
+%                 end
+%                 feature_arg_map.get(m.pattern).add(temp_args{k});
+%             end
+%         end
         feature_arg_map.get(m.pattern).add(m.args);
         
         %add the occurence of the single pattern to single_feats
@@ -97,7 +110,7 @@ end
 s_feats = sort(feats);
 for j=1:length(feats)
     feat = s_feats{j};
-    fprintf('\tOccurences of argumentss for %s:\n',feat);
+    fprintf('\tOccurences of arguments for %s:\n',feat);
     count_sep = java.util.HashMap;
     count_together = java.util.HashMap;
     argArray = feature_arg_map.get(feat);

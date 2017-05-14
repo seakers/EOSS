@@ -64,14 +64,14 @@ try
     
 catch me
     fprintf(me.message)
+    clear solution mission spacecraft missionNameIterator iter mergedPopulation
     cd(origin)
     EOSS_end(jarpath);
     disp(me.message);
 end
 cd(origin)
+clear solution mission spacecraft missionNameIterator iter mergedPopulation
 EOSS_end(jarpath);
-
-clear iter missionNameIterator solution mergedPopulation mission spacecraft
 
 save data.mat
 
