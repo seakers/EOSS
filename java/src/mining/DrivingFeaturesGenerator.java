@@ -36,8 +36,6 @@ public class DrivingFeaturesGenerator {
     private double conf_threshold;
     private double lift_threshold;
 
-    private ArrayList<Integer> behavioral;
-    private ArrayList<Integer> non_behavioral;
     private ArrayList<Integer> population;
 
     private ArrayList<Architecture> architectures;
@@ -77,8 +75,6 @@ public class DrivingFeaturesGenerator {
         this.feh = new FilterExpressionHandler();
         this.architectures = new ArrayList<>();
 
-        this.behavioral = new ArrayList<>();
-        this.non_behavioral = new ArrayList<>();
         this.presetDrivingFeatures = new ArrayList<>();
 
         this.maxIter = DrivingFeaturesParams.maxIter;
@@ -206,7 +202,7 @@ public class DrivingFeaturesGenerator {
             ArrayList<Integer> addedFeatureIndices = new ArrayList<>();
             double[] bounds = new double[2];
             bounds[0] = 0;
-            bounds[1] = (double) behavioral.size() / population.size();
+            bounds[1] = (double) this.labels.cardinality()/ population.size();
 
             boolean apriori = true;
             if (apriori) {
@@ -277,7 +273,6 @@ public class DrivingFeaturesGenerator {
         // Get feature satisfaction matrix
 //        this.presetDrivingFeatures = presetDrivingFeatures.subList(0, 50);
         this.dataFeatureMat = new double[population.size()][presetDrivingFeatures.size()];
-        this.labels = new BitSet(population.size());
 
         for (int i = 0; i < population.size(); i++) {
             for (int j = 0; j < presetDrivingFeatures.size(); j++) {
@@ -285,9 +280,6 @@ public class DrivingFeaturesGenerator {
                 DrivingFeature df = presetDrivingFeatures.get(j);
                 int index = df.getID();
                 this.dataFeatureMat[i][j] = (double) presetDrivingFeatures_satList.get(index)[i];
-            }
-            if (behavioral.contains(population.get(i))) {
-                labels.set(i, true);
             }
         }
     }
@@ -449,7 +441,6 @@ public class DrivingFeaturesGenerator {
                         w.print("(2," + i + ",*," + j + ")");
                         break;
                     }
-
             }
         }
     }
@@ -560,6 +551,8 @@ public class DrivingFeaturesGenerator {
         String splitBy = ",";
 
         architectures = new ArrayList<>();
+        population = new ArrayList<>();
+        this.labels = new BitSet();
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             //skip header
@@ -570,33 +563,27 @@ public class DrivingFeaturesGenerator {
                 // use comma as separator
                 String[] tmp = line.split(splitBy);
                 // The first column is the label
-                boolean label = tmp[0].equals("1");
+                boolean behavioral = tmp[0].equals("1");
                 StringBuilder sb = new StringBuilder();
                 //skip first variables ince it is the number of satellites per plane
                 for (int i = 1; i < numberOfVariables; i++) {
                     sb.append(tmp[i + 1]);
                 }
-                architectures.add(new Architecture(id, label, bitString2intArr(sb.toString())));
-                if (label) {
-                    this.behavioral.add(id);
-                } else {
-                    this.non_behavioral.add(id);
+                architectures.add(new Architecture(id, behavioral, bitString2intArr(sb.toString())));
+                if (behavioral) {
+                    this.labels.set(id);
                 }
-
+                population.add(id);
                 id++;
-
             }
         } catch (IOException e) {
             System.out.println("Exception in parsing labeled data file");
             e.printStackTrace();
         }
 
-        this.population = new ArrayList<>();
-        this.population.addAll(behavioral);
-        this.population.addAll(non_behavioral);
-        this.feh.setArchs(this.architectures, this.behavioral, this.non_behavioral, this.population);
+        this.feh.setArchs(this.architectures, this.labels, this.population);
         // Adaptive support threshold
-        this.adaptSupp = (double) behavioral.size() / population.size() * 0.5;
+        this.adaptSupp = (double) this.labels.cardinality() / (double) population.size() * 0.5;
     }
 
     private int[][] bitString2intArr(String input) {

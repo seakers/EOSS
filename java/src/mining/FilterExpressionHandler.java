@@ -7,6 +7,7 @@ package mining;
 
 import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
+import java.util.BitSet;
 
 import mining.DrivingFeaturesGenerator.Architecture;
 
@@ -18,8 +19,7 @@ import mining.DrivingFeaturesGenerator.Architecture;
 public class FilterExpressionHandler {
 
     private ArrayList<DrivingFeaturesGenerator.Architecture> archs;
-    private ArrayList<Integer> behavioral;
-    private ArrayList<Integer> non_behavioral;
+    private BitSet labels;
     private ArrayList<Integer> population;
     
     private int[] satList;
@@ -29,23 +29,18 @@ public class FilterExpressionHandler {
         super();
     }
 
-    public void setArchs(ArrayList<Architecture> inputArchs, ArrayList<Integer> b, ArrayList<Integer> nb, ArrayList<Integer> pop){
-    	this.behavioral = b;
-    	this.non_behavioral = nb;
-    	this.population=pop;
-    	archs = inputArchs;
+    public void setArchs(ArrayList<Architecture> inputArchs, BitSet labels, ArrayList<Integer> pop){
+    	this.labels = labels;
+    	this.archs = inputArchs;
+        this.population=pop;
     }
-    
-    
-    
     
     public double[] processSingleFilterExpression_computeMetrics(String inputExpression){
         // Examples of feature expressions 
         // Preset filter: {presetName[orbits;instruments;numbers]}   
         
-    	satList = new int[population.size()];
+    	satList = new int[archs.size()];
     	ArrayList<Integer> matchedArchIDs = new ArrayList<>();
-    	
     	
         String exp;
         if(inputExpression.startsWith("{") && inputExpression.endsWith("}")){
@@ -74,9 +69,9 @@ public class FilterExpressionHandler {
         }
         
     	double[] metrics = {0,0,0,0};
-        double cnt_all= (double) non_behavioral.size() + behavioral.size();
+        double cnt_all= archs.size();
         double cnt_F=0.0;
-        double cnt_S= (double) behavioral.size();
+        double cnt_S= labels.cardinality();
         double cnt_SF=0.0;        
 
         for(Architecture a:archs){
@@ -84,7 +79,7 @@ public class FilterExpressionHandler {
             int[][] mat = a.getBooleanMatrix();
             if(comparePresetFilter(mat, presetName,orbits,instruments,numbers)){
                 cnt_F++;
-                if(behavioral.contains(ArchID)) cnt_SF++;
+                if(this.labels.get(ArchID)) cnt_SF++;
                 matchedArchIDs.add(ArchID);
             }
         }
@@ -400,8 +395,6 @@ public class FilterExpressionHandler {
         }
         return currMatched;
     }
-    
-    
     
     
     private int[] satisfactionArray(ArrayList<Integer> matchedArchIDs, ArrayList<Integer> allArchIDs){

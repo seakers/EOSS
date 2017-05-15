@@ -51,8 +51,8 @@ public class MRMR {
                 if (D - R > phi) {
                     phi = D - R;
                     bestFeatInd = i;
+                    }
                 }
-            }
             selectedFeatures.add(bestFeatInd);
         }
 
@@ -78,9 +78,9 @@ public class MRMR {
         bnx1x2.and(set2);
         double nx1x2 = bnx1x2.cardinality();
 
-        BitSet bx1nx2 = (BitSet) set2;
+        BitSet bx1nx2 = (BitSet) set2.clone();
         bx1nx2.flip(0, numberOfObservations);
-        bx1nx2.and(set2);
+        bx1nx2.and(set1);
         double x1nx2 = bx1nx2.cardinality();
 
         BitSet bnx1 = (BitSet) set1.clone();
@@ -101,30 +101,35 @@ public class MRMR {
         
         double i1,i2,i3,i4;
         //handle cases when there p(x) = 0
-        if (p_x1 == 0 || p_x2 == 0) {
+        if (p_x1 == 0 || p_x2 == 0 || p_x1x2 == 0) {
             i1 = 0;
         }else{
             i1 = p_x1x2 * Math.log(p_x1x2 / (p_x1 * p_x2));
         }
         
-        if (p_x1 == 0 || p_nx2 == 0) {
+        if (p_x1 == 0 || p_nx2 == 0 || p_x1nx2 == 0) {
             i2 = 0;
         }else{
             i2 = p_x1nx2 * Math.log(p_x1nx2 / (p_x1 * p_nx2));
         }
         
-        if (p_nx1 == 0 || p_x2 == 0) {
+        if (p_nx1 == 0 || p_x2 == 0 || p_nx1x2 == 0) {
             i3 = 0;
         }else{
             i3 = p_nx1x2 * Math.log(p_nx1x2 / (p_nx1 * p_x2));
         }
         
-        if (p_nx1 == 0 || p_nx2 == 0) {
+        if (p_nx1 == 0 || p_nx2 == 0 || p_nx1nx2 == 0) {
             i4 = 0;
         }else{
             i4 = p_nx1nx2 * Math.log(p_nx1nx2 / (p_nx1 * p_nx2));
         }
 
-        return i1 + i2 + i3 + i4;
+        double sumI = i1 + i2 + i3 + i4;
+        if(sumI<0){
+            throw new IllegalStateException("Mutual information must be positive. Computed a negative value.");
+        }else{
+            return sumI;
+        }
     }
 }
