@@ -3,6 +3,7 @@ package mining;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import org.apache.commons.math3.util.FastMath;
 
 public class MRMR {
 
@@ -51,8 +52,8 @@ public class MRMR {
                 if (D - R > phi) {
                     phi = D - R;
                     bestFeatInd = i;
-                    }
                 }
+            }
             selectedFeatures.add(bestFeatInd);
         }
 
@@ -98,37 +99,37 @@ public class MRMR {
         double p_nx1x2 = (double) nx1x2 / numberOfObservations;
         double p_x1nx2 = (double) x1nx2 / numberOfObservations;
         double p_nx1nx2 = (double) nx1nx2 / numberOfObservations;
-        
-        double i1,i2,i3,i4;
+
+        double i1, i2, i3, i4;
         //handle cases when there p(x) = 0
         if (p_x1 == 0 || p_x2 == 0 || p_x1x2 == 0) {
             i1 = 0;
-        }else{
-            i1 = p_x1x2 * Math.log(p_x1x2 / (p_x1 * p_x2));
+        } else {
+            i1 = p_x1x2 * FastMath.log(2,p_x1x2 / (p_x1 * p_x2));
         }
-        
+
         if (p_x1 == 0 || p_nx2 == 0 || p_x1nx2 == 0) {
             i2 = 0;
-        }else{
-            i2 = p_x1nx2 * Math.log(p_x1nx2 / (p_x1 * p_nx2));
+        } else {
+            i2 = p_x1nx2 * FastMath.log(2,p_x1nx2 / (p_x1 * p_nx2));
         }
-        
+
         if (p_nx1 == 0 || p_x2 == 0 || p_nx1x2 == 0) {
             i3 = 0;
-        }else{
-            i3 = p_nx1x2 * Math.log(p_nx1x2 / (p_nx1 * p_x2));
+        } else {
+            i3 = p_nx1x2 * FastMath.log(2,p_nx1x2 / (p_nx1 * p_x2));
         }
-        
+
         if (p_nx1 == 0 || p_nx2 == 0 || p_nx1nx2 == 0) {
             i4 = 0;
-        }else{
-            i4 = p_nx1nx2 * Math.log(p_nx1nx2 / (p_nx1 * p_nx2));
+        } else {
+            i4 = p_nx1nx2 * FastMath.log(2,p_nx1nx2 / (p_nx1 * p_nx2));
         }
 
         double sumI = i1 + i2 + i3 + i4;
-        if(sumI<0){
+        if (sumI < 0) {
             throw new IllegalStateException("Mutual information must be positive. Computed a negative value.");
-        }else{
+        } else {
             return sumI;
         }
     }

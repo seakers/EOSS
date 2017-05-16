@@ -16,7 +16,6 @@ Member functions
 import eoss.problem.EOSSDatabase;
 import java.util.ArrayList;
 
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -48,9 +47,6 @@ public class DrivingFeaturesGenerator {
 
     double[] thresholds;
 
-    private int maxIter;
-    private int minRuleNum;
-    private int maxRuleNum;
     private double adaptSupp;
 
     public boolean tallMatrix;
@@ -77,10 +73,6 @@ public class DrivingFeaturesGenerator {
 
         this.presetDrivingFeatures = new ArrayList<>();
 
-        this.maxIter = DrivingFeaturesParams.maxIter;
-        this.minRuleNum = DrivingFeaturesParams.minRuleNum;
-        this.maxRuleNum = DrivingFeaturesParams.maxRuleNum;
-
         this.tallMatrix = DrivingFeaturesParams.tallMatrix;
         this.maxLength = DrivingFeaturesParams.maxLength;
         this.run_mRMR = DrivingFeaturesParams.run_mRMR;
@@ -105,11 +97,20 @@ public class DrivingFeaturesGenerator {
 
         if (this.run_mRMR) {
             MRMR mRMR = new MRMR();
-            this.drivingFeatures = mRMR.minRedundancyMaxRelevance( population.size(), getDataMat(this.drivingFeatures), this.labels, this.drivingFeatures, topN);
+            this.drivingFeatures = mRMR.minRedundancyMaxRelevance(population.size(), getDataMat(this.drivingFeatures), this.labels, this.drivingFeatures, topN);
         }
 
         // Printout result
         exportDrivingFeatures(saveDataFile, topN);
+
+        String filename = saveDataFile.split("\\.")[0];
+        ArrayList<BitSet> bs = new ArrayList<>();
+        ArrayList<String> names = new ArrayList<>();
+        for (DrivingFeature2 feature : this.drivingFeatures) {
+            bs.add(feature.getMatches());
+            names.add(feature.getName());
+        }
+        FilterApplication.exportFilterOutput(filename + "_ind.csv", bs, names, architectures.size());
 
         long t1 = System.currentTimeMillis();
         System.out.println("...[DrivingFeature] Total data mining time : " + String.valueOf(t1 - t0) + " msec");
@@ -198,54 +199,11 @@ public class DrivingFeaturesGenerator {
                 featureData_metrics.add(metrics);
             }
 
-            int iter = 0;
             ArrayList<Integer> addedFeatureIndices = new ArrayList<>();
-            double[] bounds = new double[2];
-            bounds[0] = 0;
-            bounds[1] = (double) this.labels.cardinality()/ population.size();
-
-            boolean apriori = true;
-            if (apriori) {
-                while (addedFeatureIndices.size() < minRuleNum || addedFeatureIndices.size() > maxRuleNum) {
-
-                    iter++;
-                    if (iter > maxIter) {
-                        break;
-                    } else if (iter > 1) {
-                        // max supp threshold is support_S
-                        // min supp threshold is 0
-                        double a;
-                        if (addedFeatureIndices.size() > maxRuleNum) { // Too many rules -> increase threshold
-                            bounds[0] = this.adaptSupp;
-                            a = bounds[1];
-                        } else { // too few rules -> decrease threshold
-                            bounds[1] = this.adaptSupp;
-                            a = bounds[0];
-                        }
-                        // Bisection
-                        this.adaptSupp = (double) (this.adaptSupp + a) * 0.5;
-                    }
-                    addedFeatureIndices = new ArrayList<>();
-                    for (int i = 0; i < featureData_name.size(); i++) {
-                        double[] metrics = featureData_metrics.get(i);
-                        if (metrics[0] > adaptSupp) {
-                            addedFeatureIndices.add(i);
-                            if (addedFeatureIndices.size() > this.maxRuleNum && iter < maxIter) {
-                                break;
-                            } else if ((candidate_features.size() - (i + 1)) + addedFeatureIndices.size() < this.minRuleNum) {
-                                break;
-                            }
-                        }
-                    }
-                    System.out.println("...[DrivingFeatures] number of preset rules found: " + addedFeatureIndices.size() + " with treshold: " + this.adaptSupp);
-                }
-                System.out.println("...[DrivingFeatures] preset features extracted in " + iter + " steps with size: " + addedFeatureIndices.size());
-            } else {
-                for (int i = 0; i < featureData_name.size(); i++) {
-                    double[] metrics = featureData_metrics.get(i);
-                    if (metrics[0] > thresholds[0] && metrics[1] > thresholds[1] && metrics[2] > thresholds[2] && metrics[3] > thresholds[2]) {
-                        addedFeatureIndices.add(i);
-                    }
+            for (int i = 0; i < featureData_name.size(); i++) {
+                double[] metrics = featureData_metrics.get(i);
+                if (metrics[0] > thresholds[0]) {
+                    addedFeatureIndices.add(i);
                 }
             }
 
@@ -257,6 +215,7 @@ public class DrivingFeaturesGenerator {
             }
 
             long t1 = System.currentTimeMillis();
+            System.out.println(String.format("...[DrivingFeatures] %d preset features pass support threshold = %f", featureData_satList.size(), supp_threshold));
             System.out.println("...[DrivingFeatures] preset feature evaluation done in: " + String.valueOf(t1 - t0) + " msec");
 
             //if(apriori) return getDrivingFeatures();
@@ -268,29 +227,13 @@ public class DrivingFeaturesGenerator {
         }
     }
 
-    public void setDrivingFeatureSatisfactionData() {
-
-        // Get feature satisfaction matrix
-//        this.presetDrivingFeatures = presetDrivingFeatures.subList(0, 50);
-        this.dataFeatureMat = new double[population.size()][presetDrivingFeatures.size()];
-
-        for (int i = 0; i < population.size(); i++) {
-            for (int j = 0; j < presetDrivingFeatures.size(); j++) {
-
-                DrivingFeature df = presetDrivingFeatures.get(j);
-                int index = df.getID();
-                this.dataFeatureMat[i][j] = (double) presetDrivingFeatures_satList.get(index)[i];
-            }
-        }
-    }
-
     /**
-     * Runs Apriori and returns the top n features discovered from Apriori. Features are ordered by fconfidence in descending order.
-     * @return 
+     * Runs Apriori and returns the top n features discovered from Apriori.
+     * Features are ordered by fconfidence in descending order.
+     *
+     * @return
      */
     public List<DrivingFeature2> getDrivingFeatures() {
-
-        this.setDrivingFeatureSatisfactionData();
 
         ArrayList<DrivingFeature2> newFeatures = new ArrayList<>();
 
@@ -300,7 +243,7 @@ public class DrivingFeaturesGenerator {
 
                 DrivingFeature df = presetDrivingFeatures.get(j);
                 int index = df.getID();
-                if(presetDrivingFeatures_satList.get(index)[i] > 0.0001){
+                if (presetDrivingFeatures_satList.get(index)[i] > 0.0001) {
                     bs.set(i);
                 }
             }
@@ -500,9 +443,9 @@ public class DrivingFeaturesGenerator {
                 name = name.substring(1);
             }
 
-            w.print("/" + feature.getSupport() + "/" + feature.getLift() +
-                    "/" + feature.getFConfidence() + 
-                    "/" + feature.getRConfidence() + "// " + name + "\n");
+            w.print("/" + feature.getSupport() + "/" + feature.getLift()
+                    + "/" + feature.getFConfidence()
+                    + "/" + feature.getRConfidence() + "// " + name + "\n");
 
         } catch (Exception e) {
             System.out.println("Exception in printing feature names:" + expression);
@@ -583,7 +526,7 @@ public class DrivingFeaturesGenerator {
 
         this.feh.setArchs(this.architectures, this.labels, this.population);
         // Adaptive support threshold
-        this.adaptSupp = (double) this.labels.cardinality() / (double) population.size() * 0.5;
+        this.adaptSupp = (double) this.labels.cardinality() / (double) population.size() * 0.25;
     }
 
     private int[][] bitString2intArr(String input) {

@@ -157,7 +157,7 @@ public class RBSAEOSSSMAP {
         properties.setInt("populationSize", popSize);
         double crossoverProbability = 1.0;
         properties.setDouble("crossoverProbability", crossoverProbability);
-        double mutationProbability = 1. / 65.;
+        double mutationProbability = 1. / 60.;
         properties.setDouble("mutationProbability", mutationProbability);
         Variation singlecross;
         Variation bitFlip;
@@ -182,7 +182,7 @@ public class RBSAEOSSSMAP {
             //initialize problem
 //            Problem problem = getAssignmentProblem2(path, 5, RequirementMode.FUZZYATTRIBUTE);
             Problem problem = getAssignmentProblem(path, RequirementMode.FUZZYATTRIBUTE);
-
+            
             //Random knowledge operator
             Variation repairMass = new RepairMass(3000.0, 1, 1);
             Variation repairDC = new RepairDutyCycle(0.5, 1, 1);
@@ -276,7 +276,7 @@ public class RBSAEOSSSMAP {
                         ArrayList<Variation> operators2 = new ArrayList();
                         
                         //kdo mode set to operator or repair
-                        properties.setString("operator", path);
+                        properties.setString("kdomode", "operator");
 
                         //add domain-independent heuristics
                         Variation SingleCross = new CompoundVariation(new OnePointCrossover(crossoverProbability, 2), new BitFlip(mutationProbability));

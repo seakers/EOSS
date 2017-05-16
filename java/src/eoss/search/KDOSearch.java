@@ -197,13 +197,7 @@ public class KDOSearch implements Callable<Algorithm> {
                         repair.appendOperator(cross);
                         for (Variation newOp : newOperators) {
                             repair.appendOperator(newOp);
-                            String name;
-                            if (newOp instanceof EOSSOperator) {
-                                name = newOp.toString();
-                            } else {
-                                name = newOp.getClass().getSimpleName();
-                            }
-                            sb.append(name).append(" + ");
+                            sb.append(newOp.toString()).append(" + ");
                         }
                         BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
                         sb.append(bitf.getClass().getSimpleName());
