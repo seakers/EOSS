@@ -8,7 +8,7 @@ path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAI
 load(strcat(path,'aos_noFilter_noCross.mat'));
 
 nexperiments = 4;
-ntrials = 29;
+ntrials = 30;
 hv = zeros(nexperiments,size(HV,1),ntrials);
 igd = zeros(nexperiments,size(IGD,1),ntrials);
 hv(1,:,:) = HV(:,1:ntrials);
