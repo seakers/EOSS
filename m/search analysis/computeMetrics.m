@@ -5,7 +5,7 @@ function [NFE, HV, IGD] = computeMetrics(jarpath, filepath)
 %compute these metrics
 
 path = strcat(jarpath,filesep,'problems',filesep, 'climateCentric');
-refPopPath = strcat(path, filesep, 'result', filesep, 'ASC paper', filesep, 'for Ref Pop', filesep, 'refPop.pop');
+refPopPath = strcat(path, filesep, 'result', filesep, 'AIAA JAIS', filesep, 'refPop', filesep, 'refPop.pop');
 maxNFE = 5000;
 step = 5;
 epsilonDouble = [0.001,10];

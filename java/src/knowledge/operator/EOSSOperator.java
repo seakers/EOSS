@@ -131,8 +131,10 @@ public class EOSSOperator extends AbstractEOSSOperator {
                 break;
 
             case 2:
-                if (arg > nInst) {
-                    throw new IllegalArgumentException(String.format("For mode = %d expected arg < %d (number of available instruments). Found %d", this.mode, nInst, this.arg));
+                if (arg > nInst * nOrb) {
+                    throw new IllegalArgumentException(String.format("For mode = %d expected arg < %d (number of available instruments * available orbits). Found %d", this.mode, nInst * nOrb, this.arg));
+                }else if(this.instrument[0] > -1 && arg > nOrb){
+                    throw new IllegalArgumentException(String.format("For mode = %d and specified instrument %d, expected arg < %d (number of available orbits). Found %d", this.mode, this.instrument[0], nOrb, this.arg));
                 }
                 break;
             default:
@@ -224,7 +226,6 @@ public class EOSSOperator extends AbstractEOSSOperator {
                         //add all instruments from instID array
                         for (int index : instID) {
                             arch.addInstrumentToOrbit(index, orbitInd);
-
                         }
                     }
                     break;

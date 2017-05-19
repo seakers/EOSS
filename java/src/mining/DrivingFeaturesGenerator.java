@@ -215,7 +215,7 @@ public class DrivingFeaturesGenerator {
             }
 
             long t1 = System.currentTimeMillis();
-            System.out.println(String.format("...[DrivingFeatures] %d preset features pass support threshold = %f", featureData_satList.size(), supp_threshold));
+            System.out.println(String.format("...[DrivingFeatures] %d preset features pass support threshold = %f", addedFeatureIndices.size(), supp_threshold));
             System.out.println("...[DrivingFeatures] preset feature evaluation done in: " + String.valueOf(t1 - t0) + " msec");
 
             //if(apriori) return getDrivingFeatures();

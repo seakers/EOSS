@@ -10,9 +10,12 @@ import aos.aos.AOSFactory;
 import aos.creditassigment.CreditDefFactory;
 import aos.creditassigment.ICreditAssignment;
 import aos.nextoperator.INextOperator;
+import aos.operatorselectors.replacement.CompoundTrigger;
 import aos.operatorselectors.replacement.EpochTrigger;
+import aos.operatorselectors.replacement.InitialTrigger;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
 import aos.operatorselectors.replacement.RemoveNLowest;
+import aos.operatorselectors.replacement.ReplacementTrigger;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignment2;
 import eoss.problem.evaluation.RequirementMode;
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletionService;
@@ -169,6 +173,7 @@ public class RBSAEOSSSMAP {
 
         //setup for innovization
         int epochLength = 1000; //for learning rate
+        int triggerOffset = 100;
         properties.setInt("nOpsToAdd", 4);
         properties.setInt("nOpsToRemove", 4);
 
@@ -283,12 +288,14 @@ public class RBSAEOSSSMAP {
                         operators2.add(SingleCross);
 
                         //set up OperatorReplacementStrategy
-                        EpochTrigger epochTrigger = new EpochTrigger(epochLength);
+                        EpochTrigger epochTrigger = new EpochTrigger(epochLength,triggerOffset);
+                        InitialTrigger initTrigger = new InitialTrigger(triggerOffset);
+                        CompoundTrigger compTrigger = new CompoundTrigger(Arrays.asList(new ReplacementTrigger[]{epochTrigger,initTrigger}));
                         EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator();
                         ArrayList<Variation> permanentOps = new ArrayList();
                         permanentOps.add(SingleCross);
                         RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, properties.getInt("nOpsToRemove", 2));
-                        OperatorReplacementStrategy ops = new OperatorReplacementStrategy(epochTrigger, operatorRemover, eossOpCreator);
+                        OperatorReplacementStrategy ops = new OperatorReplacementStrategy(compTrigger, operatorRemover, eossOpCreator);
 
                         properties.setDouble("pmin", 0.03);
 

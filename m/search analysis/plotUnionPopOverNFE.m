@@ -7,11 +7,10 @@ path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAI
 jarpath = '/Users/nozomihitomi/Dropbox/EOSS/dist';
 
 methods = {'baseline.mat',...
-    'aos.mat'...
-    'all.mat',...
-    'random.mat'};
+    'aos_noFilter_noCross_noRelevance.mat',...
+    'random_noFilter_noCross_noRelevance.mat'};
 
-nfeIntervals = [2000,3000,4000,5000];
+nfeIntervals = [1400,1600,1800,2000];
 
 %load refPop to show Pareto front
 load(strcat(path,filesep,'analysis',filesep,'pop_final',filesep,'refPop.mat'));

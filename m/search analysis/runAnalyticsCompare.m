@@ -5,7 +5,7 @@
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/analysis/metrics/';
 % [nfe,fHV,~] = getAllResults(strcat(path,filesep,'baseline_eps_001_10'),'','');
-load(strcat(path,'aos_noFilter_noCross.mat'));
+load(strcat(path,'aos_noFilter_noCross_noRelevance_x4.mat'));
 
 nexperiments = 4;
 ntrials = 30;
@@ -22,7 +22,7 @@ load(strcat(path,'all_noFilter.mat'));
 hv(3,:,:) = HV(:,1:ntrials);
 igd(3,:,:) = IGD(:,1:ntrials);
 
-load(strcat(path,'random_noFilter_noCross.mat'));
+load(strcat(path,'random_noFilter_noCross_noRelevance_x4.mat'));
 hv(4,:,:) = HV(:,1:ntrials);
 igd(4,:,:) = IGD(:,1:ntrials);
 

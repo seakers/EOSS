@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFileKDO()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
-respath = strcat(path,'aos_noFilter_noCross');
+respath = strcat(path,'aos_noFilter_noCross_noRelevance_x2');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -118,7 +118,6 @@ for i=1:length(files)
     all_epoch_select(2,:,i) = all_epoch_select_learned_ops;
 end
 
-
 colors = {
       [0         0.4470    0.7410]
     [0.8500    0.3250    0.0980]
@@ -144,6 +143,11 @@ for i=1:numOps
     handles = [handles plot(1:nepochs,mean_cred,'Color',colors{i}, 'LineWidth',2)];
     maxCredit = max([max(mean_cred), maxCredit]);
 end
+plot([20,20],[-2,2],':k')
+plot([40,40],[-2,2],':k')
+plot([60,60],[-2,2],':k')
+plot([80,80],[-2,2],':k')
+
 hold off
 set(gca,'FontSize',16);
 axis([0,nepochs, 0, maxCredit*1.1])
@@ -167,6 +171,10 @@ for i=1:numOps
     handles = [handles, plot(2:nepochs,mean_sel(2:end),'Color',colors{i}, 'LineWidth',2)];
 end
 plot([0,5000],[0.03,0.03],'--k')
+plot([20,20],[-2,2],':k')
+plot([40,40],[-2,2],':k')
+plot([60,60],[-2,2],':k')
+plot([80,80],[-2,2],':k')
 legend(handles, 'Single-Point Crossover','KDO Operators');
 axis([0, nepochs, 0, 1])
 xlabel('NFE')

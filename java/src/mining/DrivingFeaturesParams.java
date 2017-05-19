@@ -3,8 +3,8 @@ package mining;
 
 public class DrivingFeaturesParams {
 	
-    public static double support_threshold = 0.2;
-    public static double confidence_threshold = 0.5;
+    public static double support_threshold = 0.0625;
+    public static double confidence_threshold = 0.75;
     public static double lift_threshold = 1.0;
 
     public static boolean tallMatrix = true;

@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
-import knowledge.operator.EOSSOperator;
 import knowledge.operator.EOSSOperatorCreator;
 import mining.DrivingFeaturesGenerator;
 import mining.label.AbstractPopulationLabeler;
@@ -178,12 +177,10 @@ public class KDOSearch implements Callable<Algorithm> {
                         //combines all extracted features into n operators 
                         for (Variation newOp : newOperators) {
                             StringBuilder sb = new StringBuilder();
-                            OnePointCrossover cross = new OnePointCrossover(properties.getDouble("crossoverProbability", 1.0));
+                            OnePointCrossover cross = new OnePointCrossover(properties.getDouble("crossoverProbability", 0.0));
                             sb.append(cross.getClass().getSimpleName()).append(" + ");
                             sb.append(newOp.toString()).append(" + ");
-                            BitFlip bitf = new BitFlip(properties.getDouble("mutationProbability", 1. / (double) alg.getProblem().getNumberOfVariables()));
-                            sb.append(bitf.getClass().getSimpleName());
-                            CompoundVariation repair = new CompoundVariation(cross, newOp, bitf);
+                            CompoundVariation repair = new CompoundVariation(cross, newOp);
                             repair.setName(sb.toString());
                             alg.getNextHeuristicSupplier().addOperator(repair);
                         }
