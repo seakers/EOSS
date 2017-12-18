@@ -213,34 +213,6 @@ public class LaunchVehicle implements Serializable {
     }
 
     /**
-     * Produces a full factorial enumeration of partitions for length n
-     * decisions. The list of integers indicate which partition each index
-     * belongs to
-     *
-     * @return
-     */
-    private static List<List<Integer>> fullfactPartition(int n) {
-        LinkedList<List<Integer>> out = new LinkedList<>();
-        List<Integer> initialSet = Arrays.asList(new Integer[]{0});
-        out.add(initialSet);
-        while (out.getFirst().size() < n) {
-            List<Integer> list = out.removeFirst();
-
-            int maxSetValue = 0;
-            for (int i = 0; i < list.size(); i++) {
-                maxSetValue = Math.max(maxSetValue, list.get(i));
-            }
-
-            for (int i = 0; i <= maxSetValue + 1; i++) {
-                ArrayList<Integer> partialSolution = new ArrayList<>(list);
-                partialSolution.add(i);
-                out.add(partialSolution);
-            }
-        }
-        return out;
-    }
-
-    /**
      * Checks multiple parameters of the spacecraft to see if this launch
      * vehicle is capable of launching the given spacecraft
      *
