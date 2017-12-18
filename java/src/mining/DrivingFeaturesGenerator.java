@@ -250,7 +250,7 @@ public class DrivingFeaturesGenerator {
             newFeatures.add(new DrivingFeature2(presetDrivingFeatures.get(j).getExpression(), bs));
         }
 
-        Apriori2 ap2 = new Apriori2(population.size(), newFeatures);
+        Apriori ap2 = new Apriori(population.size(), newFeatures);
         ap2.run(labels, thresholds[0], thresholds[2], maxLength);
 
         return ap2.getTopFeatures(max_number_of_features_before_mRMR, FeatureMetric.FCONFIDENCE);

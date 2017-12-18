@@ -4,6 +4,7 @@
  */
 package eoss.problem;
 
+import seak.architecture.enumeration.FullFactorial;
 import eoss.spacecraft.Spacecraft;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -163,10 +164,10 @@ public class LaunchVehicle implements Serializable {
         double lowestCost = Double.POSITIVE_INFINITY;
 
         //find all combinations of spacecraft
-        for (List<Integer> groupIndex : fullfactPartition(spacecraft.size())) {
+        for (int[] groupIndex : FullFactorial.ffPartitioning(spacecraft.size(),8)) {
             HashMap<Integer, ArrayList<Spacecraft>> groups = new HashMap<>();
             int index = 0;
-            for (Integer groupNumber : groupIndex) {
+            for (int groupNumber : groupIndex) {
                 if (!groups.containsKey(groupNumber)) {
                     groups.put(groupNumber, new ArrayList<>());
                 }

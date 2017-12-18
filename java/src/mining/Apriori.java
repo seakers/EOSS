@@ -6,351 +6,332 @@
 package mining;
 
 import java.util.*;
-import org.hipparchus.linear.ArrayRealVector;
-import org.hipparchus.linear.MatrixUtils;
-import org.hipparchus.linear.RealMatrix;
-import org.hipparchus.linear.RealVector;
+import org.hipparchus.util.Combinations;
 
 /**
  *
- * @author Bang
+ * @author Hitomi
  */
 public class Apriori {
 
-    private double[] thresholds;
-    ArrayList<DrivingFeature> drivingFeatures;
-    RealMatrix DMMat;
-    RealVector DMLabel;
-    int nrows;
-    int ncols;
-    ArrayList<Integer> skip;
+    /**
+     * The base features that are combined to create the Hasse diagram in the
+     * Apriori algorithm. Each BitSet corresponds to a feature and contains the
+     * binary vector of the observations that match the feature
+     *
+     */
+    private final BitSet[] baseFeaturesBit;
 
-    RealMatrix tempMat;
+    /**
+     * The features given to the Apriori algorithm
+     *
+     */
+    private final ArrayList<DrivingFeature2> baseFeatures;
 
-    public Apriori() {
-    }
+    /**
+     * The features found by the Apriori algorithm that exceed the necessary
+     * support and confidence thresholds
+     */
+    private ArrayList<AprioriFeature> viableFeatures;
 
-    public Apriori(List<DrivingFeature> drivingFeatures, double[][] mat, double[] labels, double[] thresholds) {
-        this.drivingFeatures = new ArrayList(drivingFeatures);
-        this.nrows = mat.length;
-        this.ncols = mat[0].length;
+    /**
+     * The number of observations in the data
+     */
+    private final int numberOfObservations;
 
-        this.DMMat = MatrixUtils.createRealMatrix(mat);
-        this.DMLabel = MatrixUtils.createRealVector(labels);
+    /**
+     * The threshold for support
+     */
+    private double supportThreshold;
 
-        // thresholds = {supp_threshold, lift_threshold, conf_threshold}
-        this.thresholds = thresholds;
-    }
+    /**
+     * A constructor to initialize the apriori algorithm
+     *
+     * @param numberOfObservations the number of observations in the data
+     * @param drivingFeatures the base driving features to combine with Apriori
+     */
+    public Apriori(int numberOfObservations, Collection<DrivingFeature2> drivingFeatures) {
+        this.numberOfObservations = numberOfObservations;
 
-    public ArrayList<Feature> runApriori(int maxLength) {
-
-        long t0 = System.currentTimeMillis();
-        System.out.println("...[Apriori] size of the input matrix: " + nrows + " X " + ncols);
-
-        // Define the initial set of features
-        ArrayList<Feature> S = new ArrayList<>();
-        ArrayList<Feature> out = new ArrayList<>();
-
-        for (int i = 0; i < ncols; i++) {
-            Feature newFeat = new Feature(i);
-            // Count frequency
-            double[] metrics = drivingFeatures.get(i).getMetrics();
-            if(metrics[0] > thresholds[0] && metrics[2] > thresholds[2]){
-                out.add(newFeat);
-            }
-            newFeat.setMetrics(metrics);
-            newFeat.setArray(DMMat.getColumn(i));
-            S.add(newFeat);
+        this.baseFeatures = new ArrayList<>(drivingFeatures);
+        this.baseFeaturesBit = new BitSet[drivingFeatures.size()];
+        int i = 0;
+        for (DrivingFeature2 feat : drivingFeatures) {
+            this.baseFeaturesBit[i] = feat.getMatches();
+            i++;
         }
-
-        // Define frontier. Frontier is the set of features whose length is L and passes significant test
-        ArrayList<Feature> frontier = new ArrayList<>();
-
-        // Copy the initial set of features to the frontier
-        for (Feature s : S) {
-            frontier.add(s);
-        }
-
-        int l = 2;
-        // While there are features still left to explore
-        while (frontier.size() > 0) {
-            if (l - 1 == maxLength) {
-                break;
-            }
-            System.out.println("...[Apriori] " + out.size() + " features found");
-            // Candidates to form the frontier with length L+1
-            ArrayList<Feature> candidates = apriori_gen_join(frontier);
-            candidates = apriori_gen_prune(candidates, frontier);
-
-            System.out.println("...[Apriori] number of candidates (length " + l + "): " + candidates.size());
-
-            frontier = new ArrayList<>();
-            for (Feature f : candidates) {
-                // Count frequency
-                double[] metrics = computeMetrics(DMMat, f, DMLabel);
-
-                // Check if it passes minimum support threshold
-                if (metrics[0] <= thresholds[0]) {
-                    continue;
-                } else {
-                    // Add all features whose support is above threshold, add to candidates
-                    frontier.add(f);
-                    if (metrics[2] > thresholds[2]) {
-                        // If the metric is above the threshold, current feature is statistically significant
-                        S.add(f);
-                        out.add(f);
-                    }
-                }
-            }
-            System.out.println("...[Apriori] number of valid candidates (length " + l + "): " + frontier.size());
-            l = l + 1;
-        }
-
-        long t1 = System.currentTimeMillis();
-        System.out.println("...[Apriori] evaluation done in: " + String.valueOf(t1 - t0) + " msec, with " + out.size() + " features found");
-        return out;
-    }
-
-    public ArrayList<Feature> sortFeatures(ArrayList<Feature> features) {
-        ArrayList<Feature> sorted = new ArrayList<>();
-
-        double value = 0;
-        double maxval = 1000000000;
-        double minval = -1;
-        for (int i = 0; i < features.size(); i++) {
-            Apriori.Feature feat1 = features.get(i);
-            if (i == 0) {
-                sorted.add(feat1);
-                continue;
-            }
-            value = feat1.getMetrics()[2]; // Confidence (feature->selection)
-            maxval = sorted.get(0).getMetrics()[2];
-            minval = sorted.get(sorted.size() - 1).getMetrics()[2];
-
-            if (value >= maxval) {
-                sorted.add(0, feat1);
-            } else if (value <= minval) {
-                sorted.add(feat1);
-            } else {
-                for (int j = 0; j < sorted.size(); j++) {
-                    double refval = 0;
-                    double refval2 = 0;
-                    refval = sorted.get(j).metrics[2];
-                    refval2 = sorted.get(j + 1).metrics[2];
-                    if (value <= refval && value > refval2) {
-                        sorted.add(j + 1, feat1);
-                        break;
-                    }
-                }
-            }
-        }
-        return sorted;
-    }
-
-    private ArrayList<Feature> apriori_gen_join(ArrayList<Feature> front) {
-        int length = front.get(0).getElements().size();
-        ArrayList<Feature> candidates = new ArrayList<>();
-        for (int i = 0; i < front.size(); i++) {
-            Feature f1 = front.get(i);
-
-            for (int j = i + 1; j < front.size(); j++) {
-                Feature f2 = front.get(j);
-                boolean match = true;
-
-                ArrayList<Integer> elm1 = new ArrayList<>();
-                for (int temp : f1.getElements()) {
-                    elm1.add(temp);
-                }
-                ArrayList<Integer> elm2 = new ArrayList<>();
-                for (int temp : f2.getElements()) {
-                    elm2.add(temp);
-                }
-
-                for (int k = 0; k < length - 1; k++) {
-                    if (!Objects.equals(elm1.get(k), elm2.get(k))) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) {
-                    elm1.add(elm2.get(length - 1));
-                    candidates.add(new Feature(elm1));
-                }
-            }
-        }
-
-        return candidates;
-    }
-
-    private ArrayList<Feature> apriori_gen_prune(ArrayList<Feature> cand, ArrayList<Feature> prev) {
-        // cand is a set of Features of length L and prev is a set of Features of length L-1
-        ArrayList<Feature> candidates = new ArrayList<>();
-
-        for (Feature f : cand) {
-            ArrayList<Integer> list = f.getElements();
-
-            Set<Integer> subset = new HashSet<Integer>(list);
-            int length = subset.size();
-            boolean included = true;
-
-            for (int i = 0; i < length; i++) {
-                // All subsets of length L-1 should be included in prev
-                int elm = list.get(i);
-                // Create a subset of length L-1
-                subset.remove(elm);
-
-                boolean match_found = false;
-                // Test if the subset is included in prev
-                for (Feature prevF : prev) {
-                    Set<Integer> prevset = new HashSet<Integer>(prevF.getElements());
-                    if (same(subset, prevset)) {
-                        match_found = true;
-                        break;
-                    }
-                }
-                subset.add(elm);
-                if (!match_found) {
-                    included = false;
-                    break;
-                }
-            }
-
-            if (included) {
-                // If all subsets of length L-1 of current feature are included in prev, add to the candidates
-                candidates.add(f);
-            }
-        }
-        return candidates;
-    }
-
-    public boolean same(Set<?> set1, Set<?> set2) {
-        if (set1 == null || set2 == null) {
-            return false;
-        }
-        if (set1.size() != set2.size()) {
-            return false;
-        }
-        return set1.containsAll(set2);
-    }
-
-    public boolean contains(int[] arr, int i) {
-        for (int a : arr) {
-            if (a == i) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
-     * Computes and sets the metrics of the feature
+     * Runs the Apriori algorithm to identify features and compound features
+     * that surpass the support and confidence thresholds
      *
-     * @param dataMat
-     * @param feat
-     * @param label
-     * @return
+     * @param labels a BitSet containing information about which observations
+     * are behavioral (1) and which are not (0).
+     * @param supportThreshold The threshold for support
+     * @param fConfidenceThreshold The threshold for forward confidence
+     * @param maxLength the maximum length of a compound feature
      */
-    public double[] computeMetrics(RealMatrix dataMat, Feature feat, RealVector label) {
+    public void run(BitSet labels, double supportThreshold, double fConfidenceThreshold, int maxLength) {
+        this.supportThreshold = supportThreshold;
 
-        int numFeat = feat.getElements().size();
-        ArrayRealVector cond = new ArrayRealVector(ncols);
-        cond.set(0.0);
-        for (int i = 0; i < numFeat; i++) {
-            cond.setEntry(feat.getElements().get(i), 1);
-        }
+        long t0 = System.currentTimeMillis();
 
-        RealVector countVec = dataMat.operate(cond);
-        for (int i = 0; i < countVec.getDimension(); i++) {
-            if (countVec.getEntry(i) != numFeat) {
-                countVec.setEntry(i, 0.0);
-            }else{
-                countVec.setEntry(i, 1.0);
-            }
-        }
+        System.out.println("...[Apriori2] size of the input matrix: " + numberOfObservations + " X " + baseFeatures.size());
 
-        feat.setArray(countVec.toArray());
+        //these metric double sare computed during Apriori
+        double metrics[];
 
-        double cnt_SF = label.dotProduct(countVec);
-        double cnt_S = label.getL1Norm();
-        double cnt_F = countVec.getL1Norm();
+        // Define the initial set of features
+        viableFeatures = new ArrayList<>();
 
-        double[] metrics = new double[4];
-        double support = cnt_SF / (double) nrows;
-        double lift = (cnt_SF / cnt_S) / (cnt_F / (double)  nrows);
-        double conf_given_F = (cnt_SF) / (cnt_F);   // confidence (feature -> selection)
-        double conf_given_S = (cnt_SF) / (cnt_S);   // confidence (selection -> feature)
-
-        metrics[0] = support;
-        metrics[1] = lift;
-        metrics[2] = conf_given_F;
-        metrics[3] = conf_given_S;
-
-        feat.setMetrics(metrics);
-
-        return metrics;
-    }
-
-    public ArrayList<boolean[]> intMatrix2BoolArray(ArrayList<int[][]> input) {
-
-        ArrayList<boolean[]> boolArray = new ArrayList<>();
-        int len = input.get(0).length * input.get(0)[0].length;
-
-        for (int i = 0; i < input.size(); i++) {
-
-            boolean[] tmpArray = new boolean[len];
-            int cnt = 0;
-            for (int j = 0; j < input.get(i).length; j++) {
-                for (int k = 0; k < input.get(i)[j].length; k++) {
-                    if (input.get(i)[j][k] == 1) {
-                        tmpArray[cnt] = true;
-                    } else {
-                        tmpArray[cnt] = false;
-                    }
-                    cnt++;
+        // Define front. front is the set of features whose length is L and passes significant test
+        ArrayList<BitSet> front = new ArrayList();
+        for (int i = 0; i < baseFeatures.size(); i++) {
+            metrics = computeMetrics(baseFeaturesBit[i], labels);
+            if (!Double.isNaN(metrics[0])) {
+                BitSet featureCombo = new BitSet(baseFeatures.size());
+                featureCombo.set(i, true);
+                front.add(featureCombo);
+                if (metrics[2] > fConfidenceThreshold) {
+                    //only add feature to output list if it passes support and confidence thresholds
+                    AprioriFeature feat = new AprioriFeature(featureCombo, metrics[0], metrics[1], metrics[2], metrics[3]);
+                    viableFeatures.add(feat);
                 }
             }
-
-            boolArray.add(tmpArray);
         }
 
-        return boolArray;
+        int currentLength = 2;
+        // While there are features still left to explore
+        while (front.size() > 0) {
+            if (currentLength - 1 == maxLength) {
+                break;
+            }
+            // Candidates to form the frontier with length L+1
+            //updated front with new instance only containing the L+1 combinations of features
+            ArrayList<BitSet> candidates = join(front, baseFeatures.size());
+            front.clear();
+
+            System.out.println("...[Apriori2] number of candidates (length " + currentLength + "): " + candidates.size());
+
+            for (BitSet featureCombo : candidates) {
+                int ind = featureCombo.nextSetBit(0);
+                BitSet matches = (BitSet) baseFeaturesBit[ind].clone();
+
+                //find feature indices
+                for (int j = featureCombo.nextSetBit(ind + 1); j != -1; j = featureCombo.nextSetBit(j + 1)) {
+                    matches.and(baseFeaturesBit[j]);
+                }
+
+                // Check if it passes minimum support threshold
+                metrics = computeMetrics(matches, labels);
+                if (!Double.isNaN(metrics[0])) {
+                    // Add all features whose support is above threshold, add to candidates
+                    front.add(featureCombo);
+
+                    if (metrics[2] > fConfidenceThreshold) {
+                        // If the metric is above the threshold, current feature is statistically significant
+                        viableFeatures.add(new AprioriFeature(featureCombo, metrics[0], metrics[1], metrics[2], metrics[3]));
+                    }
+
+                }
+            }
+            System.out.println("...[Apriori2] number of valid candidates (length " + currentLength + "): " + front.size());
+            currentLength = currentLength + 1;
+        }
+
+        long t1 = System.currentTimeMillis();
+        System.out.println("...[Apriori2] evaluation done in: " + String.valueOf(t1 - t0) + " msec, with " + viableFeatures.size() + " features found");
     }
 
-    class Feature {
-
-        private final ArrayList<Integer> elements;
-        private double[] metrics;
-        private double[] datArray;
-
-        public Feature(ArrayList<Integer> elem) {
-            this.elements = elem;
+    /**
+     * Gets the top n features according to the specified metric in descending
+     * order. If n is greater than the number of features found by Apriori, all
+     * features will be returned.
+     *
+     * @param n the number of features desired
+     * @param metric the metric used to sort the features
+     * @return the top n features according to the specified metric in
+     * descending order
+     */
+    public List<DrivingFeature2> getTopFeatures(int n, FeatureMetric metric) {
+        Collections.sort(viableFeatures, new FeatureComparator(metric).reversed());
+        if (n > viableFeatures.size()) {
+            n = viableFeatures.size();
         }
 
-        public Feature(int i) {
-            this.elements = new ArrayList<>();
-            this.elements.add(i);
+        ArrayList<DrivingFeature2> out = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            AprioriFeature apFeature = viableFeatures.get(i);
+            //build the binary array taht is 1 for each solution matching the feature
+            StringBuilder sb = new StringBuilder();
+            BitSet featureCombo = apFeature.getMatches();
+            int ind = featureCombo.nextSetBit(0);
+            BitSet matches = (BitSet) baseFeaturesBit[ind].clone();
+            sb.append(baseFeatures.get(ind).getName());
+            
+            //find feature indices
+            for (int j = featureCombo.nextSetBit(ind + 1); j != -1; j = featureCombo.nextSetBit(j + 1)) {
+                sb.append("&&");
+                sb.append(baseFeatures.get(j).getName());
+                matches.and(baseFeaturesBit[j]);
+            }
+
+            out.add(new DrivingFeature2(sb.toString(), matches,
+                    apFeature.getSupport(), apFeature.getLift(),
+                    apFeature.getFConfidence(), apFeature.getRConfidence()));
+        }
+        return out;
+    }
+
+    /**
+     * Joins the features together using the Apriori algorithm. Ensures that
+     * duplicate feature are not generated and that features that are subsets of
+     * features that were previously filtered out aren't generated. Ordering of
+     * the bitset in the arraylist of the front is important. It should be
+     * ordered such that 10000 (A) comes before 010000 (B) or 11010 (ABD) comes
+     * before 00111 (CDE)
+     *
+     * Example1: if AB and BC both surpass the support threshold, ABC is only
+     * generated once
+     *
+     * Example2: if AB was already filtered out but BC surpasses the support
+     * threshold, ABC should not and will not be generated
+     *
+     * @param front is an arraylist of bitsets corresponding to which features
+     * are being combined. For example in a set of {A, B C, D, E} 10001 is
+     * equivalent to AE
+     * @param numberOfFeatures the maximum number of features being considered
+     * in the entire Apriori algorithm
+     * @return the next front of potential feature combinations. These need to
+     * be tested against the support threshold
+     */
+    private ArrayList<BitSet> join(ArrayList<BitSet> front, int numberOfFeatures) {
+        ArrayList<BitSet> candidates = new ArrayList<>();
+
+        //The new candidates must be checked against the current front to make 
+        //sure that each length L subset in the new candidates must already
+        //exist in the front to make sure that ABC never gets added if AB, AB,
+        //or BC is missing from the front
+        HashSet<BitSet> frontSet = new HashSet<>(front);
+
+        for (int i = 0; i < front.size(); i++) {
+            BitSet f1 = front.get(i);
+            int lastSetIndex1 = f1.previousSetBit(numberOfFeatures - 1);
+            for (int j = i + 1; j < front.size(); j++) {
+                BitSet f2 = front.get(j);
+                int lastSetIndex2 = f1.previousSetBit(numberOfFeatures - 1);
+
+                //check to see that all the bits leading up to the minimum of the last set bits are equal
+                //That is AB (11000) and AC (10100) should be combined but not AB (11000) and BC (01100)
+                //AB and AC are combined because the first bits are equal
+                //AB and BC are not combined because the first bits are not equal
+                int index = Math.min(lastSetIndex1, lastSetIndex2);
+                if (f1.get(0, index).equals(f2.get(0, index))) {
+                    BitSet copy = (BitSet) f1.clone();
+                    copy.or(f2);
+
+                    if (checkSubsets(copy, frontSet, numberOfFeatures)) {
+                        candidates.add(copy);
+                    }
+                } else {
+                    //once AB is being considered against BC, the inner loop should break
+                    //since the input front is assumed to be ordered, any set after BC is also incompatible with AB
+                    break;
+                }
+            }
+        }
+        return candidates;
+    }
+
+    /**
+     * The new candidates must be checked against the current front to make sure
+     * that each length L subset in the new candidates must already exist in the
+     * front to make sure that ABC never gets added if AB, AB, or BC is missing
+     * from the front
+     *
+     * @param bs the length L bit set
+     * @param toCheck a set of bit sets of length L-1 to check all subsets of L
+     * against
+     * @param numberOfFeatures the number of features
+     * @return true if all subsets of the given bit set are in the set of bit
+     * sets
+     */
+    private boolean checkSubsets(BitSet bs, HashSet<BitSet> toCheck, int numberOfFeatures) {
+        // the indices that are set in the bitset
+        int[] setIndices = new int[bs.cardinality()];
+        int count = 0;
+        for (int i = bs.nextSetBit(0); i != -1; i = bs.nextSetBit(i + 1)) {
+            setIndices[count] = i;
+            count++;
         }
 
-        public ArrayList<Integer> getElements() {
-            return this.elements;
-        }
+        //create all combinations of n choose k
+        Combinations subsets = new Combinations(bs.cardinality(), bs.cardinality() - 1);
+        Iterator<int[]> iter = subsets.iterator();
+        while (iter.hasNext()) {
+            BitSet subBitSet = new BitSet(numberOfFeatures);
+            int[] subsetIndices = iter.next();
+            for (int i = 0; i < subsetIndices.length; i++) {
+                subBitSet.set(setIndices[subsetIndices[i]], true);
+            }
 
-        public void setMetrics(double[] metrics) {
-            this.metrics = metrics;
+            if (!toCheck.contains(subBitSet)) {
+                return false;
+            }
         }
+        return true;
+    }
 
-        public double[] getMetrics() {
-            return this.metrics;
+    /**
+     * Computes the metrics of a feature. The feature is represented as the
+     * bitset that specifies which base features define it. If the support
+     * threshold is not met, then the other metrics are not computed.
+     *
+     * @param feature the bit set specifying which base features define it
+     * @param labels the behavioral/non-behavioral labeling
+     * @return a 4-tuple containing support, lift, fcondfidence, and
+     * rconfidence. If the support threshold is not met, all metrics will be NaN
+     */
+    private double[] computeMetrics(BitSet feature, BitSet labels) {
+        double[] out = new double[4];
+
+        BitSet copyMatches = (BitSet) feature.clone();
+        copyMatches.and(labels);
+        double cnt_SF = (double) copyMatches.cardinality();
+        out[0] = cnt_SF / (double) numberOfObservations; //support
+
+        // Check if it passes minimum support threshold
+        if (out[0] > supportThreshold) {
+            //compute the confidence and lift
+            double cnt_S = (double) labels.cardinality();
+            double cnt_F = (double) feature.cardinality();
+            out[1] = (cnt_SF / cnt_S) / (cnt_F / (double) numberOfObservations); //lift
+            out[2] = (cnt_SF) / (cnt_F);   // confidence (feature -> selection)
+            out[3] = (cnt_SF) / (cnt_S);   // confidence (selection -> feature)
+        } else {
+            Arrays.fill(out, Double.NaN);
         }
+        return out;
+    }
 
-        public void setArray(double[] m) {
-            datArray = m;
-        }
+    /**
+     * A container for the bit set defining which base features create the
+     * feature and its support, lift, and confidence metrics
+     */
+    private class AprioriFeature extends AbstractFeature {
 
-        public double[] getArray() {
-            return datArray;
+        /**
+         *
+         * @param bitset of the base features that create this feature
+         * @param support
+         * @param lift
+         * @param fconfidence
+         * @param rconfidence
+         */
+        public AprioriFeature(BitSet bitset, double support, double lift, double fconfidence, double rconfidence) {
+            super(bitset, support, lift, fconfidence, rconfidence);
         }
 
     }
-
 }

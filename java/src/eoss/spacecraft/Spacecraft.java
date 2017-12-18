@@ -455,6 +455,7 @@ public class Spacecraft implements Serializable {
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.payload);
+        hash = 67 * hash + Objects.hashCode(this.name);
         return hash;
     }
 

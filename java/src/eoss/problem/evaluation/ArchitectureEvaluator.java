@@ -84,7 +84,7 @@ public class ArchitectureEvaluator {
      *
      * @param mission
      */
-    private void assertMissions(Collection<Mission> mission) {
+    public void assertMissions(Collection<Mission> mission) {
         try {
             for (Mission mis : mission) {
                 HashMap<Spacecraft, Orbit> spacecraftSet = mis.getSpacecraft();

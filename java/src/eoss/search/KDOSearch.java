@@ -10,7 +10,7 @@ import aos.IO.IOQualityHistory;
 import aos.IO.IOSelectionHistory;
 import aos.aos.IAOS;
 import aos.operatorselectors.replacement.OperatorReplacementStrategy;
-import architecture.io.ResultIO;
+import seak.architecture.io.ResultIO;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;

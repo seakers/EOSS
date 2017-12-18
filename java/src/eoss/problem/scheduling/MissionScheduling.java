@@ -5,7 +5,7 @@
  */
 package eoss.problem.scheduling;
 
-import architecture.problem.SystemArchitectureProblem;
+import seak.architecture.problem.SystemArchitectureProblem;
 import architecture.util.ValueTree;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.EOSSDatabase;

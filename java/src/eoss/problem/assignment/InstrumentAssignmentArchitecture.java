@@ -4,10 +4,10 @@
  */
 package eoss.problem.assignment;
 
-import architecture.Architecture;
-import architecture.pattern.ArchitecturalDecision;
-import architecture.pattern.Combining;
-import architecture.pattern.Assigning;
+import seak.architecture.Architecture;
+import seak.architecture.pattern.ArchitecturalDecision;
+import seak.architecture.pattern.Combining;
+import seak.architecture.pattern.Assigning;
 import architecture.util.ValueTree;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;

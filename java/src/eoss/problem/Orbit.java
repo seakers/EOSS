@@ -6,6 +6,7 @@
 package eoss.problem;
 
 import java.io.Serializable;
+import java.util.Objects;
 import org.orekit.utils.Constants;
 
 /**
@@ -130,6 +131,7 @@ public class Orbit implements Serializable {
 //        hash = 37 * hash + (int) (Double.doubleToLongBits(this.RAAN) ^ (Double.doubleToLongBits(this.RAAN) >>> 32));
         hash = 37 * hash + (int) (Double.doubleToLongBits(this.eccentricity) ^ (Double.doubleToLongBits(this.eccentricity) >>> 32));
         hash = 37 * hash + (int) (Double.doubleToLongBits(this.argPeri) ^ (Double.doubleToLongBits(this.argPeri) >>> 32));
+        hash = 37 * hash + Objects.hashCode(this.name);
         return hash;
     }
 

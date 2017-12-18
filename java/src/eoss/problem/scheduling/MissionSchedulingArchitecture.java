@@ -5,9 +5,9 @@
 package eoss.problem.scheduling;
 
 import eoss.problem.Mission;
-import architecture.Architecture;
-import architecture.pattern.ArchitecturalDecision;
-import architecture.pattern.Permuting;
+import seak.architecture.Architecture;
+import seak.architecture.pattern.ArchitecturalDecision;
+import seak.architecture.pattern.Permuting;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.moeaframework.core.Solution;
