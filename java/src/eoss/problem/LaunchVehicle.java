@@ -8,11 +8,10 @@ import seak.architecture.enumeration.FullFactorial;
 import eoss.spacecraft.Spacecraft;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -163,16 +162,19 @@ public class LaunchVehicle implements Serializable {
         HashMap<Collection<Spacecraft>, LaunchVehicle> bestOption = new HashMap<>();
         double lowestCost = Double.POSITIVE_INFINITY;
 
-        //find all combinations of spacecraft
-        for (int[] groupIndex : FullFactorial.ffPartitioning(spacecraft.size(),8)) {
+        //find all combinations of spacecraft (assumes that all spacecraft are identical)
+        Iterator<List<Integer>> iter = FullFactorial.ffUnorderedPartitioning(spacecraft.size());
+        while (iter.hasNext()) {
+            List<Integer> partition = iter.next();
             HashMap<Integer, ArrayList<Spacecraft>> groups = new HashMap<>();
             int index = 0;
-            for (int groupNumber : groupIndex) {
-                if (!groups.containsKey(groupNumber)) {
-                    groups.put(groupNumber, new ArrayList<>());
+            for (int groupNumber = 0; groupNumber < partition.size(); groupNumber++) {
+                ArrayList<Spacecraft> group = new ArrayList<>();
+                for (int i = 0; i < partition.get(groupNumber); i++) {
+                    group.add(spacecraftList.get(index));
+                    index++;
                 }
-                groups.get(groupNumber).add(spacecraftList.get(index));
-                index++;
+                groups.put(groupNumber, group);
             }
 
             double sumCost = 0;

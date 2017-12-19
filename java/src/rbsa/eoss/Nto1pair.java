@@ -5,7 +5,6 @@
 package rbsa.eoss;
 
 import org.apache.commons.lang3.StringUtils;
-import org.paukov.combinatorics.ICombinatoricsVector;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -20,14 +19,6 @@ public class Nto1pair implements Serializable {
     
     public Nto1pair(String[] base, String added) {
         this.base = base;
-        this.added = added;
-    }
-    public Nto1pair(ICombinatoricsVector<String> comb, String added) {
-        int N = comb.getSize();
-        base = new String[N];
-        for (int i = 0;i<N;i++) {
-            base[i] = comb.getValue(i);
-        }
         this.added = added;
     }
     public ArrayList<String> toArrayList() {
