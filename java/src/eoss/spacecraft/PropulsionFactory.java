@@ -115,14 +115,14 @@ public class PropulsionFactory implements BusComponentFactory {
     private double computeDeltaVDrag(Orbit o, double lifetime) {
         double hp = ((o.getSemimajorAxis() * (1 - o.getEccentricity()))
                 - Constants.WGS84_EARTH_EQUATORIAL_RADIUS) / 1000;// dV for station-keeping(m/s/yr)
-        double dv = Double.NaN;
+        double dv;
         if (hp < 500) {
             dv = 12;
         } else if (hp < 600) {
             dv = 5;
         } else if (hp < 1000) {
             dv = 2;
-        } else if (hp < 1000) {
+        } else {
             dv = 0;
         }
         return dv * lifetime;
