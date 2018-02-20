@@ -2,8 +2,8 @@
 %that occur the most often
 
 
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/aos_noFilter/';
-fid = fopen((strcat(path, filesep,'AIAA_innovize_feats_stage3.txt')));
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/aos_noFilter_noCross_x4/';
+fid = fopen((strcat(path, filesep,'AIAA_innovize_feats_stage0.txt')));
 
 single_feats = java.util.HashMap; %counts the occurences of single features
 feature_arg_map = java.util.HashMap; %logs the arguments of each of the single features
@@ -11,11 +11,14 @@ combo_feat = java.util.HashMap; %counts the occurences of combined features
 
 while(~feof(fid))
     line = fgetl(fid);
-    feats = sort(strsplit(line, ','));
+    feats = sort(strsplit(line, '],'));
     
     str = '';
     for i=1:length(feats)
-        m = regexp(feats{i}, '(?<pattern>[\w0-9]*)\[(?<args>.*)\]', 'names');
+        if strcmp(feats{i}(end),']')
+            feats{i} = feats{i}(1:end-1);
+        end
+        m = regexp(feats{i}, '(?<pattern>[\w0-9]*)\[(?<args>.*)', 'names');
         str = strcat(str, m.pattern, ',');
         
         %add the occurence of the arguments to feature_arg_map

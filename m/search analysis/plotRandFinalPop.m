@@ -2,11 +2,17 @@
 %populations from two methods differ
 
 n_representatives = 3;
-path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
-method1 = 'baseline/';
-method2 = 'aos/';
-method3 = 'all/';
-method4 = 'random/';
+% path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
+path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/ASC paper/';
+% method1 = 'baseline/';
+% method2 = 'aos/';
+% method3 = 'all/';
+% method4 = 'random/';
+
+method1 = 'new_baseline_eps_001_1/';
+method2 = 'new_emoea_operator_aos_checkChange_allSat_1Inst_eps_001_1/';
+method3 = 'new_emoea_constraint_dnf_pop_archive_eps_001_1/';
+method4 = 'new_emoea_constraint_ach_pop_archive_eps_001_1/';
 
 files1 = dir(strcat(path,method1,'*.obj'));
 ind1 = randi(length(files1),n_representatives);
@@ -14,9 +20,9 @@ ind1 = randi(length(files1),n_representatives);
 files2 = dir(strcat(path,method2,'*.obj'));
 ind2 = randi(length(files2),n_representatives);
 
-% files3 = dir(strcat(path,method3,'*.obj'));
-% ind3 = randi(length(files3),n_representatives);
-% 
+files3 = dir(strcat(path,method3,'*.obj'));
+ind3 = randi(length(files3),n_representatives);
+
 files4 = dir(strcat(path,method4,'*.obj'));
 ind4 = randi(length(files4),n_representatives);
 
@@ -38,14 +44,14 @@ markers = {'o','+','s','>'};
 figure(1)
 for i=1:n_representatives
     subplot(1,n_representatives,i);
-    pop1 = csvread(strcat(path,method1,files1(ind1(i)).name));
-    pop2 = csvread(strcat(path,method2,files2(ind2(i)).name));
-%     pop3 = csvread(strcat(path,method3,files3(ind3(i)).name));
-    pop4 = csvread(strcat(path,method4,files4(ind4(i)).name));
+    pop1 = dlmread(strcat(path,method1,files1(ind1(i)).name));
+    pop2 = dlmread(strcat(path,method2,files2(ind2(i)).name));
+    pop3 = dlmread(strcat(path,method3,files3(ind3(i)).name));
+    pop4 = dlmread(strcat(path,method4,files4(ind4(i)).name));
     scatter(-pop1(:,1),pop1(:,2),20,colors{1}, markers{1})
     hold on
     scatter(-pop2(:,1),pop2(:,2),20,colors{2}, markers{2})
-%     scatter(-pop3(:,1),pop3(:,2),20,colors{3}, markers{3})
+    scatter(-pop3(:,1),pop3(:,2),20,colors{3}, markers{3})
     scatter(-pop4(:,1),pop4(:,2),20,colors{4}, markers{4})
     plot(-objectives(ind,1), objectives(ind,2),'--k');
     hold off

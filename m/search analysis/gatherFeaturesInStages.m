@@ -1,12 +1,12 @@
 %combine features mined from the same stages of differnet runs together
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
-resPath = 'aos_noFilter/';
+resPath = 'aos_noFilter_noCross_x4/';
 
 stage = 0;
 while(true)
     numFeatures = 0;    
     features = {};
-    files = dir(strcat(path,resPath,'AIAA_innovize_*_',num2str(stage),'_features.txt'));
+    files = dir(strcat(path,resPath,'AIAA_innovize_aos_*_',num2str(stage),'_features.txt'));
     if(isempty(files))
         break;
     end

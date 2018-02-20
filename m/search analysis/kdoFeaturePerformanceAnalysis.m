@@ -5,15 +5,15 @@ function [feature_names, feature_stats, before, after] = kdoFeaturePerformanceAn
 
 jarpath = '/Users/nozomihitomi/Dropbox/EOSS/';
 path = strcat(jarpath, filesep, 'problems',filesep, 'climateCentric');
-filepath = strcat(path, filesep, 'result', filesep, 'AIAA JAIS', filesep, 'random_noFilter_noCross_noRelevance');
+filepath = strcat(path, filesep, 'result', filesep, 'AIAA JAIS', filesep, 'aos_noFilter_noCross_x4');
 
 n_ops = 4;
-n_stages = 4;
+n_stages = 5;
 
 try
     EOSS_init(jarpath);
     origin = cd(filepath);
-    files = dir('*features.txt');
+    files = dir('*.credit');
     
      %initialize EOSSDatabase
      db = eoss.problem.EOSSDatabase.getInstance();
@@ -25,7 +25,7 @@ try
     %find unique ids
     unique_ids = java.util.HashSet;
     for i=1:length(files)
-        m = regexp(files(i).name, 'AIAA_innovize_noRelevance(?<id>[0-9]*)*', 'names');
+        m = regexp(files(i).name, 'aos_(?<id>[0-9]*)*', 'names');
         unique_ids.add(m.id);
     end
     
@@ -72,12 +72,12 @@ try
             feature_file = dir(sprintf('*%s_%d_features.txt',f_tmp,stage_i));
             label_before = dir(sprintf('*%s_%d_labels.csv',f_tmp,stage_i));
             before_ind_file = dir(sprintf('*%s_%d_features_ind.csv',f_tmp,stage_i));
-            label_after = dir(sprintf('*%s_%d_labels.csv',f_tmp,stage_i+1));
-            after_ind_file = dir(sprintf('*%s_%d_features_ind.csv',f_tmp,stage_i+1));
+%             label_after = dir(sprintf('*%s_%d_labels.csv',f_tmp,stage_i+1));
+%             after_ind_file = dir(sprintf('*%s_%d_features_ind.csv',f_tmp,stage_i+1));
             
             %find which solutions conform to the rules
             ind_before = logical(csvread(before_ind_file.name,1,0)');
-            ind_after = logical(csvread(after_ind_file.name,1,0)');
+%             ind_after = logical(csvread(after_ind_file.name,1,0)');
             
             %get the human-readable string for the rules
             fid = fopen(before_ind_file.name,'r');
@@ -101,30 +101,30 @@ try
             data_before = csvread(label_before.name,1,0);
             good_before = logical(data_before(:,1));
             
-            data_after = csvread(label_after.name,1,0);
-            good_after = logical(data_after(:,1));
+%             data_after = csvread(label_after.name,1,0);
+%             good_after = logical(data_after(:,1));
             
             for feature_j = 1:n_ops
                 feature_names(counter,file_i) = rule_string(feature_j);
                 
                 before{counter,file_i} = ind_before(:,feature_j);
-                after{counter,file_i} = ind_before(:,feature_j);
+%                 after{counter,file_i} = ind_before(:,feature_j);
                 
                 %compute support and confidence at beginning and end of data mining stage
                 feature_stats(counter,1,file_i) = sum(ind_before(:,feature_j))/length(good_before);
                 feature_stats(counter,2,file_i) = sum(and(good_before, ind_before(:,feature_j)))/length(good_before);
                 feature_stats(counter,3,file_i) = sum(and(good_before, ind_before(:,feature_j)))/sum(ind_before(:,feature_j));
-                feature_stats(counter,4,file_i) = sum(ind_after(:,feature_j))/length(good_after);
-                feature_stats(counter,5,file_i) = sum(and(good_after, ind_after(:,feature_j)))/length(good_after);
-                feature_stats(counter,6,file_i) = sum(and(good_after, ind_after(:,feature_j)))/sum(ind_after(:,feature_j));
+%                 feature_stats(counter,4,file_i) = sum(ind_after(:,feature_j))/length(good_after);
+%                 feature_stats(counter,5,file_i) = sum(and(good_after, ind_after(:,feature_j)))/length(good_after);
+%                 feature_stats(counter,6,file_i) = sum(and(good_after, ind_after(:,feature_j)))/sum(ind_after(:,feature_j));
                 
                 subplot(n_stages,n_ops,stage_i * n_ops + feature_j)
-                scatter(-data_before(:,63),data_before(:,64),20,ones(1,3)*.8);
+                scatter(-data_before(:,63),data_before(:,64),5,ones(1,3)*.8);
                 hold on
-                scatter(-data_before(good_before,63),data_before(good_before,64),20,'m','filled');
-                scatter(-data_before(ind_before(:,feature_j),63),data_before(ind_before(:,feature_j),64),20,'b');
+                scatter(-data_before(good_before,63),data_before(good_before,64),5,'m','filled');
+                scatter(-data_before(ind_before(:,feature_j),63),data_before(ind_before(:,feature_j),64),4,'b','filled');
                 hold off
-                axis([0,0.3,0,25000])
+                axis([0,0.3,0,25000]) 
                 legend('All Solutions','Top 25%',sprintf('Rule %d',feature_j))
                 
                 %record feature's num times selected and its credits
@@ -146,7 +146,7 @@ try
             end
         end
         file_i = file_i + 1;
-%         pause
+%           pause
     end
     
 catch me

@@ -6,7 +6,7 @@ function [ops, credits] = readAndPlotOneCreditFileKDO()
 
 
 path = '/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA JAIS/';
-respath = strcat(path,'aos_noFilter_noCross_noRelevance_x2');
+respath = strcat(path,'aos_noFilter_noCross_x4');
 origin = cd(respath);
 
 files = dir('*.credit');
@@ -140,9 +140,10 @@ for i=1:numOps
     %     fill(X,Y,colors{i},'EdgeColor','none');
     alpha(0.15)
     hold on
-    handles = [handles plot(1:nepochs,mean_cred,'Color',colors{i}, 'LineWidth',2)];
+    handles = [handles plot([1:nepochs]-1,mean_cred,'Color',colors{i}, 'LineWidth',2)];
     maxCredit = max([max(mean_cred), maxCredit]);
 end
+plot([1,1],[-2,2],':k')
 plot([20,20],[-2,2],':k')
 plot([40,40],[-2,2],':k')
 plot([60,60],[-2,2],':k')
@@ -151,8 +152,8 @@ plot([80,80],[-2,2],':k')
 hold off
 set(gca,'FontSize',16);
 axis([0,nepochs, 0, maxCredit*1.1])
-set(gca,'XTick',0:nepochs/10:nepochs);
-set(gca,'XTickLabels',0:nepochs/10*epochLength:nepochs*epochLength);
+set(gca,'XTick',0:nepochs/5:nepochs);
+set(gca,'XTickLabels',0:nepochs/5*epochLength:nepochs*epochLength);
 xlabel('NFE')
 ylabel('Credit earned')
 legend(handles, 'Single-Point Crossover','KDO Operators');
@@ -168,19 +169,21 @@ mean_sum = wts*means;
 for i=1:numOps
     mean_sel = means(i,:)./mean_sum;
     hold on
-    handles = [handles, plot(2:nepochs,mean_sel(2:end),'Color',colors{i}, 'LineWidth',2)];
+    handles = [handles, plot([2:nepochs]-1,mean_sel(2:end),'Color',colors{i}, 'LineWidth',2)];
 end
 plot([0,5000],[0.03,0.03],'--k')
+
 plot([20,20],[-2,2],':k')
 plot([40,40],[-2,2],':k')
 plot([60,60],[-2,2],':k')
 plot([80,80],[-2,2],':k')
+
 legend(handles, 'Single-Point Crossover','KDO Operators');
 axis([0, nepochs, 0, 1])
 xlabel('NFE')
 ylabel('Selection frequency')
-set(gca,'XTick',0:nepochs/10:nepochs);
-set(gca,'XTickLabels',0:nepochs/10*epochLength:nepochs*epochLength);
+set(gca,'XTick',0:nepochs/5:nepochs);
+set(gca,'XTickLabels',0:nepochs/5*epochLength:nepochs*epochLength);
 hold off
 set(gca,'FontSize',16);
 %save files
