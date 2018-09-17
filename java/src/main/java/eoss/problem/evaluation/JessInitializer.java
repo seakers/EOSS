@@ -11,10 +11,7 @@ package eoss.problem.evaluation;
 import eoss.attributes.EOAttribute;
 import java.io.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
@@ -49,6 +46,8 @@ public class JessInitializer {
     }
 
     public void initializeJess(RequirementMode mode, Rete r, QueryBuilder qb) {
+        Locale.setDefault(Locale.ENGLISH);
+
         System.out.println("Initializing Jess...");
         try {
 //            r.eval("(set-node-index-hash  13)"); //tunable hash value for facts (tradeoff between memory and performance. small number has small memory footprint)

@@ -10,6 +10,7 @@ import aos.operator.AOSVariation;
 import aos.operator.AOSVariationSI;
 import aos.operatorselectors.AdaptivePursuit;
 import aos.operatorselectors.OperatorSelector;
+import eoss.problem.assignment.InstrumentAssignmentArchitecture;
 import eoss.problem.evaluation.ArchitectureEvaluatorParams;
 import aos.operatorselectors.replacement.CompoundTrigger;
 import aos.operatorselectors.replacement.EpochTrigger;
@@ -24,10 +25,7 @@ import eoss.problem.scheduling.MissionScheduling;
 import java.io.File;
 
 import knowledge.constraint.*;
-import org.moeaframework.core.Algorithm;
-import org.moeaframework.core.Initialization;
-import org.moeaframework.core.Problem;
-import org.moeaframework.core.Variation;
+import org.moeaframework.core.*;
 import org.moeaframework.core.operator.OnePointCrossover;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.operator.binary.BitFlip;
@@ -42,10 +40,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -69,8 +64,6 @@ import knowledge.operator.RepairSynergy;
 import mining.label.AbstractPopulationLabeler;
 import mining.label.NondominatedSortingLabeler;
 import org.moeaframework.algorithm.EpsilonMOEA;
-import org.moeaframework.core.EpsilonBoxDominanceArchive;
-import org.moeaframework.core.Population;
 import org.moeaframework.core.comparator.ChainedComparator;
 import org.moeaframework.core.comparator.ParetoObjectiveComparator;
 import org.moeaframework.core.operator.CompoundVariation;
@@ -113,6 +106,7 @@ public class RBSAEOSSSMAP {
      * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
+        Locale.setDefault(Locale.ENGLISH);
 
         initEOSSDatabase = false;
 
@@ -121,9 +115,9 @@ public class RBSAEOSSSMAP {
             args = new String[4];
 //            args[0] = "C:\\Users\\SEAK2\\Nozomi\\EOSS\\problems\\climateCentric";
 //            args[0] = "C:\\Users\\SEAK1\\Nozomi\\EOSS\\problems\\climateCentric";
-            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric";
+            args[0] = "./problems/climateCentric";
 //            args[0] = "/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling";
-            args[1] = "3"; //Mode
+            args[1] = "1"; //Mode
             args[2] = "1"; //numCPU
             args[3] = "1"; //numRuns
         }
@@ -140,7 +134,7 @@ public class RBSAEOSSSMAP {
 //        dfg.getDrivingFeatures("/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.csv", "/Users/nozomihitomi/Dropbox/EOSS/problems/climateCentric/result/AIAA_innovize_10643440470652193_0_labels.res", 4);
 //        System.exit(0);
         //record the current class java file to save the parameters for future reference
-        quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"), "java", "src", "eoss", "problem", "RBSAEOSSSMAP.java"})),
+        quine(new File(String.join(File.separator, new String[]{System.getProperty("user.dir"), "java", "src", "main", "java", "eoss", "problem", "RBSAEOSSSMAP.java"})),
                 new File(String.join(File.separator, new String[]{path, "result", "RBSAEOSSSMAP.java"})));
         int mode = Integer.parseInt(args[1]);
         int numCPU = Integer.parseInt(args[2]);

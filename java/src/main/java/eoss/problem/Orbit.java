@@ -178,7 +178,7 @@ public class Orbit implements Serializable {
 
     public String toJessSlots() {
         return " (orbit-type " + type + ")"
-                + " (orbit-altitude# " + altitude / 1000 + ")" + //change m to km
+                + " (orbit-altitude# " + Math.round(altitude / 1000) + ")" + //change m to km
                 " (orbit-eccentricity " + eccentricity + ")"
                 + " (orbit-RAAN " + RAAN + ")"
                 + " (orbit-inclination " + inclination + ")"

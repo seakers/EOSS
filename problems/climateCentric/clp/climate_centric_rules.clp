@@ -302,7 +302,6 @@
     ?sub4 <- (SYNERGY::cross-registered (measurements $?m)) (test (subsetp (create$ ?id1 ?id2 ?id3 ?id4) $?m))
     ;(not (REQUIREMENTS::Measurement (Parameter "2.3.3 Carbon net ecosystem exchange NEE")))
 	=>
-
     (duplicate ?SM (Parameter "2.4.6 Soil carbon")  
             (Id (str-cat ?id1 "-syn" ?id2 "-syn" ?id3 "-syn" ?id4))
             (taken-by (str-cat ?ins1 "-syn" ?ins2 "-syn-" ?ins3 "-syn-" ?ins4)) );; fuzzy-max in accuracy is OK because joint product does provide 4% accuracy

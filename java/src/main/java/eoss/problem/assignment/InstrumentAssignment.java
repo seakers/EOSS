@@ -92,7 +92,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
         this.eval = new ArchitectureEvaluator(path, reqMode, withSynergy, template);
 
         //synergistic instrument pairs
-        HashMap<String, String[]> synergyNameMap = new HashMap();
+        HashMap<String, String[]> synergyNameMap = new HashMap<>();
         synergyNameMap.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
         synergyNameMap.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
         synergyNameMap.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});
@@ -114,7 +114,7 @@ public class InstrumentAssignment extends AbstractProblem implements SystemArchi
             this.synergyMap.put(EOSSDatabase.getInstrument(instNameKey), instArray);
         }
 
-        HashMap<String, String[]> interferenceNameMap = new HashMap();
+        HashMap<String, String[]> interferenceNameMap = new HashMap<>();
         interferenceNameMap.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
         interferenceNameMap.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
         interferenceNameMap.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});

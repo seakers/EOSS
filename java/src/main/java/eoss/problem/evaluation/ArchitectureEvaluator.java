@@ -99,7 +99,8 @@ public class ArchitectureEvaluator {
                         payloadDimensions.add(0, 0.0); //max dimension in x, y, and z
                         payloadDimensions.add(1, 0.0); //nadir-area
                         payloadDimensions.add(2, 0.0); //max z dimension
-                        String fliesIn = mis.getName() + ":" + orbit;
+                        //String fliesIn = mis.getName() + ":" + orbit;
+                        String fliesIn = mis.getName();
                         String call = "(assert (MANIFEST::Mission (Name " + fliesIn + ") ";
                         for (Instrument inst : spacecraft.getPayload()) {
                             payload = payload + " " + inst.getName();
@@ -122,7 +123,7 @@ public class ArchitectureEvaluator {
                                 callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
                             }
                             callManifestInstrument += "(flies-in " + fliesIn + ")";
-                            callManifestInstrument += "(orbit-altitude# " + String.valueOf((int) orbit.getAltitude()) + ")";
+                            callManifestInstrument += "(orbit-altitude# " + String.valueOf(Math.round(orbit.getAltitude())) + ")";
                             callManifestInstrument += "(orbit-inclination " + orbit.getInclination() + ")";
                             callManifestInstrument += "))";
                             r.eval(callManifestInstrument);
@@ -196,7 +197,7 @@ public class ArchitectureEvaluator {
         r.setFocus("CAPABILITIES-GENERATE");
         r.run();
 
-        //This synergy rule call creates new measurement facts that may arise from interactions between instruments 
+        //This synergy rule call creates new measurement facts that may arise from interactions between instruments
         if (withSynergy) {
             r.setFocus("SYNERGY");
             r.run();
@@ -273,6 +274,11 @@ public class ArchitectureEvaluator {
             default:
                 throw new UnsupportedOperationException(String.format("Unknown requirements mode %s", reqMode));
         }
+
+        r.eval("(facts MANIFEST)");
+        r.eval("(facts CAPABILITIES)");
+        r.eval("(facts REQUIREMENTS)");
+        r.eval("(facts AGGREGATION)");
 
         ArrayList<Fact> vals = qb.makeQuery("AGGREGATION::VALUE");
         Fact val = vals.get(0);
