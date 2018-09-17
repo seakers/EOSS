@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>seaklab</groupId>
+    <groupId>seakers</groupId>
     <artifactId>EOSS</artifactId>
-    <version>0.0</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -12,8 +12,8 @@
             <version>2.12</version>
         </dependency>
         <dependency>
-            <groupId>seak</groupId>
-            <artifactId>aos</artifactId>
+            <groupId>seakers</groupId>
+            <artifactId>mopAOS</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
@@ -22,7 +22,7 @@
             <version>8.0</version>
         </dependency>
         <dependency>
-            <groupId>seak</groupId>
+            <groupId>seakers</groupId>
             <artifactId>orekit</artifactId>
             <version>1.0</version>
         </dependency>
@@ -31,29 +31,29 @@
             <artifactId>combinatoricslib3</artifactId>
             <version>3.2.0</version>
         </dependency>
-		<dependency>
-		    <groupId>jess</groupId>
-		    <artifactId>jess</artifactId>
-		    <version>7.1p2</version>
-		</dependency>
-		<dependency>
-		    <groupId>javax</groupId>
-		    <artifactId>rules</artifactId>
-		    <version>1.0</version>
-		</dependency>
+	<dependency>
+	    <groupId>jess</groupId>
+	    <artifactId>jess</artifactId>
+	    <version>7.1p2</version>
+	</dependency>
+	<dependency>
+	    <groupId>javax</groupId>
+	    <artifactId>rules</artifactId>
+	    <version>1.0</version>
+	</dependency>
         <dependency>
             <groupId>net.sourceforge.jexcelapi</groupId>
             <artifactId>jxl</artifactId>
             <version>2.6.12</version>
         </dependency>
-		<dependency>
-		    <groupId>net.sourceforge</groupId>
-		    <artifactId>javaml</artifactId>
-		    <version>0.1.5</version>
-		</dependency>
+	<dependency>
+            <groupId>net.sourceforge</groupId>
+            <artifactId>javaml</artifactId>
+	    <version>0.1.5</version>
+	</dependency>
         <dependency>
-            <groupId>seak</groupId>
-            <artifactId>architecture</artifactId>
+            <groupId>seakers</groupId>
+            <artifactId>SystemArchitectureProblems</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
