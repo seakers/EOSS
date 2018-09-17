@@ -275,11 +275,6 @@ public class ArchitectureEvaluator {
                 throw new UnsupportedOperationException(String.format("Unknown requirements mode %s", reqMode));
         }
 
-        r.eval("(facts MANIFEST)");
-        r.eval("(facts CAPABILITIES)");
-        r.eval("(facts REQUIREMENTS)");
-        r.eval("(facts AGGREGATION)");
-
         ArrayList<Fact> vals = qb.makeQuery("AGGREGATION::VALUE");
         Fact val = vals.get(0);
         double science = val.getSlotValue("satisfaction").floatValue(r.getGlobalContext());
