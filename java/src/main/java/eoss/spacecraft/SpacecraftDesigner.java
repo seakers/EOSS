@@ -168,9 +168,9 @@ public class SpacecraftDesigner {
                 StringBuilder instFact = new StringBuilder();
                 instFact.append("(assert (CAPABILITIES::Manifested-instrument ");
                 instFact.append("(Name ").append(inst.getName()).append(")");
-                Iterator iter = inst.getProperties().iterator();
+                Iterator<String> iter = inst.getProperties().iterator();
                 while (iter.hasNext()) {
-                    String propertyName = (String) iter.next();
+                    String propertyName = iter.next();
                     instFact.append("(").append(propertyName).append(" ").append(inst.getProperty(propertyName)).append(")");
                 }
                 instFact.append("(flies-in ").append(fliesIn).append(")");

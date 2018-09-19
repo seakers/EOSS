@@ -14,16 +14,16 @@ import java.util.HashMap;
 public class QueryBuilder {
     
     private Rete r;
-    private HashMap<String,HashMap> precomputed_queries;
+    private HashMap<String, HashMap<String, Fact>> precomputed_queries;
     public QueryBuilder( Rete r ) 
     {
        this.r = r;
-       precomputed_queries = new HashMap<String,HashMap>();
+       precomputed_queries = new HashMap<>();
     }
     
     public ArrayList<Fact> makeQuery( String template )
     {
-        ArrayList<Fact> facts = new ArrayList<Fact>();
+        ArrayList<Fact> facts = new ArrayList<>();
         
         String call = "(defquery temp-query ?f <- (" + template + "))";
         

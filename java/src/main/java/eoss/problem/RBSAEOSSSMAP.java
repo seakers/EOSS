@@ -4,20 +4,19 @@
  */
 package eoss.problem;
 
-import aos.aos.AOSMOEA;
-import aos.creditassignment.setimprovement.SetImprovementDominance;
-import aos.operator.AOSVariation;
-import aos.operator.AOSVariationSI;
-import aos.operatorselectors.AdaptivePursuit;
-import aos.operatorselectors.OperatorSelector;
-import eoss.problem.assignment.InstrumentAssignmentArchitecture;
+import seakers.aos.aos.AOSMOEA;
+import seakers.aos.creditassignment.setimprovement.SetImprovementDominance;
+import seakers.aos.operator.AOSVariation;
+import seakers.aos.operator.AOSVariationSI;
+import seakers.aos.operatorselectors.AdaptivePursuit;
+import seakers.aos.operatorselectors.OperatorSelector;
 import eoss.problem.evaluation.ArchitectureEvaluatorParams;
-import aos.operatorselectors.replacement.CompoundTrigger;
-import aos.operatorselectors.replacement.EpochTrigger;
-import aos.operatorselectors.replacement.InitialTrigger;
-import aos.operatorselectors.replacement.OperatorReplacementStrategy;
-import aos.operatorselectors.replacement.RemoveNLowest;
-import aos.operatorselectors.replacement.ReplacementTrigger;
+import seakers.aos.operatorselectors.replacement.CompoundTrigger;
+import seakers.aos.operatorselectors.replacement.EpochTrigger;
+import seakers.aos.operatorselectors.replacement.InitialTrigger;
+import seakers.aos.operatorselectors.replacement.OperatorReplacementStrategy;
+import seakers.aos.operatorselectors.replacement.RemoveNLowest;
+import seakers.aos.operatorselectors.replacement.ReplacementTrigger;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.problem.assignment.InstrumentAssignment2;
 import eoss.problem.evaluation.RequirementMode;
@@ -73,7 +72,7 @@ import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
 import org.xml.sax.SAXException;
-import seak.architecture.operators.IntegerUM;
+import seakers.architecture.operators.IntegerUM;
 import seak.orekit.util.OrekitConfig;
 
 /**
@@ -202,7 +201,7 @@ public class RBSAEOSSSMAP {
             constraintOperatorMap.put(repairInter, "interferenceViolationSum");
             constraintOperatorMap.put(repairInstOrb, "instrumentOrbitAssignmentViolationSum");
 
-            HashSet<String> constraints = new HashSet(constraintOperatorMap.values());
+            HashSet<String> constraints = new HashSet<>(constraintOperatorMap.values());
 
             initialization = new RandomInitialization(problem, popSize);
 //            initialization = new NInstrumentInitializer(5, 3, (InstrumentAssignment2) problem, popSize);
@@ -229,7 +228,7 @@ public class RBSAEOSSSMAP {
                     break;
 
                 case 2: //AOS search Assignment
-                    ArrayList<Variation> operators = new ArrayList();
+                    ArrayList<Variation> operators = new ArrayList<>();
                     //add domain-independent heuristics
                     operators.add(new CompoundVariation(new OnePointCrossover(crossoverProbability), new BitFlip(mutationProbability), new IntegerUM(mutationProbability)));
                     operators.add(repairMass);
@@ -267,7 +266,7 @@ public class RBSAEOSSSMAP {
                     break;
                 case 3://innovization search Assignment
                     String innovizeAssignment = "AIAA_innovize_" + System.nanoTime();
-                    ArrayList<Variation> operators3 = new ArrayList();
+                    ArrayList<Variation> operators3 = new ArrayList<>();
                     //kdo mode set to operator or repair
                     properties.setString("kdomode", "operator");
                     //add domain-independent heuristics
@@ -278,7 +277,7 @@ public class RBSAEOSSSMAP {
                     InitialTrigger initTrigger = new InitialTrigger(triggerOffset);
                     CompoundTrigger compTrigger = new CompoundTrigger(Arrays.asList(new ReplacementTrigger[]{epochTrigger, initTrigger}));
                     EOSSOperatorCreator eossOpCreator = new EOSSOperatorCreator();
-                    ArrayList<Variation> permanentOps = new ArrayList();
+                    ArrayList<Variation> permanentOps = new ArrayList<>();
                     permanentOps.add(SingleCross);
                     RemoveNLowest operatorRemover = new RemoveNLowest(permanentOps, properties.getInt("nOpsToRemove", 2));
                     OperatorReplacementStrategy ops = new OperatorReplacementStrategy(compTrigger, operatorRemover, eossOpCreator);
@@ -363,13 +362,13 @@ public class RBSAEOSSSMAP {
     }
 
     public static void convertXlsToMap() {
-        HashMap<HashMap<Orbit, Double>, HashMap<String, Double>> newDb = new HashMap();
+        HashMap<HashMap<Orbit, Double>, HashMap<String, Double>> newDb = new HashMap<>();
         try {
             Workbook xls = Workbook.getWorkbook(new File("/Users/nozomihitomi/Dropbox/EOSS/problems/decadalScheduling/xls/Mission Analysis Database.xls"));
             Sheet sheet = xls.getSheet("Walker");
             int nlines = sheet.getRows();
             for (int i = 1; i < nlines; i++) {
-                HashMap<Orbit, Double> orbMap = new HashMap();
+                HashMap<Orbit, Double> orbMap = new HashMap<>();
                 Cell[] row = sheet.getRow(i);
                 if (Integer.parseInt(row[0].getContents()) == 1) {
                     double sa = Double.parseDouble(row[2].getContents()) * 1000. + 6378100.0;
@@ -385,7 +384,7 @@ public class RBSAEOSSSMAP {
                     double fov = Double.parseDouble(row[4].getContents());
                     orbMap.put(orb, fov);
                 }
-                HashMap<String, Double> revTimes = new HashMap();
+                HashMap<String, Double> revTimes = new HashMap<>();
                 revTimes.put("avg_revisit_time", Double.parseDouble(row[5].getContents()));
                 revTimes.put("avg_revisit_time_tropics", Double.parseDouble(row[6].getContents()));
                 revTimes.put("avg_revisit_time_NH", Double.parseDouble(row[7].getContents()));

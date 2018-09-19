@@ -86,7 +86,7 @@ public class Apriori {
         viableFeatures = new ArrayList<>();
 
         // Define front. front is the set of features whose length is L and passes significant test
-        ArrayList<BitSet> front = new ArrayList();
+        ArrayList<BitSet> front = new ArrayList<>();
         for (int i = 0; i < baseFeatures.size(); i++) {
             metrics = computeMetrics(baseFeaturesBit[i], labels);
             if (!Double.isNaN(metrics[0])) {

@@ -5,7 +5,7 @@
  */
 package knowledge.constraint;
 
-import aos.creditassigment.AbstractSetContribution;
+import seakers.aos.creditassignment.AbstractSetContribution;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +50,7 @@ public class SetConsistency extends AbstractSetContribution {
      */
     @Override
     public Map<String, Double> computeCredit(Set<String> operators) {
-        HashMap<String, Double> out = new HashMap();
+        HashMap<String, Double> out = new HashMap<>();
         for (Variation op : operatorConstraintMap.keySet()) {
             int consistentCount = 0;
             for (Solution s : solutionSet) {

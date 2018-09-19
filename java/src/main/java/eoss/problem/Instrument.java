@@ -56,7 +56,7 @@ public class Instrument implements Serializable{
      * Gets the key entries or the property names as a set.
      * @return 
      */
-    public Set getProperties(){
+    public Set<String> getProperties(){
         return properties.keySet();
     }
 
@@ -117,7 +117,7 @@ public class Instrument implements Serializable{
         /**
          * Properties of the instrument
          */
-        private HashMap<String, String> prop =  new HashMap();
+        private HashMap<String, String> prop = new HashMap<>();
         
         public Builder(String name, double fieldOfView){
             this.name = name;

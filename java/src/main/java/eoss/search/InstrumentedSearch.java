@@ -6,9 +6,9 @@
 package eoss.search;
 
 
-import aos.aos.AOS;
-import aos.history.AOSHistoryIO;
-import seak.architecture.io.ResultIO;
+import seakers.aos.aos.AOS;
+import seakers.aos.history.AOSHistoryIO;
+import seakers.architecture.io.ResultIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -48,7 +48,7 @@ public class InstrumentedSearch implements Callable<Algorithm> {
         alg.step();
         long startTime = System.currentTimeMillis();
 
-        HashSet<Solution> allSolutions = new HashSet();
+        HashSet<Solution> allSolutions = new HashSet<>();
         Population initPop = ((AbstractEvolutionaryAlgorithm) alg).getPopulation();
         for (int i = 0; i < initPop.size(); i++) {
             initPop.get(i).setAttribute("NFE", 0);

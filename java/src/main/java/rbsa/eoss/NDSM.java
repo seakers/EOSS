@@ -78,7 +78,7 @@ public class NDSM implements Serializable {
                 unsorted_map.add(new Interaction(key,val));
             }
         }
-        TreeSet<Interaction> out = new TreeSet(new InteractionComparator());
+        TreeSet<Interaction> out = new TreeSet<>(new InteractionComparator());
         out.addAll(unsorted_map);
         return out;
     }

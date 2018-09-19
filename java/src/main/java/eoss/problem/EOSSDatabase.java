@@ -205,7 +205,7 @@ public final class EOSSDatabase {
                 Cell[] row = meas.getRow(i);
                 String instrumentName = "";
                 double fov = Double.NaN;
-                HashMap<String, String> properties = new HashMap();
+                HashMap<String, String> properties = new HashMap<>();
                 for (int j = 0; j < nattributes; j++) {
                     String cell_value = row[j].getContents();
 
@@ -451,7 +451,7 @@ public final class EOSSDatabase {
                 Double cost = Double.valueOf(vehicle.getElementsByTagName("cost").item(0).getTextContent());
                 Element coeffNode = (Element) vehicle.getElementsByTagName("coeffs").item(0);
                 NodeList coeffList = coeffNode.getChildNodes();
-                HashMap<String, List<Double>> coeffs = new HashMap();
+                HashMap<String, List<Double>> coeffs = new HashMap<>();
                 for (int j = 0; j < coeffList.getLength(); j++) {
                     try{
                         String vals = coeffList.item(j).getFirstChild().getNodeValue();

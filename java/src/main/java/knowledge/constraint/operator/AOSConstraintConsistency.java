@@ -5,8 +5,8 @@
  */
 package knowledge.constraint.operator;
 
-import aos.creditassigment.Credit;
-import aos.operatorselectors.AdaptivePursuit;
+import seakers.aos.creditassignment.Credit;
+import seakers.aos.operatorselectors.AdaptivePursuit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;

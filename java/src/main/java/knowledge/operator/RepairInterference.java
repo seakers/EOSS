@@ -34,7 +34,7 @@ public class RepairInterference extends AbstractInstrumentMove {
     public RepairInterference(int nChanges) {
         super(nChanges);
 
-        this.mapNames = new HashMap();
+        this.mapNames = new HashMap<>();
         mapNames.put("ACE_LID", new String[]{"ACE_CPR", "DESD_SAR", "CLAR_ERB", "GACM_SWIR"});
         mapNames.put("ACE_CPR", new String[]{"ACE_LID", "DESD_SAR", "CNES_KaRIN", "CLAR_ERB", "ACE_POL", "ACE_ORCA", "GACM_SWIR"});
         mapNames.put("DESD_SAR", new String[]{"ACE_LID", "ACE_CPR"});

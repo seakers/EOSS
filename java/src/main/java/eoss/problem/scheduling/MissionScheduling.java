@@ -5,7 +5,7 @@
  */
 package eoss.problem.scheduling;
 
-import seak.architecture.problem.SystemArchitectureProblem;
+import seakers.architecture.problem.SystemArchitectureProblem;
 import architecture.util.ValueTree;
 import eoss.problem.evaluation.ArchitectureEvaluator;
 import eoss.problem.EOSSDatabase;
@@ -167,7 +167,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
         
         //load the continuity weights
         HashMap<AbsoluteDate, Double> contWts = loadContinuityWeights(new File(xlsPath + "Data Continuity Requirements.xls"));
-        ArrayList<AbsoluteDate> sortedDates = new ArrayList(contWts.keySet());
+        ArrayList<AbsoluteDate> sortedDates = new ArrayList<>(contWts.keySet());
         Collections.sort(sortedDates);
         this.continuityWeights = new ArrayRealVector(sortedDates.size());
         for(int j=0; j< sortedDates.hashCode(); j++){
@@ -176,7 +176,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
 
         //load missions that are to be scheduled
         this.missions = loadMissions(new File(path + File.separator + "config" + File.separator + "missions.xml"));
-        this.missionValueTree = new HashMap();
+        this.missionValueTree = new HashMap<>();
         this.missionDataContinuity = new HashMap<>();
         processMissions(path, missions, measWts.keySet());
         Collections.unmodifiableList(missions);
@@ -371,7 +371,7 @@ public class MissionScheduling extends AbstractProblem implements SystemArchitec
                         throw new IllegalArgumentException(String.format("Mission status %s not recognized in row %d of %s", missionStatus, j, filename));
                 }
 
-                HashMap spacecraft = new HashMap(1);
+                HashMap<Spacecraft, Orbit> spacecraft = new HashMap<>(1);
                 spacecraft.put(new Spacecraft(missionName + "_1", Arrays.asList(new Instrument[]{inst})), null);
 
                 Mission miss = new Mission(missionName, spacecraft, launchDate, endOfLifeDate, status, 0, 0.0);

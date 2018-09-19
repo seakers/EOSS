@@ -5,7 +5,7 @@
  */
 package knowledge.constraint;
 
-import aos.operatorselectors.AdaptivePursuit;
+import seakers.aos.operatorselectors.AdaptivePursuit;
 import java.util.HashMap;
 import org.moeaframework.core.Variation;
 

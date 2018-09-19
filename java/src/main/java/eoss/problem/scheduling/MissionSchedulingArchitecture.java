@@ -5,14 +5,14 @@
 package eoss.problem.scheduling;
 
 import eoss.problem.Mission;
-import seak.architecture.Architecture;
-import seak.architecture.pattern.ArchitecturalDecision;
-import seak.architecture.pattern.Permuting;
+import seakers.architecture.Architecture;
+import seakers.architecture.pattern.ArchitecturalDecision;
+import seakers.architecture.pattern.Permuting;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.moeaframework.core.Solution;
 import org.orekit.time.AbsoluteDate;
-import seak.architecture.util.IntegerVariable;
+import seakers.architecture.util.IntegerVariable;
 
 /**
  * This class creates a solution for the problem where the goal is to schedule a

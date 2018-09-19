@@ -112,6 +112,7 @@ public class ArchitectureEvaluatorParams {
      * @throws java.io.IOException
      * @throws java.lang.ClassNotFoundException
      */
+    @SuppressWarnings("unchecked")
     private ArchitectureEvaluatorParams(String p) throws IOException, ClassNotFoundException {
         //this.master_xls = master_xls;
         //this.recompute_scores = recompute_scores;
@@ -175,7 +176,7 @@ public class ArchitectureEvaluatorParams {
         adhoc_rules_clp = clpPath + props.getProperty("adhoc_rules_clp");
 
         // Intermediate results
-        measurements_to_subobjectives = new HashMap();
+        measurements_to_subobjectives = new HashMap<>();
         measurements = new HashSet<>();
 
         //Load specific adhoc parameters from config folder

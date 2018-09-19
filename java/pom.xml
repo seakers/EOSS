@@ -12,11 +12,6 @@
             <version>2.12</version>
         </dependency>
         <dependency>
-            <groupId>seakers</groupId>
-            <artifactId>mopAOS</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.orekit</groupId>
             <artifactId>orekit</artifactId>
             <version>8.0</version>
@@ -31,29 +26,34 @@
             <artifactId>combinatoricslib3</artifactId>
             <version>3.2.0</version>
         </dependency>
-	<dependency>
-	    <groupId>jess</groupId>
-	    <artifactId>jess</artifactId>
-	    <version>7.1p2</version>
-	</dependency>
-	<dependency>
-	    <groupId>javax</groupId>
-	    <artifactId>rules</artifactId>
-	    <version>1.0</version>
-	</dependency>
+        <dependency>
+            <groupId>gov.sandia</groupId>
+            <artifactId>jess</artifactId>
+            <version>7.1p2</version>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>rules</artifactId>
+            <version>1.0</version>
+        </dependency>
         <dependency>
             <groupId>net.sourceforge.jexcelapi</groupId>
             <artifactId>jxl</artifactId>
             <version>2.6.12</version>
         </dependency>
-	<dependency>
+        <dependency>
             <groupId>net.sourceforge</groupId>
             <artifactId>javaml</artifactId>
-	    <version>0.1.5</version>
-	</dependency>
+            <version>0.1.5</version>
+        </dependency>
         <dependency>
             <groupId>seakers</groupId>
-            <artifactId>SystemArchitectureProblems</artifactId>
+            <artifactId>mopAOS</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>seakers</groupId>
+            <artifactId>system-architecture-problems</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
@@ -63,30 +63,41 @@
         </dependency>
     </dependencies>
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.1</version>
-                <configuration>
-                    <artifactSet>
-                        <excludes>
-                            <exclude>bouncycastle:bcmail-jdk14</exclude>
-                            <exclude>bouncycastle:bcprov-jdk14</exclude>
-                        </excludes>
-                    </artifactSet>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <compilerArgs>
+                            <arg>-Xlint</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.1.1</version>
+                    <configuration>
+                        <artifactSet>
+                            <excludes>
+                                <exclude>bouncycastle:bcmail-jdk14</exclude>
+                                <exclude>bouncycastle:bcprov-jdk14</exclude>
+                            </excludes>
+                        </artifactSet>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
 
-                </executions>
-            </plugin>
-        </plugins>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

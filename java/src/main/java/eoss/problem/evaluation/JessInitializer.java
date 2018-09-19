@@ -200,10 +200,10 @@ public class JessInitializer {
      */
     private HashMap<String, SlotType> loadMeasurementTemplate(Rete r, Workbook xls) throws JessException {
         HashMap<String, SlotType> out = new HashMap<>();
-        HashMap<String, Integer> attribs_to_keys = new HashMap();
-        HashMap<Integer, String> keys_to_attribs = new HashMap();
-        HashMap<String, String> attribs_to_types = new HashMap();
-        HashMap attribSet = new HashMap();
+        HashMap<String, Integer> attribs_to_keys = new HashMap<>();
+        HashMap<Integer, String> keys_to_attribs = new HashMap<>();
+        HashMap<String, String> attribs_to_types = new HashMap<>();
+        HashMap<String, EOAttribute> attribSet = new HashMap<>();
         Sheet meas = xls.getSheet("Measurement");
         String call = "(deftemplate REQUIREMENTS::Measurement ";
         int nslots = meas.getRows();
@@ -585,7 +585,7 @@ public class JessInitializer {
             String subobj = row[0].getContents();
             param = row[1].getContents();
 
-            ArrayList<String> attrib_test = new ArrayList();
+            ArrayList<String> attrib_test = new ArrayList<>();
             if (!subobj.equalsIgnoreCase(current_subobj)) {
 
                 if (nattrib > 0) {
@@ -607,7 +607,7 @@ public class JessInitializer {
                     current_subobj = subobj;
                     current_param = param;
                     nattrib = 0;
-                    subobj_tests = new HashMap();
+                    subobj_tests = new HashMap<>();
                 } else {
                     //start next requirement rule
                     rhs = "";
@@ -616,7 +616,7 @@ public class JessInitializer {
                     lhs = "(defrule REQUIREMENTS::" + subobj + "-attrib ?m <- (REQUIREMENTS::Measurement (taken-by ?whom)  (power-duty-cycle# ?pc) (data-rate-duty-cycle# ?dc)  (Parameter " + param + ")";
                     current_subobj = subobj;
                     current_param = param;
-                    subobj_tests = new HashMap();
+                    subobj_tests = new HashMap<>();
                     //nattrib = 0;
                 }
             }
@@ -674,7 +674,7 @@ public class JessInitializer {
             String subobj = row[0].getContents();
             param = row[1].getContents();
 
-            ArrayList<String> attrib_test = new ArrayList();
+            ArrayList<String> attrib_test = new ArrayList<>();
             if (!subobj.equalsIgnoreCase(current_subobj)) {
 
                 if (nattrib > 0) {
@@ -701,7 +701,7 @@ public class JessInitializer {
                     current_subobj = subobj;
                     current_param = param;
                     nattrib = 0;
-                    subobj_tests = new HashMap();
+                    subobj_tests = new HashMap<>();
                 } else {
                     //start next requirement rule
                     rhs = "";
@@ -711,7 +711,7 @@ public class JessInitializer {
                             + "?m <- (REQUIREMENTS::Measurement (taken-by ?whom) (data-rate-duty-cycle# ?dc) (power-duty-cycle# ?pc) (Parameter " + param + ") ";
                     current_subobj = subobj;
                     current_param = param;
-                    subobj_tests = new HashMap();
+                    subobj_tests = new HashMap<>();
                     //nattrib = 0;
                 }
             }
@@ -874,8 +874,8 @@ public class JessInitializer {
         NodeList panelNode = doc.getElementsByTagName("panel");
         ArchitectureEvaluatorParams.npanels = panelNode.getLength();
         String call = "(deffacts AGGREGATION::init-aggregation-facts ";
-        ArchitectureEvaluatorParams.panel_names = new ArrayList(ArchitectureEvaluatorParams.npanels);
-        ArchitectureEvaluatorParams.panel_weights = new ArrayList(ArchitectureEvaluatorParams.npanels);
+        ArchitectureEvaluatorParams.panel_names = new ArrayList<>(ArchitectureEvaluatorParams.npanels);
+        ArchitectureEvaluatorParams.panel_weights = new ArrayList<>(ArchitectureEvaluatorParams.npanels);
 
         for (int i = 0; i < panelNode.getLength(); i++) {
             Element panel = (Element) panelNode.item(i);
@@ -888,7 +888,7 @@ public class JessInitializer {
         for (int i = 0; i < panelNode.getLength(); i++) {
             Element panel = (Element) panelNode.item(i);
             NodeList objNode = panel.getElementsByTagName("objective");
-            ArrayList<Double> obj_weights = new ArrayList();
+            ArrayList<Double> obj_weights = new ArrayList<>();
 
             for (int j = 0; j < objNode.getLength(); j++) { //cycle through objectives
                 Element obj = (Element) objNode.item(j);

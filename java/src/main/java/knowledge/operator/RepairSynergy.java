@@ -34,7 +34,7 @@ public class RepairSynergy extends AbstractInstrumentMove {
     public RepairSynergy(int nChanges) {
         super(nChanges);
 
-        this.mapNames = new HashMap();
+        this.mapNames = new HashMap<>();
         mapNames.put("ACE_ORCA", new String[]{"DESD_LID", "GACM_VIS", "ACE_POL", "HYSP_TIR", "ACE_LID"});
         mapNames.put("DESD_LID", new String[]{"ACE_ORCA", "ACE_LID", "ACE_POL"});
         mapNames.put("GACM_VIS", new String[]{"ACE_ORCA", "ACE_LID"});

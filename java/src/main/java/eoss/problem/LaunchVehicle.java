@@ -4,7 +4,7 @@
  */
 package eoss.problem;
 
-import seak.architecture.enumeration.FullFactorial;
+import seakers.architecture.enumeration.FullFactorial;
 import eoss.spacecraft.Spacecraft;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -178,7 +178,7 @@ public class LaunchVehicle implements Serializable {
             }
 
             double sumCost = 0;
-            HashMap<Collection<Spacecraft>, LaunchVehicle> option = new HashMap();
+            HashMap<Collection<Spacecraft>, LaunchVehicle> option = new HashMap<>();
             for (Integer groupNumber : groups.keySet()) {
                 //find all the feasible launch vehicles for each group of spacecraft
                 ArrayList<LaunchVehicle> feasibleLV = new ArrayList<>();

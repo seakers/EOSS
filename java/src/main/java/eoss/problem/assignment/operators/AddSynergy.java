@@ -88,7 +88,7 @@ public class AddSynergy extends AbstractEOSSOperator {
         TreeSet<Interaction> stm = dsm.getAllInteractions("+");
 
         //find all superfluous interactions that apply to this spacecraft
-        ArrayList<String> missingSynergisticInstrument = new ArrayList();
+        ArrayList<String> missingSynergisticInstrument = new ArrayList<>();
         Iterator<Interaction> iter = stm.descendingIterator();
         while (iter.hasNext()) {
             Interaction key = iter.next();

@@ -25,7 +25,7 @@ public class ConsistencyTracker extends Population{
 
     public ConsistencyTracker(Population pop, HashSet<String> knowledgeConstraints) {
         this.pop = pop;
-        this.knowledgeConstraints = new HashMap();
+        this.knowledgeConstraints = new HashMap<>();
         for(String constraint : knowledgeConstraints){
             this.knowledgeConstraints.put(constraint, 0);
         }

@@ -17,12 +17,7 @@ import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignment;
 import eoss.spacecraft.SpacecraftDesigner;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jess.Fact;
@@ -117,9 +112,9 @@ public class ArchitectureEvaluator {
                             //manifest the instrument
                             String callManifestInstrument = "(assert (CAPABILITIES::Manifested-instrument ";
                             callManifestInstrument += "(Name " + inst.getName() + ")";
-                            Iterator iter = inst.getProperties().iterator();
+                            Iterator<String> iter = inst.getProperties().iterator();
                             while (iter.hasNext()) {
-                                String propertyName = (String) iter.next();
+                                String propertyName = iter.next();
                                 callManifestInstrument += "(" + propertyName + " " + inst.getProperty(propertyName) + ")";
                             }
                             callManifestInstrument += "(flies-in " + fliesIn + ")";

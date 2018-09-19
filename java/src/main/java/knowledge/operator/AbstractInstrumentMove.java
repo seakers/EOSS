@@ -5,7 +5,7 @@
  */
 package knowledge.operator;
 
-import aos.operator.CheckParents;
+import seakers.aos.operator.CheckParents;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
 import eoss.problem.Mission;

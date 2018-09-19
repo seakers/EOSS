@@ -5,8 +5,8 @@
  */
 package knowledge.constraint;
 
-import aos.creditassigment.Credit;
-import aos.operatorselectors.AbstractOperatorSelector;
+import seakers.aos.creditassignment.Credit;
+import seakers.aos.operatorselectors.AbstractOperatorSelector;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.moeaframework.core.Variation;

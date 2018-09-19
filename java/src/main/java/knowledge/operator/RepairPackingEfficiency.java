@@ -5,7 +5,7 @@
  */
 package knowledge.operator;
 
-import aos.operator.CheckParents;
+import seakers.aos.operator.CheckParents;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.LaunchVehicle;
 import eoss.problem.Mission;
@@ -76,7 +76,7 @@ public class RepairPackingEfficiency implements Variation, CheckParents {
         }
         HashMap<Collection<Spacecraft>, LaunchVehicle> lvSelection = LaunchVehicle.select(copy.getMissions());
 
-        ArrayList<Mission> candidateMission = new ArrayList();
+        ArrayList<Mission> candidateMission = new ArrayList<>();
         for (Mission m : copy.getMissions()) {
             for (Spacecraft s : m.getSpacecraft().keySet()) {
                 for (Collection<Spacecraft> group : lvSelection.keySet()) {

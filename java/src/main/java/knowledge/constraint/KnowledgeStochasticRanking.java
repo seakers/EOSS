@@ -78,7 +78,7 @@ public class KnowledgeStochasticRanking implements DominanceComparator,
         double constraint1 = 0;
         double constraint2 = 0;
         int numApplied = 0;
-        ArrayList<String> constraints = new ArrayList(probabilities.keySet());
+        ArrayList<String> constraints = new ArrayList<>(probabilities.keySet());
         Collections.shuffle(constraints);
         for (String str : constraints) {
             if (numApplied >= numberConstraints) {

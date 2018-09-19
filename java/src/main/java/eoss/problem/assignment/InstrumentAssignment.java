@@ -5,7 +5,7 @@
  */
 package eoss.problem.assignment;
 
-import seak.architecture.problem.SystemArchitectureProblem;
+import seakers.architecture.problem.SystemArchitectureProblem;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;

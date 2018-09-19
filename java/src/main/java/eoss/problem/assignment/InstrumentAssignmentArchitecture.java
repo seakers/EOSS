@@ -4,10 +4,10 @@
  */
 package eoss.problem.assignment;
 
-import seak.architecture.Architecture;
-import seak.architecture.pattern.ArchitecturalDecision;
-import seak.architecture.pattern.Combining;
-import seak.architecture.pattern.Assigning;
+import seakers.architecture.Architecture;
+import seakers.architecture.pattern.ArchitecturalDecision;
+import seakers.architecture.pattern.Combining;
+import seakers.architecture.pattern.Assigning;
 import architecture.util.ValueTree;
 import eoss.problem.EOSSDatabase;
 import eoss.problem.Instrument;
@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.moeaframework.core.Solution;
-import seak.architecture.util.IntegerVariable;
+import seakers.architecture.util.IntegerVariable;
 
 /**
  * This class creates a solution for the problem consisting of an assigning

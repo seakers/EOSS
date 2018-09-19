@@ -5,7 +5,7 @@
  */
 package knowledge.operator;
 
-import aos.operator.CheckParents;
+import seakers.aos.operator.CheckParents;
 import eoss.problem.Mission;
 import eoss.spacecraft.Spacecraft;
 import eoss.problem.assignment.InstrumentAssignmentArchitecture2;
@@ -66,7 +66,7 @@ public class RepairDutyCycle implements Variation, CheckParents {
         InstrumentAssignmentArchitecture2 copy = (InstrumentAssignmentArchitecture2) child.copy();
         copy.setMissions();
 
-        ArrayList<Mission> candidateMission = new ArrayList();
+        ArrayList<Mission> candidateMission = new ArrayList<>();
         for (Mission m : copy.getMissions()) {
             scDesigner.designSpacecraft(m);
             Spacecraft s = m.getSpacecraft().keySet().iterator().next();

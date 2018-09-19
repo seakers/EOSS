@@ -93,7 +93,7 @@ public class RemoveSuperfluous extends AbstractEOSSOperator {
         }
 
         //find all superfluous interactions that apply to this spacecraft
-        ArrayList<Nto1pair> relevantInteractions = new ArrayList();
+        ArrayList<Nto1pair> relevantInteractions = new ArrayList<>();
         Iterator<Interaction> iter = rtm.iterator();
         while (iter.hasNext()) {
             Interaction key = iter.next();

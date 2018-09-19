@@ -5,7 +5,7 @@
  */
 package knowledge.operator;
 
-import aos.operatorselectors.replacement.OperatorCreator;
+import seakers.aos.operatorselectors.replacement.OperatorCreator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -77,7 +77,7 @@ public class EOSSOperatorCreator implements OperatorCreator {
     }
 
     private Collection<String> readFeatures(File featureFile) {
-        ArrayList<String> features = new ArrayList();
+        ArrayList<String> features = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(featureFile))) {
             String line;
@@ -88,8 +88,6 @@ public class EOSSOperatorCreator implements OperatorCreator {
                     features.add(line);
                 }
             }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(EOSSOperatorCreator.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(EOSSOperatorCreator.class.getName()).log(Level.SEVERE, null, ex);
         }

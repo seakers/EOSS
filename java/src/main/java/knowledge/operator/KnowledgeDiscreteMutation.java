@@ -66,7 +66,10 @@ public class KnowledgeDiscreteMutation implements Variation, Serializable {
                     + "varaibles to mutate must be a number in  the range "
                     + "[0, %d]. Found %d", targetValue.length, numVarToMutate));
         }
-        this.variablesToMutate = new ArrayList(Arrays.asList(variablesToMutate));
+        this.variablesToMutate = new ArrayList<>();
+        for (int i: variablesToMutate) {
+            this.variablesToMutate.add(i);
+        }
         this.mutationMap = new HashMap<>(targetValue.length);
         for(int i=1; i<targetValue.length; i++){
             mutationMap.put(variablesToMutate[i], targetValue[i]);
