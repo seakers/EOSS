@@ -22,6 +22,8 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import eoss.RawSafety;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import java.util.HashSet;
@@ -80,7 +82,7 @@ public class ArchitectureEvaluatorParams {
     public static ArrayList<Double> panel_weights;
     public static ArrayList<String> panel_names;
 
-    public static HashMap<ArrayList<Integer>, HashMap<String, Double>> revtimes;//map <sorted orbit indices>, <region, revtime>
+    public static Map<ArrayList<Integer>, HashMap<String, Double>> revtimes;//map <sorted orbit indices>, <region, revtime>
     public static Map<ArrayList<String>, HashMap<String, Double>> scores;
     public static Map<String, NDSM> all_dsms;
 
@@ -112,7 +114,6 @@ public class ArchitectureEvaluatorParams {
      * @throws java.io.IOException
      * @throws java.lang.ClassNotFoundException
      */
-    @SuppressWarnings("unchecked")
     private ArchitectureEvaluatorParams(String p) throws IOException, ClassNotFoundException {
         //this.master_xls = master_xls;
         //this.recompute_scores = recompute_scores;
@@ -189,21 +190,14 @@ public class ArchitectureEvaluatorParams {
             doc.getDocumentElement().normalize();
             time_horizon = Double.parseDouble(doc.getElementsByTagName("timeHorizon").item(0).getTextContent());
 
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-            Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
             Logger.getLogger(ArchitectureEvaluatorParams.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         System.out.println("Loading revisit time look-up table...");
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(revtimes_dat_file))) {
-            revtimes = (HashMap<ArrayList<Integer>, HashMap<String, Double>>) ois.readObject();
-            Collections.unmodifiableMap(revtimes);
-        } catch (IOException ex) {
-            throw ex;
-        } catch (ClassNotFoundException ex) {
+            revtimes = Collections.unmodifiableMap(RawSafety.castHashMap(ois.readObject()));
+        } catch (IOException | ClassNotFoundException ex) {
             throw ex;
         }
 //        
@@ -229,10 +223,8 @@ public class ArchitectureEvaluatorParams {
 
         System.out.println("Loading dsm_dat ...");
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(dsm_dat_file))) {
-            all_dsms = Collections.unmodifiableMap((HashMap<String, NDSM>) ois.readObject());
-        } catch (IOException ex) {
-            throw ex;
-        } catch (ClassNotFoundException ex) {
+            all_dsms = Collections.unmodifiableMap(RawSafety.castHashMap(ois.readObject()));
+        } catch (IOException | ClassNotFoundException ex) {
             throw ex;
         }
 
