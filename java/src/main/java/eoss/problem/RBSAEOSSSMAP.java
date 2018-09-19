@@ -73,7 +73,7 @@ import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
 import org.xml.sax.SAXException;
 import seakers.architecture.operators.IntegerUM;
-import seak.orekit.util.OrekitConfig;
+import seakers.orekit.util.OrekitConfig;
 
 /**
  *
