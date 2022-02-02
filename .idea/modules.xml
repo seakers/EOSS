@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/EOSS-AIAA.iml" filepath="$PROJECT_DIR$/.idea/EOSS-AIAA.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EOSSAIAA.iml" filepath="$PROJECT_DIR$/.idea/modules/EOSSAIAA.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EOSSAIAA.main.iml" filepath="$PROJECT_DIR$/.idea/modules/EOSSAIAA.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EOSSAIAA.test.iml" filepath="$PROJECT_DIR$/.idea/modules/EOSSAIAA.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/seakers.EOSSAIAA.main.iml" filepath="$PROJECT_DIR$/.idea/modules/seakers.EOSSAIAA.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/seakers.EOSSAIAA.test.iml" filepath="$PROJECT_DIR$/.idea/modules/seakers.EOSSAIAA.test.iml" />
+    </modules>
+  </component>
+</project>

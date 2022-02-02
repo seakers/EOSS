@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.hipparchus:hipparchus-stat:1.6">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-stat/1.6/9f5ac0d931d4d6413e6e155cc18c4955abffa86c/hipparchus-stat-1.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-stat/1.6/77081672ad268790e3ea3f77378163fee4e666ed/hipparchus-stat-1.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

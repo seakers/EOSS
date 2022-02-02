@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.moeaframework:moeaframework:2.12">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.moeaframework/moeaframework/2.12/e551643b97a0e708f5d423a41f1effa4a2a1035f/moeaframework-2.12.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.moeaframework/moeaframework/2.12/3f127ac6979f6efb7cd1b596fb2e6e4752229350/moeaframework-2.12-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

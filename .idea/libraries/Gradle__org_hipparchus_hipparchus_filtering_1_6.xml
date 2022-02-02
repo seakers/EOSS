@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.hipparchus:hipparchus-filtering:1.6">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-filtering/1.6/3be90447a153fa9147d799a7a1140fed4ae6edb3/hipparchus-filtering-1.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-filtering/1.6/8dc5f4617498bdc2bac4ded53e8788505387afaf/hipparchus-filtering-1.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

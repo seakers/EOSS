@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.hipparchus:hipparchus-optim:1.6">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-optim/1.6/5b9eefdbe5204b8d704f87546ed6aad7b202d038/hipparchus-optim-1.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hipparchus/hipparchus-optim/1.6/1b0dbde744172fa7be74aa0b9c52d4a1b90644ee/hipparchus-optim-1.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
