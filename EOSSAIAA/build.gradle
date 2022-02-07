@@ -1,0 +1,38 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group 'seakers'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    compile 'org.moeaframework:moeaframework:2.12'
+    compile 'org.orekit:orekit:8.0'
+    compile 'seakers:orekit:1.0'
+    compile 'com.github.dpaukov:combinatoricslib3:3.2.0'
+    compile 'javax:rules:1.0'
+    compile 'net.sourceforge.jexcelapi:jxl:2.6.12'
+    compile 'net.sourceforge:javaml:0.1.5'
+    compile 'seakers:system-architecture-problems:1.0'
+    compile 'org.jblas:jblas:1.2.4'
+    compile files('C:\\SEAK Lab\\SEAK Lab Github\\EOSS\\EOSS-AIAA\\java\\mopAOS.jar')
+    compile files('C:\\SEAK Lab\\SEAK Lab Github\\VASSAR\\jess.jar')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'EOSSAIAA'
+            from components.java
+        }
+    }
+}
