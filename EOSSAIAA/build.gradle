@@ -21,10 +21,12 @@ dependencies {
     // compile 'javax:rules:1.0'
     compile 'net.sourceforge.jexcelapi:jxl:2.6.12'
     // compile 'net.sourceforge:javaml:0.1.5'
-    compile files('/home/ubuntu/vassar/EOSS/java/javaml-0.1.5.jar')
+//    compile files('/home/ubuntu/vassar/EOSS/java/javaml-0.1.5.jar')
+    compile files('/app/EOSS/java/javaml-0.1.5.jar')
     compile 'seakers:system-architecture-problems:1.0'
     compile 'org.jblas:jblas:1.2.4'
-    compile files('/home/ubuntu/vassar/EOSS/java/mopAOS.jar')
+//    compile files('/home/ubuntu/vassar/EOSS/java/mopAOS.jar')
+    compile files('/app/EOSS/java/mopAOS.jar')
     // compile files('C:\\SEAK Lab\\SEAK Lab Github\\EOSS\\EOSS-AIAA\\java\\mopAOS.jar')
     // compile files('C:\\SEAK Lab\\SEAK Lab Github\\VASSAR\\jess.jar')
     compile 'gov.sandia:jess:7.1p2'

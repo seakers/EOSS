@@ -14,3 +14,7 @@ dist/**
 problems/**/result/**
 
 manifest.mf
+
+
+EOSSAIAA/build
+EOSSAIAA/.gradle
