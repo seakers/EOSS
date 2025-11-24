@@ -27,17 +27,24 @@ dependencies {
     implementation 'net.sourceforge.jexcelapi:jxl:2.6.12'
     // implementation 'net.sourceforge:javaml:0.1.5'
     // implementation files('/home/ubuntu/vassar/EOSS/java/javaml-0.1.5.jar')
-    implementation files('/app/EOSS/java/javaml-0.1.5.jar')
     implementation 'seakers:system-architecture-problems:1.0'
     implementation 'org.jblas:jblas:1.2.4'
     // implementation files('/home/ubuntu/vassar/EOSS/java/mopAOS.jar')
-    implementation files('/app/EOSS/java/mopAOS.jar')
     // implementation files('C:\\SEAK Lab\\SEAK Lab Github\\EOSS\\EOSS-AIAA\\java\\mopAOS.jar')
     // implementation files('C:\\SEAK Lab\\SEAK Lab Github\\VASSAR\\jess.jar')
     implementation 'gov.sandia:jess:7.1p2'
 
     // testCompile → testImplementation
     testImplementation 'junit:junit:4.12'
+
+
+    // CONTAINER BUILD PATHS
+//    implementation files('/app/EOSS/java/javaml-0.1.5.jar')
+//    implementation files('/app/EOSS/java/mopAOS.jar')
+
+    // LOCAL BUILD PATHS
+    implementation files('/Users/gapaza/repos/ideal/decadal-survey/app/EOSS/java/javaml-0.1.5.jar')
+    implementation files('/Users/gapaza/repos/ideal/decadal-survey/app/EOSS/java/mopAOS.jar')
 }
 
 publishing {
